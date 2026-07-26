@@ -66,6 +66,9 @@ ROOT = Path(__file__).resolve().parent.parent
 PORTS = ROOT / "ports"
 OUT = PORTS / "out"
 
+sys.path.insert(0, str(ROOT))
+from color_science import lc as apca_lc  # noqa: E402 (requiere ROOT en sys.path)
+
 # --------------------------------------------------------------------------
 # Paletas Ocular + oficiales Catppuccin (para reconocer hex por rol)
 # --------------------------------------------------------------------------
@@ -116,6 +119,63 @@ OFICIAL_ALL_HEX = {h(v) for d in OFICIAL.values() for v in d.values()}
 
 BARE_HEX_RE = re.compile(r"#([0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?)")
 QUOTED_HEX_RE = re.compile(r"([\"'])#([0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?)\1")
+
+# --------------------------------------------------------------------------
+# Guarda de pares APCA EMITIDOS (audit 2026-07-26): tabla ESTÁTICA de los
+# pares fg/bg que los generadores de este archivo de verdad producen — KISS,
+# no un parser genérico de artefactos. Nace de encontrar acentos/neutros
+# oscuros usados como fondo con Lc≈0 (yazi indicator/progress_error, lazygit
+# markedBaseCommit, herdr surface_dim). Cada vez que se agregue un rol nuevo
+# usado como bg en alguno de estos generadores, se agrega su par aquí.
+# Piso por clase (color_science.lc, ver ese módulo para la fórmula APCA):
+#   cuerpo (60)     -> texto largo/leído normalmente
+#   chrome (55)     -> bordes, tabs, marcas de selección puntuales
+#   decorativo (45) -> marks/highlights que no se leen como texto corrido
+PAIR_FLOORS = {"cuerpo": 60, "chrome": 55, "decorativo": 45}
+
+EMITTED_PAIRS = [
+    # (app, campo, clase, rol_fg, rol_bg)
+    ("yazi", "indicator.parent/preview", "cuerpo", "text", "surface1"),
+    ("yazi", "indicator.current", "chrome", "base", "peach"),
+    ("yazi", "status.progress_error", "chrome", "base", "red"),
+    ("yazi", "status.count_copied", "chrome", "base", "green"),
+    ("yazi", "status.count_cut", "chrome", "base", "red"),
+    ("yazi", "status.count_selected", "chrome", "base", "mauve"),
+    ("lazygit", "markedBaseCommit(fg/bg)", "chrome", "blue", "surface1"),
+    ("lazygit", "cherryPickedCommit(fg/bg)", "chrome", "mauve", "surface1"),
+    ("lazygit", "selectedLineBgColor (fg=defaultFgColor)", "cuerpo", "text", "surface0"),
+    ("lazygit", "inactiveViewSelectedLineBgColor (fg=defaultFgColor)", "cuerpo", "text", "surface1"),
+    ("herdr", "surface_dim (fg=text)", "cuerpo", "text", "surface1"),
+    ("kitty", "selection_foreground/background", "chrome", "base", "rosewater"),
+    ("kitty", "cursor/cursor_text_color", "chrome", "base", "rosewater"),
+    ("kitty", "active_tab_foreground/background", "chrome", "crust", "mauve"),
+    ("kitty", "inactive_tab_foreground/background", "chrome", "text", "mantle"),
+    ("kitty", "mark1_foreground/background", "decorativo", "base", "lavender"),
+    ("kitty", "mark2_foreground/background", "decorativo", "base", "mauve"),
+    ("kitty", "mark3_foreground/background", "decorativo", "base", "sapphire"),
+    ("tmux", "status-style", "cuerpo", "text", "mantle"),
+    ("tmux", "window-status-current-style/mode-style", "chrome", "crust", "mauve"),
+    ("ghostty", "cursor-color/cursor-text", "chrome", "crust", "rosewater"),
+    ("ghostty", "selection-background/foreground", "cuerpo", "text", "surface1"),
+]
+
+
+def check_emitted_pairs():
+    """Recorre EMITTED_PAIRS con la paleta real de cada modo y registra un
+    check APCA (color_science.lc) por par — exit≠0 si alguno baja del piso
+    de su clase. Vigila la clase entera de "acento/neutro-oscuro como bg"
+    para siempre, no solo los casos puntuales de este audit."""
+    for mode_name, P in (("rooibos", ROOIBOS), ("manzanilla", MANZANILLA)):
+        for app, field, clase, fg_role, bg_role in EMITTED_PAIRS:
+            fg_hex, bg_hex = P["colors"][fg_role], P["colors"][bg_role]
+            val = apca_lc(fg_hex, bg_hex)
+            floor = PAIR_FLOORS[clase]
+            ok = val >= floor
+            label = ROOT / "ports" / f"pares-apca:{app}:{mode_name}:{field}"
+            record(
+                "apca-pares", label, ok,
+                f"Lc={val:.2f} (piso {clase}={floor}) fg={fg_role} bg={bg_role}",
+            )
 
 
 # --------------------------------------------------------------------------
@@ -410,11 +470,16 @@ def bat_tmtheme(mocha_or_latte_text, hex2role, target_colors, exceptions,
 #     palette/{rooibos,manzanilla}.json (cada hex mapea a un rol único):
 #       activeBorderColor / cherryPickedCommitFgColor -> mauve
 #       inactiveBorderColor                            -> subtext0
-#       searchingActiveBorderColor / markedBaseCommitBgColor -> yellow
+#       searchingActiveBorderColor                      -> yellow
 #       optionsTextColor / markedBaseCommitFgColor      -> blue
 #       selectedLineBgColor                             -> surface0
-#       inactiveViewSelectedLineBgColor                 -> overlay0
+#       inactiveViewSelectedLineBgColor                 -> surface1 (fix APCA
+#         2026-07-26: overlay0 daba Lc=38-42 con el texto por encima, mismo
+#         patrón que cherryPickedCommitBgColor)
 #       cherryPickedCommitBgColor                       -> surface1
+#       markedBaseCommitBgColor                         -> surface1 (fix APCA
+#         2026-07-26: blue sobre yellow daba Lc=0; bg=surface1 es el mismo
+#         patrón que cherryPickedCommitBgColor, fg queda blue)
 #       unstagedChangesColor                            -> red
 #       defaultFgColor                                  -> text
 # --------------------------------------------------------------------------
@@ -436,7 +501,7 @@ def lazygit_theme(label, P):
         "    selectedLineBgColor:",
         f"      - '{c['surface0']}'",
         "    inactiveViewSelectedLineBgColor:",
-        f"      - '{c['overlay0']}'",
+        f"      - '{c['surface1']}'",
         "    cherryPickedCommitFgColor:",
         f"      - '{c['mauve']}'",
         "    cherryPickedCommitBgColor:",
@@ -444,7 +509,7 @@ def lazygit_theme(label, P):
         "    markedBaseCommitFgColor:",
         f"      - '{c['blue']}'",
         "    markedBaseCommitBgColor:",
-        f"      - '{c['yellow']}'",
+        f"      - '{c['surface1']}'",
         "    unstagedChangesColor:",
         f"      - '{c['red']}'",
         "    defaultFgColor:",
@@ -625,8 +690,8 @@ def ccmax_sh(label, P):
 #     palette/{rooibos,manzanilla}.json — todos los campos son 1:1 con su
 #     propio nombre de rol (blue->blue, mauve->mauve, ...), salvo:
 #       panel_bg     -> base
-#       surface_dim  -> overlay0 (bg de la fila seleccionada del sidebar,
-#                       decisión conservada del config original — ver comentario)
+#       surface_dim  -> surface1 (bg de la fila seleccionada del sidebar; fix
+#                       APCA 2026-07-26, overlay0 daba Lc 38-42 — ver comentario)
 #       accent       -> override deliberado a peach (NO al rol heredado
 #                       lavender): el usuario reportó el marco del panel
 #                       SELECCIONADO/con foco en azul saturado pese a estar
@@ -644,16 +709,17 @@ def herdr_theme(label, P):
     c = P["colors"]
     return "\n".join([
         f"# Ocular {label} — fragmento [theme.custom] para ~/.config/herdr/config.toml",
-        "# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15). Conserva la",
-        "# decisión surface_dim=overlay0 (selección visible del sidebar) del original.",
+        "# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15).",
         "[theme.custom]",
         f'panel_bg = "{c["base"]}"      # base',
-        f'surface_dim = "{c["overlay0"]}"   # bg de la fila SELECCIONADA del sidebar (verificado empíricamente',
-        "                          # con colores chillones). El mantle oficial (#181825) es más oscuro",
-        "                          # que panel_bg y hacía la selección invisible de noche. Se usa el",
-        "                          # overlay0 oficial de Mocha: visible de noche y texto claro legible",
-        "                          # (~4.6:1). Descartados: morados de Mocha (mauve/lavender, muy claros",
-        "                          # para bg), #8839ef mauve de Latte (muy eléctrico), #574b7d custom.",
+        f'surface_dim = "{c["surface1"]}"   # bg de la fila SELECCIONADA del sidebar (fix APCA 2026-07-26:',
+        "                          # overlay0 media Lc 38-42 con el texto por encima — WCAG 2.x aprueba",
+        "                          # pares que APCA rechaza, y los pares de Ocular se validan con APCA",
+        "                          # (color_science.lc), no con el ratio WCAG. surface1 da texto legible",
+        "                          # (Lc ≥ 71 en ambos modos) y sigue siendo más oscuro que panel_bg, así",
+        "                          # que la selección se ve. Descartados: morados de Mocha (mauve/",
+        "                          # lavender, muy claros para bg), #8839ef mauve de Latte (muy",
+        "                          # eléctrico), #574b7d custom.",
         f'surface0 = "{c["surface0"]}"',
         f'surface1 = "{c["surface1"]}"',
         f'overlay0 = "{c["overlay0"]}"',
@@ -1047,6 +1113,42 @@ def main():
         yazi_mocha_text, HEX2ROLE_MOCHA, MANZANILLA["colors"],
         keep=GLOBAL_KEEP, quoted=True,
     )
+    # EXCEPCIÓN post-sustitución (audit 2026-07-26): el mapeo genérico por rol
+    # deja [indicator] con pares equivocados en AMBOS modos — parent/preview
+    # heredan base/text (bg=text da una barra casi negra en Manzanilla, donde
+    # "text" es oscuro) y current hereda mauve (chrome morado que no calza con
+    # la identidad del acento). Se sobreescriben con los roles APCA correctos:
+    # parent/preview = highlight neutro sutil (fg=text/bg=surface1), current =
+    # identidad cálida del acento (fg=base/bg=peach). Y status.progress_error
+    # (yellow sobre red, Lc=0) -> fg=base sobre bg=red, mismo patrón que los
+    # chips count_* de arriba (fg=base/bg=acento).
+    for name, P in (("rooibos", ROOIBOS), ("manzanilla", MANZANILLA)):
+        c = P["colors"]
+        text = yazi_rooibos if name == "rooibos" else yazi_manzanilla
+        text = re.sub(
+            r'parent = \{ fg = "#[0-9a-fA-F]{6}", bg = "#[0-9a-fA-F]{6}" \}',
+            f'parent = {{ fg = "{c["text"]}", bg = "{c["surface1"]}" }}',
+            text,
+        )
+        text = re.sub(
+            r'current = \{ fg = "#[0-9a-fA-F]{6}", bg = "#[0-9a-fA-F]{6}" \}',
+            f'current = {{ fg = "{c["base"]}", bg = "{c["peach"]}" }}',
+            text,
+        )
+        text = re.sub(
+            r'preview = \{ fg = "#[0-9a-fA-F]{6}", bg = "#[0-9a-fA-F]{6}" \}',
+            f'preview = {{ fg = "{c["text"]}", bg = "{c["surface1"]}" }}',
+            text,
+        )
+        text = re.sub(
+            r'progress_error(\s*)= \{ fg = "#[0-9a-fA-F]{6}", bg = "#[0-9a-fA-F]{6}" \}',
+            rf'progress_error\1= {{ fg = "{c["base"]}", bg = "{c["red"]}" }}',
+            text,
+        )
+        if name == "rooibos":
+            yazi_rooibos = text
+        else:
+            yazi_manzanilla = text
     write(OUT / "yazi/ocular-rooibos.yazi/flavor.toml", yazi_rooibos)
     write(OUT / "yazi/ocular-manzanilla.yazi/flavor.toml", yazi_manzanilla)
     write(OUT / "yazi/ocular-rooibos.yazi/tmtheme.xml", rooibos_bat)
@@ -1203,6 +1305,9 @@ def main():
         record("exists", p, p.exists())
         validate_bash(p)
         audit_ansi_rgb_file(p, allowed)
+
+    # pares fg/bg emitidos (guarda APCA permanente, ver EMITTED_PAIRS arriba)
+    check_emitted_pairs()
 
     # ------------------------------------------------------------------
     # Imprimir reporte

@@ -36,9 +36,9 @@ unset_main  = { fg = "#f5efe7", bg = "#993c3f", bold = true }
 unset_alt   = { fg = "#993c3f", bg = "#e3ddd4"}
 
 [indicator]
-parent = { fg = "#f5efe7", bg = "#3f372d" }
-current = { fg = "#f5efe7", bg = "#684c9e" }
-preview = { fg = "#f5efe7", bg = "#3f372d" }
+parent = { fg = "#3f372d", bg = "#d9d3c9" }
+current = { fg = "#f5efe7", bg = "#983f15" }
+preview = { fg = "#3f372d", bg = "#d9d3c9" }
 
 [status]
 sep_left  = { open = "", close = "" }
@@ -46,7 +46,7 @@ sep_right = { open = "", close = "" }
 
 progress_label  = { fg = "#ffffff", bold = true }
 progress_normal = { fg = "#276819", bg = "#d9d3c9" }
-progress_error  = { fg = "#835000", bg = "#9b393f" }
+progress_error  = { fg = "#f5efe7", bg = "#9b393f" }
 
 perm_type  = { fg = "#3259a4" }
 perm_read  = { fg = "#835000" }
