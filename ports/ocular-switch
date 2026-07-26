@@ -21,6 +21,19 @@
 #     al modo pedido en cada corrida.
 #   - vscode, chrome: fuera de alcance (ver notas en sus secciones).
 #
+# Límite conocido — TUIs de larga vida (reportado por el usuario con btop,
+# 2026-07-26): btop, lazygit, gh-dash y yazi leen su config SOLO al arrancar
+# — no tienen reload en caliente. Una instancia ya abierta antes de correr
+# el switcher se queda con los colores viejos hasta que se cierra y se abre
+# de nuevo; instancias NUEVAS sí toman el modo correcto de inmediato. No es
+# un bug de este script, es una limitación de esas apps.
+# Gotcha específico de btop: reescribe btop.conf completo AL SALIR. Si una
+# instancia vieja de btop sigue abierta cuando corre el switcher y luego se
+# cierra, su propio btop.conf (con el color_theme viejo en memoria) pisa el
+# que el switcher acaba de escribir. Se autocorrige solo en la SIGUIENTE
+# corrida del switcher — no matar procesos de btop del usuario para
+# "arreglarlo".
+#
 # statusline y ccmax no leen directo de ports/out/: consumen
 # ~/.config/ocular/mode (el modo activo, "dark"/"light") + su fragmento de
 # color propio (~/.config/claude-statusline/colors-<modo>.sh,
@@ -182,6 +195,44 @@ if command -v herdr >/dev/null 2>&1 && [ -f "$HOME/.config/herdr/config.toml" ];
         ok "herdr (bloque [theme.custom])"
     else
         note "herdr: no se encontró el bloque [theme.custom] esperado — se omite (revisar a mano)"
+    fi
+    # --- herdr: ui.accent — token INDEPENDIENTE de [theme.custom], verificado
+    #     2026-07-26 contra `herdr --default-config` (comentario "Accent color
+    #     for highlights, borders, and navigation UI") y docs.herdr.dev/
+    #     config-reference: es el que pinta los BORDES de panel. NINGUNO de
+    #     los 16 tokens de CustomThemeColors los cubre (confirmado con
+    #     `strings` sobre el binario: CustomThemeColors no tiene campo
+    #     "border"), así que sin este upsert herdr cae a su default propio
+    #     (cyan/#89b4fa) — el azul saturado que desentona reportado por el
+    #     usuario. Se upsertea con el MISMO hex que theme.custom.accent (se
+    #     lee del fragmento ya generado — una sola fuente de verdad, sin
+    #     duplicar la paleta en este script) dentro de la sección [ui]
+    #     existente (crea la línea si falta, la reemplaza si ya está).
+    accent_hex="$(grep -m1 '^accent = ' "$OUT/herdr/ocular-$variant.toml" | sed -E 's/^accent = "([^"]+)".*/\1/')"
+    if [ -n "$accent_hex" ]; then
+        python3 - "$HOME/.config/herdr/config.toml" "$accent_hex" <<'PYEOF'
+import re
+import sys
+
+path, hexval = sys.argv[1], sys.argv[2]
+text = open(path).read()
+i = text.find("\n[ui]\n")
+if i == -1:
+    sys.exit(1)
+j = text.find("\n[", i + 1)
+if j == -1:
+    j = len(text)
+section = text[i:j]
+new_line = f'accent = "{hexval}"'
+if re.search(r"(?m)^accent\s*=", section):
+    section = re.sub(r"(?m)^accent\s*=.*$", new_line, section, count=1)
+else:
+    section = section.rstrip("\n") + "\n" + new_line + "\n"
+open(path, "w").write(text[:i] + section + text[j:])
+PYEOF
+        ok "herdr (ui.accent = $accent_hex, bordes de panel)"
+    else
+        note "herdr: no se pudo leer accent del fragmento generado — ui.accent no actualizado"
     fi
 else
     skip "herdr"

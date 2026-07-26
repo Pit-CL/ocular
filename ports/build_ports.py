@@ -6,15 +6,20 @@ switcher, a partir de palette/rooibos.json (dark) y palette/manzanilla.json
 
 Dos estrategias según el artefacto:
   1. SUSTITUCIÓN de hex sobre el port oficial Catppuccin instalado localmente
-     (bat, yazi, lazygit, btop, gh-dash, oh-my-posh, herdr): se recorre el
+     (bat, yazi, lazygit, btop, oh-my-posh, herdr): se recorre el
      archivo de referencia, cada #hex oficial Mocha/Latte se reconoce por su
      ROL (via palette/catppuccin-oficial.json) y se reemplaza por el hex
      Ocular de ese mismo rol. Preserva estructura, comentarios y campos no
      visitados 1:1.
   2. GENERACIÓN directa por rol (kitty, ghostty, tmux, statusline, herdr-doc,
-     nvim, vscode): no hay forma segura de sustituir (kitty/ghostty usan el
-     bloque `ansi` dedicado, no roles puros; tmux/statusline no tienen port
-     oficial de referencia con hex fijos).
+     nvim, vscode, gh-dash): no hay forma segura de sustituir (kitty/ghostty
+     usan el bloque `ansi` dedicado, no roles puros; tmux/statusline no
+     tienen port oficial de referencia con hex fijos). gh-dash pasó de
+     sustitución a generación directa el 2026-07-26 (fix de rollout): el
+     legado Catppuccin heredaba roles poco apropiados para su propio schema
+     (p.ej. text.secondary/border.primary en lavender, un acento vívido, no
+     un tono de texto secundario) — ver mapeo semántico por campo en
+     gh_dash_theme().
 
 Mapeo sintáctico común (para los artefactos de generación directa; los de
 sustitución simplemente heredan el mapeo que ya trae el port oficial):
@@ -156,6 +161,18 @@ def extract_between(text, start_marker, end_marker):
     i = text.index(start_marker)
     j = text.index(end_marker, i + len(start_marker))
     return text[i:j]
+
+
+def override_toml_line(text, field, new_line):
+    """Reemplaza la línea `field = ...` (valor Y comentario) por new_line
+    completa. Para casos donde el rol heredado por substitute_hexes no es el
+    que queremos para ESE campo puntual (ver accent de herdr, 2026-07-26)."""
+    new_text, n = re.subn(
+        rf"(?m)^{re.escape(field)}\s*=.*$", lambda _m: new_line, text, count=1,
+    )
+    if n == 0:
+        raise ValueError(f"campo {field!r} no encontrado para override")
+    return new_text
 
 
 # --------------------------------------------------------------------------
@@ -440,6 +457,49 @@ def tmux_theme(label, P):
         "",
         f'set -g clock-mode-colour "{c["blue"]}"',
         "set -g clock-mode-style 24",
+        "",
+    ])
+
+
+# --------------------------------------------------------------------------
+# 4b) GH-DASH — generación directa por ROL semántico (NO sustitución del
+#     legado Catppuccin — fix 2026-07-26, ver docstring del módulo). Campos
+#     reales del schema (verificados contra ~/.config/gh-dash/config.yml
+#     vivo, que ya trae theme.colors.* con estos nombres): text.{primary,
+#     secondary,inverted,faint,warning,success,error}, background.selected,
+#     border.{primary,secondary,faint} — el campo es "faint", no "faded".
+#     Mapeo: primary=text, secondary=subtext0, inverted=base,
+#     faint=overlay2 (Lc~58/60 sobre fondo normal — legible, no decorativo),
+#     background.selected=surface1 (fondo del MISMO modo siempre, nunca el
+#     opuesto), border.primary=surface2, border.secondary=surface1,
+#     border.faint=surface0. text.primary sobre background.selected da
+#     Lc 77.96 (rooibos) / 71.61 (manzanilla) — ambos ≥ 60.
+# --------------------------------------------------------------------------
+def gh_dash_theme(label, P):
+    c = P["colors"]
+    return "\n".join([
+        f"# Ocular {label} — fragmento theme: para ~/.config/gh-dash/config.yml",
+        "theme:",
+        "    colors:",
+        "        text:",
+        f'            primary: "{c["text"]}"',
+        f'            secondary: "{c["subtext0"]}"',
+        f'            inverted: "{c["base"]}"',
+        f'            faint: "{c["overlay2"]}"',
+        f'            warning: "{c["yellow"]}"',
+        f'            success: "{c["green"]}"',
+        f'            error: "{c["red"]}"',
+        "        background:",
+        f'            selected: "{c["surface1"]}"',
+        "        border:",
+        f'            primary: "{c["surface2"]}"',
+        f'            secondary: "{c["surface1"]}"',
+        f'            faint: "{c["surface0"]}"',
+        "    ui:",
+        "        sectionsShowCount: true",
+        "        table:",
+        "            showSeparator: true",
+        "            compact: false",
         "",
     ])
 
@@ -872,15 +932,10 @@ def main():
     write(OUT / "tmux/ocular-rooibos.tmuxtheme", tmux_theme("Rooibos", ROOIBOS))
     write(OUT / "tmux/ocular-manzanilla.tmuxtheme", tmux_theme("Manzanilla", MANZANILLA))
 
-    # ---------------- gh-dash (solo bloque theme:) ----------------
-    ghdash_text = ref["ghdash"].read_text()
-    ghdash_block = extract_between(ghdash_text, "\ntheme:\n", "\npager:")
-    rooibos_gd = "# Ocular Rooibos — fragmento theme: para ~/.config/gh-dash/config.yml\n" + \
-        substitute_hexes(ghdash_block.lstrip("\n"), HEX2ROLE_MOCHA, ROOIBOS["colors"], quoted=True) + "\n"
-    manzanilla_gd = "# Ocular Manzanilla — fragmento theme: para ~/.config/gh-dash/config.yml\n" + \
-        substitute_hexes(ghdash_block.lstrip("\n"), HEX2ROLE_MOCHA, MANZANILLA["colors"], quoted=True) + "\n"
-    write(OUT / "gh-dash/ocular-rooibos.yml", rooibos_gd)
-    write(OUT / "gh-dash/ocular-manzanilla.yml", manzanilla_gd)
+    # ---------------- gh-dash (solo bloque theme:, generación directa por
+    # rol semántico — NO sustitución del legado; ver gh_dash_theme()) ----------------
+    write(OUT / "gh-dash/ocular-rooibos.yml", gh_dash_theme("Rooibos", ROOIBOS))
+    write(OUT / "gh-dash/ocular-manzanilla.yml", gh_dash_theme("Manzanilla", MANZANILLA))
 
     # ---------------- oh-my-posh ----------------
     omp_text = ref["ohmyposh"].read_text()
@@ -898,17 +953,39 @@ def main():
     write(OUT / "ccmax/ocular-manzanilla.sh", ccmax_sh("Manzanilla", MANZANILLA))
 
     # ---------------- herdr (solo bloque [theme.custom]) ----------------
+    # accent: override deliberado sobre el rol heredado (lavender) — fix
+    # 2026-07-26. El usuario reportó el marco del panel SELECCIONADO/con foco
+    # en azul saturado (los NO seleccionados armonizan bien). `accent` es el
+    # único candidato: es la MISMA clave que `ui.accent` upsertea en
+    # ocular-switch (ver ese script), y herdr documenta esa clave como
+    # "Accent color for highlights, borders, and navigation UI" (`herdr
+    # --default-config`, sección [ui]; confirmado también en
+    # docs.herdr.dev/config-reference). El valor heredado por sustitución
+    # (lavender: #bac4ff rooibos / #4655a5 manzanilla) sigue leyéndose azul
+    # en pantalla pese a estar calibrado en la paleta Ocular — se reemplaza
+    # por peach (marco activo cálido, identidad Rooibos/Manzanilla), que de
+    # paso también tiñe la selección del sidebar (mismo token, ver comentario
+    # "resalta la selección" en el config vivo) — cambio intencional, no
+    # colateral.
     herdr_text = ref["herdr"].read_text()
     herdr_block = extract_between(herdr_text, "\n[theme.custom]\n", "\n[keys]")
     header = ("# Ocular {label} — fragmento [theme.custom] para ~/.config/herdr/config.toml\n"
               "# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15). Conserva la\n"
               "# decisión surface_dim=overlay0 (selección visible del sidebar) del original.\n")
-    write(OUT / "herdr/ocular-rooibos.toml",
-          header.format(label="Rooibos") +
-          substitute_hexes(herdr_block, HEX2ROLE_MOCHA, ROOIBOS["colors"], quoted=True).lstrip("\n") + "\n")
-    write(OUT / "herdr/ocular-manzanilla.toml",
-          header.format(label="Manzanilla") +
-          substitute_hexes(herdr_block, HEX2ROLE_MOCHA, MANZANILLA["colors"], quoted=True).lstrip("\n") + "\n")
+    rooibos_herdr = substitute_hexes(herdr_block, HEX2ROLE_MOCHA, ROOIBOS["colors"], quoted=True)
+    rooibos_herdr = override_toml_line(
+        rooibos_herdr, "accent",
+        f'accent = "{ROOIBOS["colors"]["peach"]}"        '
+        '# peach — marco activo cálido + selección del sidebar (fix bordes azules, 2026-07-26)',
+    )
+    manzanilla_herdr = substitute_hexes(herdr_block, HEX2ROLE_MOCHA, MANZANILLA["colors"], quoted=True)
+    manzanilla_herdr = override_toml_line(
+        manzanilla_herdr, "accent",
+        f'accent = "{MANZANILLA["colors"]["peach"]}"        '
+        '# peach — marco activo cálido + selección del sidebar (fix bordes azules, 2026-07-26)',
+    )
+    write(OUT / "herdr/ocular-rooibos.toml", header.format(label="Rooibos") + rooibos_herdr.lstrip("\n") + "\n")
+    write(OUT / "herdr/ocular-manzanilla.toml", header.format(label="Manzanilla") + manzanilla_herdr.lstrip("\n") + "\n")
 
     # ---------------- nvim ----------------
     write(OUT / "nvim/ocular.lua", nvim_lua())
