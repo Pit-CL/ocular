@@ -630,8 +630,8 @@ def ccmax_sh(label, P):
 #     palette/{rooibos,manzanilla}.json — todos los campos son 1:1 con su
 #     propio nombre de rol (blue->blue, mauve->mauve, ...), salvo:
 #       panel_bg     -> base
-#       surface_dim  -> overlay0 (bg de la fila seleccionada del sidebar,
-#                       decisión conservada del config original — ver comentario)
+#       surface_dim  -> surface1 (bg de la fila seleccionada del sidebar; fix
+#                       APCA 2026-07-26, overlay0 daba Lc 38-42 — ver comentario)
 #       accent       -> override deliberado a peach (NO al rol heredado
 #                       lavender): el usuario reportó el marco del panel
 #                       SELECCIONADO/con foco en azul saturado pese a estar
@@ -649,16 +649,17 @@ def herdr_theme(label, P):
     c = P["colors"]
     return "\n".join([
         f"# Ocular {label} — fragmento [theme.custom] para ~/.config/herdr/config.toml",
-        "# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15). Conserva la",
-        "# decisión surface_dim=overlay0 (selección visible del sidebar) del original.",
+        "# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15).",
         "[theme.custom]",
         f'panel_bg = "{c["base"]}"      # base',
-        f'surface_dim = "{c["overlay0"]}"   # bg de la fila SELECCIONADA del sidebar (verificado empíricamente',
-        "                          # con colores chillones). El mantle oficial (#181825) es más oscuro",
-        "                          # que panel_bg y hacía la selección invisible de noche. Se usa el",
-        "                          # overlay0 oficial de Mocha: visible de noche y texto claro legible",
-        "                          # (~4.6:1). Descartados: morados de Mocha (mauve/lavender, muy claros",
-        "                          # para bg), #8839ef mauve de Latte (muy eléctrico), #574b7d custom.",
+        f'surface_dim = "{c["surface1"]}"   # bg de la fila SELECCIONADA del sidebar (fix APCA 2026-07-26:',
+        "                          # overlay0 media Lc 38-42 con el texto por encima — WCAG 2.x aprueba",
+        "                          # pares que APCA rechaza, y los pares de Ocular se validan con APCA",
+        "                          # (color_science.lc), no con el ratio WCAG. surface1 da texto legible",
+        "                          # (Lc ≥ 71 en ambos modos) y sigue siendo más oscuro que panel_bg, así",
+        "                          # que la selección se ve. Descartados: morados de Mocha (mauve/",
+        "                          # lavender, muy claros para bg), #8839ef mauve de Latte (muy",
+        "                          # eléctrico), #574b7d custom.",
         f'surface0 = "{c["surface0"]}"',
         f'surface1 = "{c["surface1"]}"',
         f'overlay0 = "{c["overlay0"]}"',
