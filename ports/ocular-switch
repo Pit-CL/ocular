@@ -261,11 +261,10 @@ if [ -d "$HOME/.config/ohmyposh" ]; then  # detección por config, NO command -v
     cp "$OUT/ohmyposh/ocular-rooibos.omp.json" "$HOME/.config/ohmyposh/"
     cp "$OUT/ohmyposh/ocular-manzanilla.omp.json" "$HOME/.config/ohmyposh/"
     ln -sf "ocular-$variant.omp.json" "$HOME/.config/ohmyposh/ocular-active.omp.json"
-    if [ -f "$HOME/.zshrc" ] && grep -q 'catppuccin_mocha\.omp\.json' "$HOME/.zshrc"; then
-        sed -i.bak "s#catppuccin_mocha\.omp\.json#ocular-active.omp.json#" "$HOME/.zshrc"
-        rm -f "$HOME/.zshrc.bak"
-        note "oh-my-posh: ~/.zshrc reapuntado (una sola vez) al symlink ocular-active.omp.json — abre un shell nuevo para verlo"
-    fi
+    # El zshrc NO se toca desde acá: la config canónica viene de dotfiles y ya
+    # apunta al symlink con fallback a catppuccin_mocha. (El antiguo sed
+    # "one-time" pisaba justamente esa línea de fallback y la dejaba circular
+    # — bug detectado 2026-07-26.)
     ok "oh-my-posh (symlink ocular-active.omp.json -> ocular-$variant.omp.json)"
 else
     skip "oh-my-posh"
