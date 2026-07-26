@@ -946,17 +946,17 @@ manage Chrome for this reason.
 # --------------------------------------------------------------------------
 def main():
     ref = {
-        "kitty": HOME / ".config/kitty/dark-theme.auto.conf",
-        "bat_mocha": HOME / ".config/bat/themes/Catppuccin Mocha.tmTheme",
-        "bat_latte": HOME / ".config/catppuccin/bat/themes/Catppuccin Latte.tmTheme",
-        "yazi_mocha": HOME / ".config/yazi/flavors/catppuccin-mocha.yazi/flavor.toml",
-        "btop_mocha": HOME / ".config/btop/themes/catppuccin_mocha.theme",
-        "btop_latte": HOME / ".config/catppuccin/btop/themes/catppuccin_latte.theme",
-        "ghdash": HOME / ".config/gh-dash/config.yml",
-        "ohmyposh": HOME / ".config/ohmyposh/catppuccin_mocha.omp.json",
-        # lazygit y herdr NO llevan entrada aquí: desde el fix del issue #7
-        # (2026-07-26) generan directo por rol (lazygit_theme/herdr_theme),
-        # sin leer ningún config vivo — ver docstring del módulo.
+        "bat_mocha": PORTS / "reference/bat-catppuccin-mocha.tmTheme",
+        "bat_latte": PORTS / "reference/bat-catppuccin-latte.tmTheme",
+        "yazi_mocha": PORTS / "reference/yazi-catppuccin-mocha-flavor.toml",
+        "btop_mocha": PORTS / "reference/btop-catppuccin-mocha.theme",
+        "btop_latte": PORTS / "reference/btop-catppuccin-latte.theme",
+        "ohmyposh": PORTS / "reference/ohmyposh-catppuccin-mocha.omp.json",
+        # kitty y ghdash NO llevan entrada aquí: generan directo por rol (sin
+        # leer ninguna plantilla) desde siempre. lazygit y herdr tampoco: desde
+        # el fix del issue #7 (2026-07-26) generan directo por rol
+        # (lazygit_theme/herdr_theme), sin leer ningún config vivo — ver
+        # docstring del módulo.
     }
     missing = [str(p) for p in ref.values() if not p.exists()]
     if missing:

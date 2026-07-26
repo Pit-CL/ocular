@@ -32,6 +32,15 @@ VSCode, nvim (spec built on
 scratch by `build_ports.py`, using the official ports only as a reference
 for which fields exist.
 
+## Vendored reference templates
+
+`ports/reference/` holds the 6 upstream Catppuccin templates (MIT license)
+that `build_ports.py` reads for the palette-substitution artifacts (bat,
+yazi, btop, oh-my-posh — see table above). They used to be read from the
+maintainer's local dotfiles; vendoring them makes the build self-contained
+so CI and any clean clone can regenerate `ports/out/` without depending on
+files installed outside this repo.
+
 ## Also
 
 - Palette role structure and accent hues: [catppuccin/palette](https://github.com/catppuccin/palette) (MIT) — see credits in the main README.
