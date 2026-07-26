@@ -822,24 +822,25 @@ def chrome_manifest(label, mode_desc, P):
     }
 
 
-CHROME_README = """# Chrome (modo desarrollador) — Ocular
+CHROME_README = """# Chrome (developer mode) — Ocular
 
-Theme MV3 (`theme.colors` en RGB decimal), misma estructura que
-`tools/chrome-catppuccin-mocha/manifest.json` del workspace Rollitos/Claude.
+MV3 theme (`theme.colors` in decimal RGB), same structure as
+`tools/chrome-catppuccin-mocha/manifest.json` in the Rollitos/Claude
+workspace.
 
-## Instalar (unpacked)
+## Install (unpacked)
 
-1. `chrome://extensions` -> activar "Modo de desarrollador".
-2. "Cargar descomprimida" -> apuntar a `ocular-rooibos/` o `ocular-manzanilla/`.
+1. `chrome://extensions` -> enable "Developer mode".
+2. "Load unpacked" -> point to `ocular-rooibos/` or `ocular-manzanilla/`.
 
-## Limitación (documentar, no es un bug)
+## Limitation (documented, not a bug)
 
-Los themes de Chrome cargados como *unpacked* son **estáticos**: no siguen la
-apariencia del sistema (no hay auto dark/light) ni pueden recargarse por
-script — Chrome no expone una API para eso a una extensión unpacked. El
-cambio entre Rooibos y Manzanilla es **manual**: `chrome://extensions` ->
-desactivar el theme activo -> activar el otro. `ocular-switch` NO gestiona
-Chrome por este motivo.
+Chrome themes loaded as *unpacked* are **static**: they don't follow the
+system appearance (no auto dark/light) and can't be reloaded by script —
+Chrome doesn't expose an API for that to an unpacked extension. Switching
+between Rooibos and Manzanilla is **manual**: `chrome://extensions` ->
+disable the active theme -> enable the other one. `ocular-switch` does NOT
+manage Chrome for this reason.
 """
 
 
@@ -1006,16 +1007,16 @@ def main():
     # ---------------- delta ----------------
     write(OUT / "delta/README.md", (
         "# delta — Ocular\n\n"
-        "delta no tiene theme propio: reusa el tmTheme de **bat** por nombre "
+        "delta has no theme of its own: it reuses bat's tmTheme by name\n"
         "(`git config --global delta.syntax-theme`).\n\n"
         "```\n"
         'git config --global delta.syntax-theme "Ocular Rooibos"     # dark\n'
         'git config --global delta.syntax-theme "Ocular Manzanilla" # light\n'
         "```\n\n"
-        "Requiere que `ports/out/bat/Ocular Rooibos.tmTheme` y "
-        "`Ocular Manzanilla.tmTheme` estén instalados en el theme dir de bat "
-        "(`bat --config-dir`/themes, con `bat cache --build` tras copiarlos) — "
-        "`ocular-switch` se encarga de ambos pasos.\n"
+        "Requires `ports/out/bat/Ocular Rooibos.tmTheme` and `Ocular\n"
+        "Manzanilla.tmTheme` to be installed in bat's theme dir (`bat\n"
+        "--config-dir`/themes, with `bat cache --build` after copying them) —\n"
+        "`ocular-switch` takes care of both steps.\n"
     ))
 
     # ------------------------------------------------------------------
