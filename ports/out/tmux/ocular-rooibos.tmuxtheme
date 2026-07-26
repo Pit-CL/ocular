@@ -27,7 +27,7 @@ set -g status-left-style "fg=#d1cbc0,bg=#191511"
 set -g status-right-style "fg=#d1cbc0,bg=#191511"
 
 set -g status-left "#[fg=#15110d,bg=#d9b9ff,bold] #S #[fg=#d1cbc0,bg=#191511,nobold]"
-set -g status-right " %d-%m %H:%M "
+set -g status-right "#[fg=#c6c1b7] #h #[default]· %d-%m %H:%M "
 
 set -g clock-mode-colour "#a7c8ff"
 set -g clock-mode-style 24

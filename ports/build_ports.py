@@ -431,10 +431,12 @@ def tmux_theme(label, P):
         f'set -g status-right-style "fg={c["subtext1"]},bg={c["mantle"]}"',
         "",
         # Izquierda: sesión en cápsula de acento (mismo mauve que la ventana
-        # activa y mode-style). Derecha: fecha-hora formato Chile (DD-MM HH:MM),
-        # hereda status-right-style de arriba — sin depender de ningún plugin.
+        # activa y mode-style). Derecha: host (#h, resuelto por tmux en runtime
+        # — cero hardcode, identifica la máquina en un flujo SSH multi-host) en
+        # tono sutil subtext0, luego fecha-hora formato Chile (DD-MM HH:MM) con
+        # #[default] que vuelve a status-right-style de arriba — sin plugin.
         f'set -g status-left "#[fg={c["crust"]},bg={c["mauve"]},bold] #S #[fg={c["subtext1"]},bg={c["mantle"]},nobold]"',
-        'set -g status-right " %d-%m %H:%M "',
+        f'set -g status-right "#[fg={c["subtext0"]}] #h #[default]· %d-%m %H:%M "',
         "",
         f'set -g clock-mode-colour "{c["blue"]}"',
         "set -g clock-mode-style 24",
