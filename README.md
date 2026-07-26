@@ -63,6 +63,20 @@ venv/bin/python wallpaper.py   # regenera los 6 wallpapers + previews
 `build.py` y `audit.py` no tienen dependencias externas (solo `color_science.py`,
 incluido).
 
+## Ports y switcher
+
+`ports/build_ports.py` genera desde los JSON de paleta los themes listos para:
+kitty, ghostty, bat (tmTheme, reusado por delta), yazi, lazygit, btop, tmux,
+gh-dash, oh-my-posh, nvim (spec de `catppuccin/nvim` con `color_overrides` y
+flavour automático por `background`), VSCode, Chrome (theme MV3), Slack (cadena
+de tema custom) y fragmentos shell genéricos — todo ×2 modos y validado
+(sintaxis + pertenencia de cada hex a la paleta).
+
+`ports/ocular-switch light|dark` aplica el modo en las apps presentes de la
+máquina. kitty, ghostty y nvim quedan con **conmutación nativa** (se instalan
+una vez y siguen la apariencia del sistema solos); el resto se re-apunta por
+modo en cada corrida.
+
 ## Créditos
 
 - **[Catppuccin](https://github.com/catppuccin/palette)** (MIT) — estructura de
