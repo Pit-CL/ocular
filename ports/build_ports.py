@@ -163,6 +163,18 @@ def extract_between(text, start_marker, end_marker):
     return text[i:j]
 
 
+def override_toml_line(text, field, new_line):
+    """Reemplaza la línea `field = ...` (valor Y comentario) por new_line
+    completa. Para casos donde el rol heredado por substitute_hexes no es el
+    que queremos para ESE campo puntual (ver accent de herdr, 2026-07-26)."""
+    new_text, n = re.subn(
+        rf"(?m)^{re.escape(field)}\s*=.*$", lambda _m: new_line, text, count=1,
+    )
+    if n == 0:
+        raise ValueError(f"campo {field!r} no encontrado para override")
+    return new_text
+
+
 # --------------------------------------------------------------------------
 # Reporte / validación
 # --------------------------------------------------------------------------
@@ -941,17 +953,39 @@ def main():
     write(OUT / "ccmax/ocular-manzanilla.sh", ccmax_sh("Manzanilla", MANZANILLA))
 
     # ---------------- herdr (solo bloque [theme.custom]) ----------------
+    # accent: override deliberado sobre el rol heredado (lavender) — fix
+    # 2026-07-26. El usuario reportó el marco del panel SELECCIONADO/con foco
+    # en azul saturado (los NO seleccionados armonizan bien). `accent` es el
+    # único candidato: es la MISMA clave que `ui.accent` upsertea en
+    # ocular-switch (ver ese script), y herdr documenta esa clave como
+    # "Accent color for highlights, borders, and navigation UI" (`herdr
+    # --default-config`, sección [ui]; confirmado también en
+    # docs.herdr.dev/config-reference). El valor heredado por sustitución
+    # (lavender: #bac4ff rooibos / #4655a5 manzanilla) sigue leyéndose azul
+    # en pantalla pese a estar calibrado en la paleta Ocular — se reemplaza
+    # por peach (marco activo cálido, identidad Rooibos/Manzanilla), que de
+    # paso también tiñe la selección del sidebar (mismo token, ver comentario
+    # "resalta la selección" en el config vivo) — cambio intencional, no
+    # colateral.
     herdr_text = ref["herdr"].read_text()
     herdr_block = extract_between(herdr_text, "\n[theme.custom]\n", "\n[keys]")
     header = ("# Ocular {label} — fragmento [theme.custom] para ~/.config/herdr/config.toml\n"
               "# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15). Conserva la\n"
               "# decisión surface_dim=overlay0 (selección visible del sidebar) del original.\n")
-    write(OUT / "herdr/ocular-rooibos.toml",
-          header.format(label="Rooibos") +
-          substitute_hexes(herdr_block, HEX2ROLE_MOCHA, ROOIBOS["colors"], quoted=True).lstrip("\n") + "\n")
-    write(OUT / "herdr/ocular-manzanilla.toml",
-          header.format(label="Manzanilla") +
-          substitute_hexes(herdr_block, HEX2ROLE_MOCHA, MANZANILLA["colors"], quoted=True).lstrip("\n") + "\n")
+    rooibos_herdr = substitute_hexes(herdr_block, HEX2ROLE_MOCHA, ROOIBOS["colors"], quoted=True)
+    rooibos_herdr = override_toml_line(
+        rooibos_herdr, "accent",
+        f'accent = "{ROOIBOS["colors"]["peach"]}"        '
+        '# peach — marco activo cálido + selección del sidebar (fix bordes azules, 2026-07-26)',
+    )
+    manzanilla_herdr = substitute_hexes(herdr_block, HEX2ROLE_MOCHA, MANZANILLA["colors"], quoted=True)
+    manzanilla_herdr = override_toml_line(
+        manzanilla_herdr, "accent",
+        f'accent = "{MANZANILLA["colors"]["peach"]}"        '
+        '# peach — marco activo cálido + selección del sidebar (fix bordes azules, 2026-07-26)',
+    )
+    write(OUT / "herdr/ocular-rooibos.toml", header.format(label="Rooibos") + rooibos_herdr.lstrip("\n") + "\n")
+    write(OUT / "herdr/ocular-manzanilla.toml", header.format(label="Manzanilla") + manzanilla_herdr.lstrip("\n") + "\n")
 
     # ---------------- nvim ----------------
     write(OUT / "nvim/ocular.lua", nvim_lua())
