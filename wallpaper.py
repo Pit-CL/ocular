@@ -9,9 +9,10 @@ Replica el estilo del wallpaper HEIC activo (wave-mauve: fondo casi plano +
 ondas en 2 esquinas) — NO el de build_wallpaper.py (cerros+sol+neblina), que
 es un sistema distinto y no aplica aqui.
 
-De tools/vision-theme/color_science.py se reusa SOLO oklch_to_hex (la unica
-pieza de ciencia de color que este renderer necesita: OKLCH -> sRGB con gamut
-mapping). Nada de APCA aqui — el wallpaper no lleva texto encima.
+De `color_science.py` (vendorizado en este repo, ver build.py) se reusa SOLO
+oklch_to_hex (la unica pieza de ciencia de color que este renderer necesita:
+OKLCH -> sRGB con gamut mapping). Nada de APCA aqui — el wallpaper no lleva
+texto encima.
 """
 import os
 import sys

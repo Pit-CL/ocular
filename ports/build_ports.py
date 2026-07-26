@@ -65,7 +65,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PORTS = ROOT / "ports"
 OUT = PORTS / "out"
-HOME = Path.home()
 
 # --------------------------------------------------------------------------
 # Paletas Ocular + oficiales Catppuccin (para reconocer hex por rol)
@@ -719,8 +718,8 @@ def nvim_lua():
 
 
 # --------------------------------------------------------------------------
-# 7) VSCODE — misma estructura que vscode_theme() de tools/pyvision-theme/
-#    build_v2.py (mismos keys de colors + tokenColors), con el mapeo
+# 7) VSCODE — misma estructura que un generador equivalente de herramientas
+#    externas del autor (mismos keys de colors + tokenColors), con el mapeo
 #    sintáctico Catppuccin del enunciado en vez de la paleta OKLCH.
 # --------------------------------------------------------------------------
 def ocular_ui_palette(P):
@@ -923,9 +922,8 @@ def chrome_manifest(label, mode_desc, P):
 
 CHROME_README = """# Chrome (developer mode) — Ocular
 
-MV3 theme (`theme.colors` in decimal RGB), same structure as
-`tools/chrome-catppuccin-mocha/manifest.json` in the Rollitos/Claude
-workspace.
+MV3 theme (`theme.colors` in decimal RGB), same structure as an equivalent
+manifest from the author's external tooling.
 
 ## Install (unpacked)
 
@@ -1043,7 +1041,7 @@ def main():
         keep=GLOBAL_KEEP, quoted=True,
     )
     # DESVIACIÓN: no existe un flavor catppuccin-latte.yazi instalado localmente
-    # (fleet dark-only, ver private/CATASTRO.md) — se deriva manzanilla desde el
+    # (fleet dark-only) — se deriva manzanilla desde el
     # MISMO flavor.toml Mocha (mapa hex->rol Mocha), igual que oh-my-posh.
     yazi_manzanilla = substitute_hexes(
         yazi_mocha_text, HEX2ROLE_MOCHA, MANZANILLA["colors"],

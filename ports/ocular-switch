@@ -38,9 +38,8 @@
 # ~/.config/ocular/mode (el modo activo, "dark"/"light") + su fragmento de
 # color propio (~/.config/claude-statusline/colors-<modo>.sh,
 # ~/.config/ocular/ccmax-colors.sh). Cablear esos DOS scripts para que
-# hagan `source` de sus fragmentos es un cambio en tools/claude-statusline/
-# y tools/claude-monitor-max/ del repo Rollitos/Claude — va por PR aparte
-# a ESE repo, no en este switcher.
+# hagan `source` de sus fragmentos es un cambio en herramientas externas del
+# autor — va por PR aparte a ESE repo, no en este switcher.
 set -euo pipefail
 
 mode="${1:-}"
@@ -275,7 +274,7 @@ fi
 mkdir -p "$HOME/.config/claude-statusline"
 sl_theme="dark"; [ "$variant" = manzanilla ] && sl_theme="light"
 cp "$OUT/statusline/ocular-$variant.sh" "$HOME/.config/claude-statusline/colors-$sl_theme.sh"
-note "statusline: fragmento instalado en ~/.config/claude-statusline/colors-$sl_theme.sh — falta cablear el 'source' en statusline-command.sh (repo Rollitos/Claude, fuera de este switcher)"
+note "statusline: fragmento instalado en ~/.config/claude-statusline/colors-$sl_theme.sh — falta cablear el 'source' en statusline-command.sh (herramienta externa del autor, fuera de este switcher)"
 
 # --- ccmax: sin condición de comando (el archivo no estorba si ccmax no
 #     está instalado) — el 'source' queda pendiente de cablear en

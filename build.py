@@ -2,8 +2,9 @@
 """
 Generador de paleta "Ocular" — Rooibos (dark) / Manzanilla (light).
 
-Ciencia de color 100% reusada de tools/vision-theme/color_science.py
-(OKLCH<->sRGB con gamut mapping + APCA-W3 0.1.9). Estructura de roles 100%
+Ciencia de color 100% reusada de herramientas externas del autor
+(vendorizada en este repo como `color_science.py`): OKLCH<->sRGB con gamut
+mapping + APCA-W3 0.1.9. Estructura de roles 100%
 Catppuccin (drop-in): crust/mantle/base/surface0-2/overlay0-2/subtext0-1/text
 + 14 acentos + bloque ANSI16.
 
