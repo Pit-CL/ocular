@@ -944,6 +944,53 @@ manage Chrome for this reason.
 
 
 # --------------------------------------------------------------------------
+# 9) SLACK — README con el custom theme (string de 8 hex), generación
+#    directa por rol. Mapeo (mismo para ambos modos, diseñado y validado
+#    visualmente): Column BG=mantle, Menu Hover BG=surface0, Active Item=
+#    mauve, Active Item Text=crust (dark) / base (light), Hover Item=
+#    surface1, Text=text, Active Presence=green, Mention Badge=red. Slack no
+#    expone API para custom themes ni para recargarlos: la conmutación sigue
+#    siendo manual (paste del string).
+# --------------------------------------------------------------------------
+def slack_theme_string(P):
+    c = P["colors"]
+    active_item_text = c["crust"] if P["mode"] == "dark" else c["base"]
+    roles = [c["mantle"], c["surface0"], c["mauve"], active_item_text,
+             c["surface1"], c["text"], c["green"], c["red"]]
+    return ",".join(f"#{r.lstrip('#').upper()}" for r in roles)
+
+
+def slack_readme():
+    return "\n".join([
+        "# Slack — Ocular custom theme",
+        "",
+        "Slack accepts an 8-hex string (Preferences → Themes → Custom theme, or paste",
+        "it into a message and Slack offers \"Apply Slack theme\"). Field order: Column",
+        "BG, Menu Hover BG, Active Item, Active Item Text, Hover Item, Text Color,",
+        "Active Presence, Mention Badge.",
+        "",
+        "## Ocular Rooibos (dark)",
+        "",
+        "```",
+        slack_theme_string(ROOIBOS),
+        "```",
+        "",
+        "## Ocular Manzanilla (light)",
+        "",
+        "```",
+        slack_theme_string(MANZANILLA),
+        "```",
+        "",
+        "Mapping by role: Column BG = mantle · Menu Hover BG = surface0 · Active Item",
+        "= mauve · Active Item Text = crust (dark) / base (light) · Hover Item =",
+        "surface1 · Text = text · Active Presence = green · Mention Badge = red.",
+        "Slack doesn't support automatic switching of custom themes: paste the",
+        "string for whichever mode you're using.",
+        "",
+    ])
+
+
+# --------------------------------------------------------------------------
 # MAIN — orquesta generación + validación de cada artefacto
 # --------------------------------------------------------------------------
 def main():
@@ -1077,6 +1124,9 @@ def main():
           json.dumps(chrome_manifest("Manzanilla", "light", MANZANILLA), indent=2, ensure_ascii=False) + "\n")
     write(OUT / "chrome/README.md", CHROME_README)
 
+    # ---------------- slack (README con custom theme, generación directa) --
+    write(OUT / "slack/README.md", slack_readme())
+
     # ---------------- delta ----------------
     write(OUT / "delta/README.md", (
         "# delta — Ocular\n\n"
@@ -1131,6 +1181,11 @@ def main():
     nvim_path = OUT / "nvim/ocular.lua"
     record("exists", nvim_path, nvim_path.exists())
     audit_hex_file("nvim", nvim_path, ALLOWED_BOTH, quoted=True)
+
+    # slack/README.md mezcla ambas paletas en un solo archivo -> allowed = unión
+    slack_path = OUT / "slack/README.md"
+    record("exists", slack_path, slack_path.exists())
+    audit_hex_file("slack", slack_path, ALLOWED_BOTH, quoted=False)
 
     # chrome: JSON parse + membresía RGB->hex propia (no usa el motor de #hex)
     for p, allowed in (
