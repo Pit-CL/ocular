@@ -1053,6 +1053,42 @@ def main():
         yazi_mocha_text, HEX2ROLE_MOCHA, MANZANILLA["colors"],
         keep=GLOBAL_KEEP, quoted=True,
     )
+    # EXCEPCIÓN post-sustitución (audit 2026-07-26): el mapeo genérico por rol
+    # deja [indicator] con pares equivocados en AMBOS modos — parent/preview
+    # heredan base/text (bg=text da una barra casi negra en Manzanilla, donde
+    # "text" es oscuro) y current hereda mauve (chrome morado que no calza con
+    # la identidad del acento). Se sobreescriben con los roles APCA correctos:
+    # parent/preview = highlight neutro sutil (fg=text/bg=surface1), current =
+    # identidad cálida del acento (fg=base/bg=peach). Y status.progress_error
+    # (yellow sobre red, Lc=0) -> fg=base sobre bg=red, mismo patrón que los
+    # chips count_* de arriba (fg=base/bg=acento).
+    for name, P in (("rooibos", ROOIBOS), ("manzanilla", MANZANILLA)):
+        c = P["colors"]
+        text = yazi_rooibos if name == "rooibos" else yazi_manzanilla
+        text = re.sub(
+            r'parent = \{ fg = "#[0-9a-fA-F]{6}", bg = "#[0-9a-fA-F]{6}" \}',
+            f'parent = {{ fg = "{c["text"]}", bg = "{c["surface1"]}" }}',
+            text,
+        )
+        text = re.sub(
+            r'current = \{ fg = "#[0-9a-fA-F]{6}", bg = "#[0-9a-fA-F]{6}" \}',
+            f'current = {{ fg = "{c["base"]}", bg = "{c["peach"]}" }}',
+            text,
+        )
+        text = re.sub(
+            r'preview = \{ fg = "#[0-9a-fA-F]{6}", bg = "#[0-9a-fA-F]{6}" \}',
+            f'preview = {{ fg = "{c["text"]}", bg = "{c["surface1"]}" }}',
+            text,
+        )
+        text = re.sub(
+            r'progress_error(\s*)= \{ fg = "#[0-9a-fA-F]{6}", bg = "#[0-9a-fA-F]{6}" \}',
+            rf'progress_error\1= {{ fg = "{c["base"]}", bg = "{c["red"]}" }}',
+            text,
+        )
+        if name == "rooibos":
+            yazi_rooibos = text
+        else:
+            yazi_manzanilla = text
     write(OUT / "yazi/ocular-rooibos.yazi/flavor.toml", yazi_rooibos)
     write(OUT / "yazi/ocular-manzanilla.yazi/flavor.toml", yazi_manzanilla)
     write(OUT / "yazi/ocular-rooibos.yazi/tmtheme.xml", rooibos_bat)
