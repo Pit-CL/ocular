@@ -230,6 +230,21 @@ def validate_chrome_rgb(path, allowed):
     return ok
 
 
+ANSI_RGB_RE = re.compile(r"38;2;(\d{1,3});(\d{1,3});(\d{1,3})m")
+
+
+def audit_ansi_rgb_file(path, allowed):
+    """Como audit_hex_file, pero para fragmentos que NO llevan #hex literal
+    sino secuencias ANSI truecolor `\\e[38;2;R;G;Bm` (statusline, ccmax)."""
+    text = path.read_text()
+    found = {f"{int(r):02x}{int(g):02x}{int(b):02x}" for r, g, b in ANSI_RGB_RE.findall(text)}
+    unknown = found - allowed
+    ok = not unknown
+    detail = f"RGB fuera de paleta: {sorted(unknown)}" if unknown else f"{len(found)} RGB, todos en paleta"
+    record("rgb-audit", path, ok, detail)
+    return ok
+
+
 # --------------------------------------------------------------------------
 # 1) KITTY — generación directa (colors por rol, terminal por bloque ansi)
 # --------------------------------------------------------------------------
@@ -452,6 +467,39 @@ def statusline_sh(label, P):
         f"C_YELLOW=$'\\e[{seq('yellow')}m'      # yellow",
         f"C_RED=$'\\e[{seq('red')}m'        # red",
         f"C_GREEN=$'\\e[{seq('green')}m'       # green",
+        "",
+    ])
+
+
+# --------------------------------------------------------------------------
+# 6b) CCMAX — fragmento con las MISMAS variables C_* que
+#     tools/claude-monitor-max/ccmax líneas 83-95 ("# --- Catppuccin Mocha ---")
+# --------------------------------------------------------------------------
+def ccmax_sh(label, P):
+    c = P["colors"]
+
+    def seq(role):
+        return hex_to_ansi_seq(c[role])
+
+    return "\n".join([
+        "#!/usr/bin/env bash",
+        f"# Ocular {label} — fragmento de color para ccmax",
+        "# Mismos nombres C_* que tools/claude-monitor-max/ccmax (líneas 83-95,",
+        "# bloque '# --- Catppuccin Mocha ---'). R y B (reset/bold) quedan",
+        "# intactos: no son roles de color, son códigos ANSI de control.",
+        "",
+        "R=$'\\e[0m'",
+        "B=$'\\e[1m'",
+        f"C_SUB=$'\\e[{seq('overlay0')}m'       # overlay0",
+        f"C_SUB1=$'\\e[{seq('overlay1')}m'      # overlay1",
+        f"C_MAUVE=$'\\e[{seq('mauve')}m'     # mauve",
+        f"C_LAV=$'\\e[{seq('lavender')}m'       # lavender",
+        f"C_GREEN=$'\\e[{seq('green')}m'     # green",
+        f"C_YELLOW=$'\\e[{seq('yellow')}m'    # yellow",
+        f"C_PEACH=$'\\e[{seq('peach')}m'     # peach",
+        f"C_RED=$'\\e[{seq('red')}m'      # red",
+        f"C_TEAL=$'\\e[{seq('teal')}m'      # teal",
+        f"C_SURF=$'\\e[{seq('surface1')}m'      # surface1",
         "",
     ])
 
@@ -834,6 +882,10 @@ def main():
     write(OUT / "statusline/ocular-rooibos.sh", statusline_sh("Rooibos", ROOIBOS))
     write(OUT / "statusline/ocular-manzanilla.sh", statusline_sh("Manzanilla", MANZANILLA))
 
+    # ---------------- ccmax (generación directa) ----------------
+    write(OUT / "ccmax/ocular-rooibos.sh", ccmax_sh("Rooibos", ROOIBOS))
+    write(OUT / "ccmax/ocular-manzanilla.sh", ccmax_sh("Manzanilla", MANZANILLA))
+
     # ---------------- herdr (solo bloque [theme.custom]) ----------------
     herdr_text = ref["herdr"].read_text()
     herdr_block = extract_between(herdr_text, "\n[theme.custom]\n", "\n[keys]")
@@ -926,6 +978,16 @@ def main():
         record("exists", p, p.exists())
         validate_json(p)
         validate_chrome_rgb(p, allowed)
+
+    # ccmax: bash -n + auditoría RGB->hex (mismo patrón que statusline, pero
+    # con check explícito de las secuencias ANSI truecolor, no solo #hex)
+    for p, allowed in (
+        (OUT / "ccmax/ocular-rooibos.sh", ALLOWED_ROOIBOS),
+        (OUT / "ccmax/ocular-manzanilla.sh", ALLOWED_MANZANILLA),
+    ):
+        record("exists", p, p.exists())
+        validate_bash(p)
+        audit_ansi_rgb_file(p, allowed)
 
     # ------------------------------------------------------------------
     # Imprimir reporte
