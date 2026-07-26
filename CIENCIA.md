@@ -1,5 +1,7 @@
 # Base científica — Ocular
 
+> 🇬🇧 [English version](SCIENCE.md)
+
 > Theme basado en Catppuccin (estructura de roles + 14 hues de acento oficiales) donde
 > la **luminancia y la saturación las fija la ciencia**, no la estética. Variantes:
 > **Rooibos** (dark) y **Manzanilla** (light) — bebidas sin cafeína, coherentes con el

@@ -1,38 +1,39 @@
-# Atribución — ports de Ocular
+# Attribution — Ocular ports
 
-Varios artefactos de `ports/out/` **derivan de los ports oficiales del proyecto
-[Catppuccin](https://github.com/catppuccin)** (licencia MIT): se tomó el archivo
-del port oficial y se sustituyó su paleta por la de Ocular, conservando la
-estructura, los scopes y el trabajo de mapeo original de sus autores. En
-cumplimiento de la licencia MIT de Catppuccin:
+Several artifacts under `ports/out/` **derive from the official ports of the
+[Catppuccin](https://github.com/catppuccin) project** (MIT license): the
+official port file was taken and its palette substituted with Ocular's,
+preserving the structure, scopes, and original mapping work of its authors.
+In compliance with Catppuccin's MIT license:
 
 > Copyright (c) 2021 Catppuccin
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy
-> of this software and associated documentation files… (texto completo:
+> of this software and associated documentation files… (full text:
 > [catppuccin/catppuccin/LICENSE](https://github.com/catppuccin/catppuccin/blob/main/LICENSE))
 
-## Derivados directos de un port oficial (sustitución de paleta)
+## Direct derivatives of an official port (palette substitution)
 
-| Artefacto | Origen |
+| Artifact | Source |
 |---|---|
-| `out/bat/*.tmTheme` (reusado por delta y yazi) | [catppuccin/bat](https://github.com/catppuccin/bat) |
+| `out/bat/*.tmTheme` (reused by delta and yazi) | [catppuccin/bat](https://github.com/catppuccin/bat) |
 | `out/yazi/*/flavor.toml` | [catppuccin/yazi](https://github.com/catppuccin/yazi) |
 | `out/btop/*.theme` | [catppuccin/btop](https://github.com/catppuccin/btop) |
-| `out/lazygit/*.yml` (estructura del bloque theme) | [catppuccin/lazygit](https://github.com/catppuccin/lazygit) |
-| `out/ohmyposh/*.omp.json` | tema catppuccin de [oh-my-posh](https://ohmyposh.dev/docs/themes) |
-| Mapeo ANSI16 (todas las variantes) | convención del port [catppuccin/kitty](https://github.com/catppuccin/kitty) |
+| `out/lazygit/*.yml` (theme block structure) | [catppuccin/lazygit](https://github.com/catppuccin/lazygit) |
+| `out/ohmyposh/*.omp.json` | catppuccin theme for [oh-my-posh](https://ohmyposh.dev/docs/themes) |
+| ANSI16 mapping (all variants) | convention from the [catppuccin/kitty](https://github.com/catppuccin/kitty) port |
 
-## Generación propia con estructura de campos de referencia
+## Own generation, using reference field structure
 
-kitty, ghostty, tmux, gh-dash (mapeo semántico propio desde PR #5), Chrome,
-VSCode, nvim (spec sobre [catppuccin/nvim](https://github.com/catppuccin/nvim)
-vía su API `color_overrides`), Slack, statusline y ccmax: archivos generados
-desde cero por `build_ports.py`, usando los ports oficiales solo como referencia
-de qué campos existen.
+kitty, ghostty, tmux, gh-dash (own semantic mapping since PR #5), Chrome,
+VSCode, nvim (spec built on
+[catppuccin/nvim](https://github.com/catppuccin/nvim) via its
+`color_overrides` API), Slack, statusline, and ccmax: files generated from
+scratch by `build_ports.py`, using the official ports only as a reference
+for which fields exist.
 
-## Además
+## Also
 
-- Estructura de roles y matices de acento de la paleta: [catppuccin/palette](https://github.com/catppuccin/palette) (MIT) — ver créditos del README principal.
+- Palette role structure and accent hues: [catppuccin/palette](https://github.com/catppuccin/palette) (MIT) — see credits in the main README.
 - OKLab/OKLCH: [Björn Ottosson](https://bottosson.github.io/posts/oklab/).
 - APCA-W3 0.1.9: [Andrew Somers / Myndex](https://git.apcacontrast.com/).

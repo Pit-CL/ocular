@@ -1,111 +1,117 @@
 # Ocular
 
-Theme **light + dark** para descanso ocular: la luminancia y la saturación de cada
-color las fija la **ciencia** (OKLCH + APCA), no la estética. Construido sobre la
-estructura de roles y los matices de acento de [Catppuccin](https://github.com/catppuccin/catppuccin).
+> 🇪🇸 [Versión en español](README.es.md)
 
-| Variante | Modo | Carácter |
+A **light + dark** theme for eye comfort: the luminance and saturation of every
+color are set by **science** (OKLCH + APCA), not aesthetics. Built on the role
+structure and accent hues of [Catppuccin](https://github.com/catppuccin/catppuccin).
+
+| Variant | Mode | Character |
 |---|---|---|
-| **Rooibos** | dark | fondo oscuro cálido, texto off-white cálido, acentos a Lc 71 |
-| **Manzanilla** | light | papel cálido, tinta cálida, acentos a Lc 74 |
+| **Rooibos** | dark | warm dark background, warm off-white text, accents at Lc 71 |
+| **Manzanilla** (chamomile) | light | warm paper, warm ink, accents at Lc 74 |
 
-Bebidas **sin cafeína**: este theme existe para descansar la vista.
+Caffeine-free drinks: this theme exists to rest your eyes.
 
 ## Wallpapers
 
-Fondo casi plano (mínima emisión) + olas simétricas de baja frecuencia espacial,
-derivados de la misma paleta. Desktop 3840×2160 · iPhone 1284×2778 · iPad 2420×1668.
+Near-flat background (minimal emission) + symmetric low-spatial-frequency
+waves, derived from the same palette. Desktop 3840×2160 · iPhone 1284×2778 ·
+iPad 2420×1668.
 
 | Manzanilla (light) | Rooibos (dark) |
 |---|---|
 | ![Manzanilla](preview/manzanilla-pv.png) | ![Rooibos](preview/rooibos-pv.png) |
 
-## La ciencia, en corto
+## The science, in short
 
-1. **Polaridad**: la evidencia 2024-2025 muestra que el contraste de luminancia pesa
-   más que la polaridad y que el factor dominante de confort es el calce
-   pantalla↔luz ambiente → ambos modos de primera clase, pensados para conmutar
-   automáticamente con el sistema.
-2. **APCA en bandas, no en máximos**: texto cuerpo Lc 82 (dark) / 88 (light);
-   jerarquías de texto secundario en escalones controlados. En dark no se persigue
-   Lc 90: el exceso de brillo alimenta halación.
-3. **Anti-halación**: nunca `#000` ni `#fff`; fondo dark gris cálido oscuro y texto
-   off-white cálido (crítico con astigmatismo/miopía).
-4. **Circadiano**: los neutros (≈90 % del área emisiva) viran a cálido — menos
-   energía en la banda melanópica (~460-490 nm) a igual luminancia percibida. Los
-   acentos fríos se conservan: su área es mínima.
-5. **Chroma con tope** (0.11 dark / 0.13 light, auditado post-gamut):
-   anti-chromostereopsis, menos fatiga por saturación sostenida.
-6. **Acentos equal-weight**: los 14 acentos a la misma Lc — ningún token grita; la
-   luminancia lee, el matiz categoriza.
-7. **Wallpaper de baja frecuencia espacial**: bandas anchas con contraste local
-   bajo, que no compiten por atención con las ventanas.
+1. **Contrast polarity**: 2024-2025 evidence shows that luminance contrast
+   matters more than polarity itself, and that the dominant comfort factor is
+   the match between screen and ambient light → both modes are first-class
+   citizens, designed to switch automatically with the system.
+2. **APCA in bands, not maxima**: body text at Lc 82 (dark) / 88 (light);
+   secondary text hierarchies in controlled steps. In dark mode we don't chase
+   Lc 90: excess brightness feeds halation.
+3. **Anti-halation**: never `#000` or `#fff`; the dark background is a warm
+   dark gray and text is warm off-white (critical for astigmatism/myopia).
+4. **Circadian**: neutrals (~90% of the emissive area) shift warm — less
+   energy in the melanopic band (~460-490 nm) at equal perceived luminance.
+   Cool accents are preserved: their area is minimal.
+5. **Capped chroma** (0.11 dark / 0.13 light, audited post-gamut):
+   anti-chromostereopsis, less fatigue from sustained saturation.
+6. **Equal-weight accents**: all 14 accents sit at the same Lc — no token
+   shouts; luminance reads, hue categorizes.
+7. **Low-spatial-frequency wallpaper**: wide bands with low local contrast,
+   that don't compete for attention with windows.
 
-Detalle completo con fuentes: [CIENCIA.md](CIENCIA.md).
+Full detail with sources: [SCIENCE.md](SCIENCE.md).
 
-## Paleta
+## Palette
 
-- [`palette/rooibos.json`](palette/rooibos.json) · [`palette/manzanilla.json`](palette/manzanilla.json) —
-  roles Catppuccin completos + ANSI16, con la Lc real de cada rol en su metadata.
-- [`palette/VALIDACION.md`](palette/VALIDACION.md) — tabla de validación completa.
-- Estructura 100 % compatible con los roles de Catppuccin: cualquier port se adapta
-  cambiando solo los hex.
+- [`palette/rooibos.json`](palette/rooibos.json) ·
+  [`palette/manzanilla.json`](palette/manzanilla.json) — full Catppuccin roles
+  + ANSI16, with the actual Lc of each role in its metadata.
+- [`palette/VALIDACION.md`](palette/VALIDACION.md) — full validation table.
+- Structure is 100% compatible with Catppuccin's roles: any port can be
+  adapted by swapping only the hex values.
 
-## Uso
+## Usage
 
 ```bash
-python3 -m venv venv && venv/bin/pip install numpy pillow   # solo para wallpapers
-python3 build.py        # regenera la paleta y falla si un check no pasa
-python3 audit.py        # auditoría cruzada texto × superficie (228 pares)
-venv/bin/python wallpaper.py   # regenera los 6 wallpapers + previews
+python3 -m venv venv && venv/bin/pip install numpy pillow   # only for wallpapers
+python3 build.py        # regenerates the palette and fails if a check doesn't pass
+python3 audit.py        # cross-audit text × surface (228 pairs)
+venv/bin/python wallpaper.py   # regenerates the 6 wallpapers + previews
 ```
 
-`build.py` y `audit.py` no tienen dependencias externas (solo `color_science.py`,
-incluido).
+`build.py` and `audit.py` have no external dependencies (only
+`color_science.py`, included).
 
-## Ports y switcher
+## Ports and switcher
 
-`ports/build_ports.py` genera desde los JSON de paleta los themes listos para:
-kitty, ghostty, bat (tmTheme, reusado por delta), yazi, lazygit, btop, tmux,
-gh-dash, oh-my-posh, nvim (spec de `catppuccin/nvim` con `color_overrides` y
-flavour automático por `background`), VSCode, Chrome (theme MV3), Slack (cadena
-de tema custom) y fragmentos shell genéricos — todo ×2 modos y validado
-(sintaxis + pertenencia de cada hex a la paleta).
+`ports/build_ports.py` generates ready-to-use themes from the palette JSONs
+for: kitty, ghostty, bat (tmTheme, reused by delta), yazi, lazygit, btop,
+tmux, gh-dash, oh-my-posh, nvim (spec for `catppuccin/nvim` with
+`color_overrides` and automatic flavour by `background`), VSCode, Chrome (MV3
+theme), Slack (custom theme string) and generic shell fragments — all ×2
+modes and validated (syntax + palette membership of every hex).
 
-`ports/ocular-switch light|dark` aplica el modo en las apps presentes de la
-máquina. kitty, ghostty y nvim quedan con **conmutación nativa** (se instalan
-una vez y siguen la apariencia del sistema solos); el resto se re-apunta por
-modo en cada corrida.
+`ports/ocular-switch light|dark` applies the mode across the apps present on
+the machine. kitty, ghostty, and nvim get **native switching** (installed
+once, then they follow the system appearance on their own); the rest are
+re-pointed per mode on every run.
 
-## Estado y limitaciones conocidas
+## Status and known limitations
 
-El theme está en uso real (terminales, TUIs, editores y una app web shadcn/Tailwind
-derivan de esta paleta). Limitaciones honestas del switch automático:
+The theme is in real use (terminals, TUIs, editors, and a shadcn/Tailwind web
+app all derive from this palette). Honest limitations of the automatic
+switch:
 
-- **TUIs de larga vida** (btop, lazygit, gh-dash, yazi) leen su config al arrancar:
-  las instancias abiertas no conmutan hasta reabrirse. btop además reescribe su
-  config al salir (una instancia vieja puede pisar el theme; se corrige en el
-  siguiente switch).
-- **Chrome**: los themes (`out/chrome/`) se cargan como extensión descomprimida y
-  son estáticos — el cambio de modo es manual (limitación de la plataforma).
-- **Slack**: dos cadenas de tema custom (`out/slack/`), cambio manual.
-- El generador de ports asume los ports oficiales de Catppuccin como fuente de
-  sustitución: para regenerar sobre una máquina ya migrada a Ocular, ver el issue
-  de referencias del repo.
+- **Long-lived TUIs** (btop, lazygit, gh-dash, yazi) read their config at
+  startup: already-open instances don't switch until reopened. btop also
+  rewrites its config on exit (an old instance can overwrite the theme; this
+  self-corrects on the next switch).
+- **Chrome**: themes (`out/chrome/`) load as an unpacked extension and are
+  static — switching modes is manual (a platform limitation).
+- **Slack**: two custom theme strings (`out/slack/`), manual switch.
+- The port generator assumes Catppuccin's official ports as the substitution
+  source: to regenerate on a machine already migrated to Ocular, see the
+  repo's references issue.
 
-## Créditos
+## Credits
 
-- **[Catppuccin](https://github.com/catppuccin)** (MIT) — estructura de roles,
-  nombres y matices de acento de referencia (`palette/catppuccin-oficial.json` es
-  un extracto de su paleta oficial), **y varios ports de `ports/out/` derivan
-  directamente de sus ports oficiales** (bat, yazi, btop, lazygit, entre otros)
-  con la paleta sustituida: detalle completo y aviso de copyright en
-  [`ports/ATTRIBUTION.md`](ports/ATTRIBUTION.md).
-- **[Björn Ottosson](https://bottosson.github.io/posts/oklab/)** — espacio de color
-  OKLab/OKLCH.
-- **[APCA](https://git.apcacontrast.com/)** (Andrew Somers / Myndex) — algoritmo de
-  contraste perceptual APCA-W3 0.1.9, implementado en `color_science.py`.
+- **[Catppuccin](https://github.com/catppuccin)** (MIT) — role structure,
+  naming, and reference accent hues (`palette/catppuccin-oficial.json` is an
+  extract of their official palette), **and several ports under `ports/out/`
+  derive directly from their official ports** (bat, yazi, btop, lazygit,
+  among others) with the palette substituted: full detail and copyright
+  notice in [`ports/ATTRIBUTION.md`](ports/ATTRIBUTION.md).
+- **[Björn Ottosson](https://bottosson.github.io/posts/oklab/)** — the
+  OKLab/OKLCH color space.
+- **[APCA](https://git.apcacontrast.com/)** (Andrew Somers / Myndex) — the
+  APCA-W3 0.1.9 perceptual contrast algorithm, implemented in
+  `color_science.py`.
 
-## Licencia
+## License
 
 [MIT](LICENSE)
