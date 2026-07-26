@@ -410,11 +410,16 @@ def bat_tmtheme(mocha_or_latte_text, hex2role, target_colors, exceptions,
 #     palette/{rooibos,manzanilla}.json (cada hex mapea a un rol único):
 #       activeBorderColor / cherryPickedCommitFgColor -> mauve
 #       inactiveBorderColor                            -> subtext0
-#       searchingActiveBorderColor / markedBaseCommitBgColor -> yellow
+#       searchingActiveBorderColor                      -> yellow
 #       optionsTextColor / markedBaseCommitFgColor      -> blue
 #       selectedLineBgColor                             -> surface0
-#       inactiveViewSelectedLineBgColor                 -> overlay0
+#       inactiveViewSelectedLineBgColor                 -> surface1 (fix APCA
+#         2026-07-26: overlay0 daba Lc=38-42 con el texto por encima, mismo
+#         patrón que cherryPickedCommitBgColor)
 #       cherryPickedCommitBgColor                       -> surface1
+#       markedBaseCommitBgColor                         -> surface1 (fix APCA
+#         2026-07-26: blue sobre yellow daba Lc=0; bg=surface1 es el mismo
+#         patrón que cherryPickedCommitBgColor, fg queda blue)
 #       unstagedChangesColor                            -> red
 #       defaultFgColor                                  -> text
 # --------------------------------------------------------------------------
@@ -436,7 +441,7 @@ def lazygit_theme(label, P):
         "    selectedLineBgColor:",
         f"      - '{c['surface0']}'",
         "    inactiveViewSelectedLineBgColor:",
-        f"      - '{c['overlay0']}'",
+        f"      - '{c['surface1']}'",
         "    cherryPickedCommitFgColor:",
         f"      - '{c['mauve']}'",
         "    cherryPickedCommitBgColor:",
@@ -444,7 +449,7 @@ def lazygit_theme(label, P):
         "    markedBaseCommitFgColor:",
         f"      - '{c['blue']}'",
         "    markedBaseCommitBgColor:",
-        f"      - '{c['yellow']}'",
+        f"      - '{c['surface1']}'",
         "    unstagedChangesColor:",
         f"      - '{c['red']}'",
         "    defaultFgColor:",
