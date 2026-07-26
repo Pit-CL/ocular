@@ -1,18 +1,19 @@
-# Chrome (modo desarrollador) — Ocular
+# Chrome (developer mode) — Ocular
 
-Theme MV3 (`theme.colors` en RGB decimal), misma estructura que
-`tools/chrome-catppuccin-mocha/manifest.json` del workspace Rollitos/Claude.
+MV3 theme (`theme.colors` in decimal RGB), same structure as
+`tools/chrome-catppuccin-mocha/manifest.json` in the Rollitos/Claude
+workspace.
 
-## Instalar (unpacked)
+## Install (unpacked)
 
-1. `chrome://extensions` -> activar "Modo de desarrollador".
-2. "Cargar descomprimida" -> apuntar a `ocular-rooibos/` o `ocular-manzanilla/`.
+1. `chrome://extensions` -> enable "Developer mode".
+2. "Load unpacked" -> point to `ocular-rooibos/` or `ocular-manzanilla/`.
 
-## Limitación (documentar, no es un bug)
+## Limitation (documented, not a bug)
 
-Los themes de Chrome cargados como *unpacked* son **estáticos**: no siguen la
-apariencia del sistema (no hay auto dark/light) ni pueden recargarse por
-script — Chrome no expone una API para eso a una extensión unpacked. El
-cambio entre Rooibos y Manzanilla es **manual**: `chrome://extensions` ->
-desactivar el theme activo -> activar el otro. `ocular-switch` NO gestiona
-Chrome por este motivo.
+Chrome themes loaded as *unpacked* are **static**: they don't follow the
+system appearance (no auto dark/light) and can't be reloaded by script —
+Chrome doesn't expose an API for that to an unpacked extension. Switching
+between Rooibos and Manzanilla is **manual**: `chrome://extensions` ->
+disable the active theme -> enable the other one. `ocular-switch` does NOT
+manage Chrome for this reason.
