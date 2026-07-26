@@ -1028,11 +1028,23 @@ def main():
     write(OUT / "gh-dash/ocular-manzanilla.yml", gh_dash_theme("Manzanilla", MANZANILLA))
 
     # ---------------- oh-my-posh ----------------
+    # Override de identidad (2026-07-26, feedback del usuario): el prompt es UI
+    # PERSISTENTE (siempre en pantalla) — lleva la familia FIRMA cálida del
+    # theme, no los acentos fríos que heredaba del mapeo Mocha original.
+    # path: pink -> peach (misma firma que el marco activo de herdr);
+    # rama: lavender -> mauve (mismo rol que la cápsula de sesión de tmux).
+    # Los acentos fríos quedan para contenido/sintaxis, donde el hue categoriza.
+    def omp_colors(palette):
+        c = dict(palette["colors"])
+        c["pink"] = c["peach"]
+        c["lavender"] = c["mauve"]
+        return c
+
     omp_text = ref["ohmyposh"].read_text()
     write(OUT / "ohmyposh/ocular-rooibos.omp.json",
-          substitute_hexes(omp_text, HEX2ROLE_MOCHA, ROOIBOS["colors"], exceptions=EXC_OMP, quoted=True))
+          substitute_hexes(omp_text, HEX2ROLE_MOCHA, omp_colors(ROOIBOS), exceptions=EXC_OMP, quoted=True))
     write(OUT / "ohmyposh/ocular-manzanilla.omp.json",
-          substitute_hexes(omp_text, HEX2ROLE_MOCHA, MANZANILLA["colors"], exceptions=EXC_OMP, quoted=True))
+          substitute_hexes(omp_text, HEX2ROLE_MOCHA, omp_colors(MANZANILLA), exceptions=EXC_OMP, quoted=True))
 
     # ---------------- statusline (generación directa) ----------------
     write(OUT / "statusline/ocular-rooibos.sh", statusline_sh("Rooibos", ROOIBOS))
