@@ -406,6 +406,9 @@ def tmux_theme(label, P):
         "# Recrea la estética actual de ~/.tmux.conf líneas 50-76 (status arriba,",
         "# ventana activa resaltada, borde de panel activo) sin depender del plugin.",
         "# `tmux source-file` este archivo para aplicarlo en caliente.",
+        "# status-left/status-right son COMPLETOS y AUTOSUFICIENTES (sesión +",
+        "# fecha/hora): tmux.conf no debe definir los suyos, o los pisa al cargar",
+        "# después de este archivo.",
         "",
         "set -g status-position top",
         f'set -g status-style "bg={c["mantle"]},fg={c["text"]}"',
@@ -426,6 +429,12 @@ def tmux_theme(label, P):
         "",
         f'set -g status-left-style "fg={c["subtext1"]},bg={c["mantle"]}"',
         f'set -g status-right-style "fg={c["subtext1"]},bg={c["mantle"]}"',
+        "",
+        # Izquierda: sesión en cápsula de acento (mismo mauve que la ventana
+        # activa y mode-style). Derecha: fecha-hora formato Chile (DD-MM HH:MM),
+        # hereda status-right-style de arriba — sin depender de ningún plugin.
+        f'set -g status-left "#[fg={c["crust"]},bg={c["mauve"]},bold] #S #[fg={c["subtext1"]},bg={c["mantle"]},nobold]"',
+        'set -g status-right " %d-%m %H:%M "',
         "",
         f'set -g clock-mode-colour "{c["blue"]}"',
         "set -g clock-mode-style 24",
