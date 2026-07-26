@@ -97,9 +97,11 @@ switch:
 - **Chrome**: themes (`out/chrome/`) load as an unpacked extension and are
   static — switching modes is manual (a platform limitation).
 - **Slack**: two custom theme strings (`out/slack/`), manual switch.
-- The port generator assumes Catppuccin's official ports as the substitution
-  source: to regenerate on a machine already migrated to Ocular, see the
-  repo's references issue.
+- Regeneration is self-contained: the substitution source templates are
+  vendored in `ports/reference/` (see [`ports/ATTRIBUTION.md`](ports/ATTRIBUTION.md)),
+  so any clean clone can regenerate `ports/out/` without depending on files
+  installed outside this repo. CI (`.github/workflows/verify.yml`)
+  regenerates the palette and every port on each PR and fails on drift.
 
 ## Credits
 

@@ -5,12 +5,14 @@ switcher, a partir de palette/rooibos.json (dark) y palette/manzanilla.json
 (light), SIN tocar ningún config vivo. Todo se escribe bajo ports/out/.
 
 Dos estrategias según el artefacto:
-  1. SUSTITUCIÓN de hex sobre el port oficial Catppuccin instalado localmente
-     (bat, yazi, btop, oh-my-posh): se recorre el
-     archivo de referencia, cada #hex oficial Mocha/Latte se reconoce por su
+  1. SUSTITUCIÓN de hex sobre las plantillas oficiales de Catppuccin
+     vendorizadas en ports/reference/ (bat, yazi, btop, oh-my-posh): se
+     recorre la plantilla, cada #hex oficial Mocha/Latte se reconoce por su
      ROL (via palette/catppuccin-oficial.json) y se reemplaza por el hex
      Ocular de ese mismo rol. Preserva estructura, comentarios y campos no
-     visitados 1:1.
+     visitados 1:1. Las plantillas se vendorizaron el 2026-07-26 (PR #15,
+     issue #7) para que el build sea autocontenido: antes se leían de los
+     ports instalados localmente en la máquina del autor.
   2. GENERACIÓN directa por rol (kitty, ghostty, tmux, statusline, lazygit,
      herdr, nvim, vscode, gh-dash): no hay forma segura de sustituir (kitty/
      ghostty usan el bloque `ansi` dedicado, no roles puros; tmux/statusline

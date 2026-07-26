@@ -94,9 +94,12 @@ derivan de esta paleta). Limitaciones honestas del switch automático:
 - **Chrome**: los themes (`out/chrome/`) se cargan como extensión descomprimida y
   son estáticos — el cambio de modo es manual (limitación de la plataforma).
 - **Slack**: dos cadenas de tema custom (`out/slack/`), cambio manual.
-- El generador de ports asume los ports oficiales de Catppuccin como fuente de
-  sustitución: para regenerar sobre una máquina ya migrada a Ocular, ver el issue
-  de referencias del repo.
+- La regeneración es autocontenida: las plantillas fuente de la sustitución
+  están vendorizadas en `ports/reference/` (ver
+  [`ports/ATTRIBUTION.md`](ports/ATTRIBUTION.md)), así que cualquier clone
+  limpio puede regenerar `ports/out/` sin depender de archivos instalados
+  fuera de este repo. El CI (`.github/workflows/verify.yml`) regenera la
+  paleta y cada port en cada PR y falla si hay drift.
 
 ## Créditos
 
