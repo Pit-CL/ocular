@@ -547,8 +547,8 @@ def gh_dash_theme(label, P):
 
 
 # --------------------------------------------------------------------------
-# 5) STATUSLINE — fragmento bash con los MISMOS nombres C_* que
-#    tools/claude-statusline/statusline-command.sh (líneas 71-94)
+# 5) STATUSLINE — fragmento bash con los MISMOS nombres C_* que espera el
+#    script consumidor externo (statusline del autor).
 # --------------------------------------------------------------------------
 def hex_to_ansi_seq(hex_str):
     hh = hex_str.lstrip("#")
@@ -565,8 +565,8 @@ def statusline_sh(label, P):
     return "\n".join([
         "#!/usr/bin/env bash",
         f"# Ocular {label} — fragmento de color para claude-statusline",
-        "# Mismos nombres C_* que tools/claude-statusline/statusline-command.sh",
-        "# (líneas 71-94). 'source' este archivo en vez del bloque Mocha hardcodeado.",
+        "# Mismos nombres C_* que espera el script consumidor externo (statusline",
+        "# del autor). 'source' este archivo en vez del bloque Mocha hardcodeado.",
         "# NO incluye C_PR_OPEN: es el color fijo #42A0FA hardcodeado por gh-dash",
         "# (no sale de ningún theme Catppuccin), así que no se remapea a ningún rol.",
         "",
@@ -585,8 +585,8 @@ def statusline_sh(label, P):
 
 
 # --------------------------------------------------------------------------
-# 6b) CCMAX — fragmento con las MISMAS variables C_* que
-#     tools/claude-monitor-max/ccmax líneas 83-95 ("# --- Catppuccin Mocha ---")
+# 6b) CCMAX — fragmento con las MISMAS variables C_* que espera el script
+#     consumidor externo (ccmax del autor, bloque "# --- Catppuccin Mocha ---")
 # --------------------------------------------------------------------------
 def ccmax_sh(label, P):
     c = P["colors"]
@@ -597,8 +597,8 @@ def ccmax_sh(label, P):
     return "\n".join([
         "#!/usr/bin/env bash",
         f"# Ocular {label} — fragmento de color para ccmax",
-        "# Mismos nombres C_* que tools/claude-monitor-max/ccmax (líneas 83-95,",
-        "# bloque '# --- Catppuccin Mocha ---'). R y B (reset/bold) quedan",
+        "# Mismos nombres C_* que espera el script consumidor externo (ccmax del",
+        "# autor, bloque '# --- Catppuccin Mocha ---'). R y B (reset/bold) quedan",
         "# intactos: no son roles de color, son códigos ANSI de control.",
         "",
         "R=$'\\e[0m'",

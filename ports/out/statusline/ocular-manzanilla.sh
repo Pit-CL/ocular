@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Ocular Manzanilla — fragmento de color para claude-statusline
-# Mismos nombres C_* que tools/claude-statusline/statusline-command.sh
-# (líneas 71-94). 'source' este archivo en vez del bloque Mocha hardcodeado.
+# Mismos nombres C_* que espera el script consumidor externo (statusline
+# del autor). 'source' este archivo en vez del bloque Mocha hardcodeado.
 # NO incluye C_PR_OPEN: es el color fijo #42A0FA hardcodeado por gh-dash
 # (no sale de ningún theme Catppuccin), así que no se remapea a ningún rol.
 

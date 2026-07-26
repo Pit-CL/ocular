@@ -270,15 +270,15 @@ else
 fi
 
 # --- statusline (Claude Code): fragmento de color, el 'source' queda
-#     pendiente de cablear en tools/claude-statusline/ (otro repo) ---
+#     pendiente de cablear en el script consumidor externo (otro repo) ---
 mkdir -p "$HOME/.config/claude-statusline"
 sl_theme="dark"; [ "$variant" = manzanilla ] && sl_theme="light"
 cp "$OUT/statusline/ocular-$variant.sh" "$HOME/.config/claude-statusline/colors-$sl_theme.sh"
 note "statusline: fragmento instalado en ~/.config/claude-statusline/colors-$sl_theme.sh — falta cablear el 'source' en statusline-command.sh (herramienta externa del autor, fuera de este switcher)"
 
 # --- ccmax: sin condición de comando (el archivo no estorba si ccmax no
-#     está instalado) — el 'source' queda pendiente de cablear en
-#     tools/claude-monitor-max/ (otro repo), igual que statusline ---
+#     está instalado) — el 'source' queda pendiente de cablear en el script
+#     consumidor externo (otro repo), igual que statusline ---
 mkdir -p "$HOME/.config/ocular"
 cp "$OUT/ccmax/ocular-$variant.sh" "$HOME/.config/ocular/ccmax-colors.sh"
 ok "ccmax (fragmento instalado en ~/.config/ocular/ccmax-colors.sh)"
