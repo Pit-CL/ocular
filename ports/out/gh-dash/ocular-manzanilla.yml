@@ -1,0 +1,22 @@
+# Ocular Manzanilla — fragmento theme: para ~/.config/gh-dash/config.yml
+theme:
+    colors:
+        text:
+            primary: "#3f372d"
+            secondary: "#4655a5"
+            inverted: "#e6e0d7"
+            faint: "#544c43"
+            warning: "#835000"
+            success: "#276819"
+            error: "#9b393f"
+        background:
+            selected: "#e3ddd4"
+        border:
+            primary: "#4655a5"
+            secondary: "#d9d3c9"
+            faint: "#e3ddd4"
+    ui:
+        sectionsShowCount: true
+        table:
+            showSeparator: true
+            compact: false

@@ -1,0 +1,26 @@
+# Ocular Manzanilla — fragmento [theme.custom] para ~/.config/herdr/config.toml
+# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15). Conserva la
+# decisión surface_dim=overlay0 (selección visible del sidebar) del original.
+[theme.custom]
+panel_bg = "#f5efe7"      # base
+surface_dim = "#a19c94"   # bg de la fila SELECCIONADA del sidebar (verificado empíricamente
+                          # con colores chillones). El mantle oficial (#181825) es más oscuro
+                          # que panel_bg y hacía la selección invisible de noche. Se usa el
+                          # overlay0 oficial de Mocha: visible de noche y texto claro legible
+                          # (~4.6:1). Descartados: morados de Mocha (mauve/lavender, muy claros
+                          # para bg), #8839ef mauve de Latte (muy eléctrico), #574b7d custom.
+surface0 = "#e3ddd4"
+surface1 = "#d9d3c9"
+overlay0 = "#a19c94"
+overlay1 = "#918b84"
+text = "#3f372d"
+subtext0 = "#675f57"
+accent = "#4655a5"        # lavender — resalta la selección del sidebar
+blue = "#3259a4"
+mauve = "#684c9e"
+green = "#276819"
+red = "#9b393f"
+yellow = "#835000"
+peach = "#983f15"
+teal = "#00656a"
+

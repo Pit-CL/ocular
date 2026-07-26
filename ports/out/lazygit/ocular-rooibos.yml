@@ -1,0 +1,29 @@
+# Ocular Rooibos — fragmento gui.theme para ~/.config/lazygit/config.yml
+gui:
+  theme:
+    activeBorderColor:
+      - '#d9b9ff'
+      - bold
+    inactiveBorderColor:
+      - '#c6c1b7'
+    searchingActiveBorderColor:
+      - '#dbc492'
+    optionsTextColor:
+      - '#a7c8ff'
+    selectedLineBgColor:
+      - '#2b2520'
+    inactiveViewSelectedLineBgColor:
+      - '#98938d'
+    cherryPickedCommitFgColor:
+      - '#d9b9ff'
+    cherryPickedCommitBgColor:
+      - '#38322b'
+    markedBaseCommitFgColor:
+      - '#a7c8ff'
+    markedBaseCommitBgColor:
+      - '#dbc492'
+    unstagedChangesColor:
+      - '#ffb1c4'
+    defaultFgColor:
+      - '#dfd9cc'
+
