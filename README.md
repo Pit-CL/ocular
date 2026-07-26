@@ -77,11 +77,30 @@ máquina. kitty, ghostty y nvim quedan con **conmutación nativa** (se instalan
 una vez y siguen la apariencia del sistema solos); el resto se re-apunta por
 modo en cada corrida.
 
+## Estado y limitaciones conocidas
+
+El theme está en uso real (terminales, TUIs, editores y una app web shadcn/Tailwind
+derivan de esta paleta). Limitaciones honestas del switch automático:
+
+- **TUIs de larga vida** (btop, lazygit, gh-dash, yazi) leen su config al arrancar:
+  las instancias abiertas no conmutan hasta reabrirse. btop además reescribe su
+  config al salir (una instancia vieja puede pisar el theme; se corrige en el
+  siguiente switch).
+- **Chrome**: los themes (`out/chrome/`) se cargan como extensión descomprimida y
+  son estáticos — el cambio de modo es manual (limitación de la plataforma).
+- **Slack**: dos cadenas de tema custom (`out/slack/`), cambio manual.
+- El generador de ports asume los ports oficiales de Catppuccin como fuente de
+  sustitución: para regenerar sobre una máquina ya migrada a Ocular, ver el issue
+  de referencias del repo.
+
 ## Créditos
 
-- **[Catppuccin](https://github.com/catppuccin/palette)** (MIT) — estructura de
-  roles, nombres y matices de acento de referencia
-  (`palette/catppuccin-oficial.json` es un extracto de su paleta oficial).
+- **[Catppuccin](https://github.com/catppuccin)** (MIT) — estructura de roles,
+  nombres y matices de acento de referencia (`palette/catppuccin-oficial.json` es
+  un extracto de su paleta oficial), **y varios ports de `ports/out/` derivan
+  directamente de sus ports oficiales** (bat, yazi, btop, lazygit, entre otros)
+  con la paleta sustituida: detalle completo y aviso de copyright en
+  [`ports/ATTRIBUTION.md`](ports/ATTRIBUTION.md).
 - **[Björn Ottosson](https://bottosson.github.io/posts/oklab/)** — espacio de color
   OKLab/OKLCH.
 - **[APCA](https://git.apcacontrast.com/)** (Andrew Somers / Myndex) — algoritmo de
