@@ -5,12 +5,14 @@ switcher, a partir de palette/rooibos.json (dark) y palette/manzanilla.json
 (light), SIN tocar ningún config vivo. Todo se escribe bajo ports/out/.
 
 Dos estrategias según el artefacto:
-  1. SUSTITUCIÓN de hex sobre el port oficial Catppuccin instalado localmente
-     (bat, yazi, btop, oh-my-posh): se recorre el
-     archivo de referencia, cada #hex oficial Mocha/Latte se reconoce por su
+  1. SUSTITUCIÓN de hex sobre las plantillas oficiales de Catppuccin
+     vendorizadas en ports/reference/ (bat, yazi, btop, oh-my-posh): se
+     recorre la plantilla, cada #hex oficial Mocha/Latte se reconoce por su
      ROL (via palette/catppuccin-oficial.json) y se reemplaza por el hex
      Ocular de ese mismo rol. Preserva estructura, comentarios y campos no
-     visitados 1:1.
+     visitados 1:1. Las plantillas se vendorizaron el 2026-07-26 (PR #15,
+     issue #7) para que el build sea autocontenido: antes se leían de los
+     ports instalados localmente en la máquina del autor.
   2. GENERACIÓN directa por rol (kitty, ghostty, tmux, statusline, lazygit,
      herdr, nvim, vscode, gh-dash): no hay forma segura de sustituir (kitty/
      ghostty usan el bloque `ansi` dedicado, no roles puros; tmux/statusline
@@ -63,7 +65,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PORTS = ROOT / "ports"
 OUT = PORTS / "out"
-HOME = Path.home()
 
 # --------------------------------------------------------------------------
 # Paletas Ocular + oficiales Catppuccin (para reconocer hex por rol)
@@ -546,8 +547,8 @@ def gh_dash_theme(label, P):
 
 
 # --------------------------------------------------------------------------
-# 5) STATUSLINE — fragmento bash con los MISMOS nombres C_* que
-#    tools/claude-statusline/statusline-command.sh (líneas 71-94)
+# 5) STATUSLINE — fragmento bash con los MISMOS nombres C_* que espera el
+#    script consumidor externo (statusline del autor).
 # --------------------------------------------------------------------------
 def hex_to_ansi_seq(hex_str):
     hh = hex_str.lstrip("#")
@@ -564,8 +565,8 @@ def statusline_sh(label, P):
     return "\n".join([
         "#!/usr/bin/env bash",
         f"# Ocular {label} — fragmento de color para claude-statusline",
-        "# Mismos nombres C_* que tools/claude-statusline/statusline-command.sh",
-        "# (líneas 71-94). 'source' este archivo en vez del bloque Mocha hardcodeado.",
+        "# Mismos nombres C_* que espera el script consumidor externo (statusline",
+        "# del autor). 'source' este archivo en vez del bloque Mocha hardcodeado.",
         "# NO incluye C_PR_OPEN: es el color fijo #42A0FA hardcodeado por gh-dash",
         "# (no sale de ningún theme Catppuccin), así que no se remapea a ningún rol.",
         "",
@@ -584,8 +585,8 @@ def statusline_sh(label, P):
 
 
 # --------------------------------------------------------------------------
-# 6b) CCMAX — fragmento con las MISMAS variables C_* que
-#     tools/claude-monitor-max/ccmax líneas 83-95 ("# --- Catppuccin Mocha ---")
+# 6b) CCMAX — fragmento con las MISMAS variables C_* que espera el script
+#     consumidor externo (ccmax del autor, bloque "# --- Catppuccin Mocha ---")
 # --------------------------------------------------------------------------
 def ccmax_sh(label, P):
     c = P["colors"]
@@ -596,8 +597,8 @@ def ccmax_sh(label, P):
     return "\n".join([
         "#!/usr/bin/env bash",
         f"# Ocular {label} — fragmento de color para ccmax",
-        "# Mismos nombres C_* que tools/claude-monitor-max/ccmax (líneas 83-95,",
-        "# bloque '# --- Catppuccin Mocha ---'). R y B (reset/bold) quedan",
+        "# Mismos nombres C_* que espera el script consumidor externo (ccmax del",
+        "# autor, bloque '# --- Catppuccin Mocha ---'). R y B (reset/bold) quedan",
         "# intactos: no son roles de color, son códigos ANSI de control.",
         "",
         "R=$'\\e[0m'",
@@ -717,8 +718,8 @@ def nvim_lua():
 
 
 # --------------------------------------------------------------------------
-# 7) VSCODE — misma estructura que vscode_theme() de tools/pyvision-theme/
-#    build_v2.py (mismos keys de colors + tokenColors), con el mapeo
+# 7) VSCODE — misma estructura que un generador equivalente de herramientas
+#    externas del autor (mismos keys de colors + tokenColors), con el mapeo
 #    sintáctico Catppuccin del enunciado en vez de la paleta OKLCH.
 # --------------------------------------------------------------------------
 def ocular_ui_palette(P):
@@ -921,9 +922,8 @@ def chrome_manifest(label, mode_desc, P):
 
 CHROME_README = """# Chrome (developer mode) — Ocular
 
-MV3 theme (`theme.colors` in decimal RGB), same structure as
-`tools/chrome-catppuccin-mocha/manifest.json` in the Rollitos/Claude
-workspace.
+MV3 theme (`theme.colors` in decimal RGB), same structure as an equivalent
+manifest from the author's external tooling.
 
 ## Install (unpacked)
 
@@ -939,6 +939,53 @@ between Rooibos and Manzanilla is **manual**: `chrome://extensions` ->
 disable the active theme -> enable the other one. `ocular-switch` does NOT
 manage Chrome for this reason.
 """
+
+
+# --------------------------------------------------------------------------
+# 9) SLACK — README con el custom theme (string de 8 hex), generación
+#    directa por rol. Mapeo (mismo para ambos modos, diseñado y validado
+#    visualmente): Column BG=mantle, Menu Hover BG=surface0, Active Item=
+#    mauve, Active Item Text=crust (dark) / base (light), Hover Item=
+#    surface1, Text=text, Active Presence=green, Mention Badge=red. Slack no
+#    expone API para custom themes ni para recargarlos: la conmutación sigue
+#    siendo manual (paste del string).
+# --------------------------------------------------------------------------
+def slack_theme_string(P):
+    c = P["colors"]
+    active_item_text = c["crust"] if P["mode"] == "dark" else c["base"]
+    roles = [c["mantle"], c["surface0"], c["mauve"], active_item_text,
+             c["surface1"], c["text"], c["green"], c["red"]]
+    return ",".join(f"#{r.lstrip('#').upper()}" for r in roles)
+
+
+def slack_readme():
+    return "\n".join([
+        "# Slack — Ocular custom theme",
+        "",
+        "Slack accepts an 8-hex string (Preferences → Themes → Custom theme, or paste",
+        "it into a message and Slack offers \"Apply Slack theme\"). Field order: Column",
+        "BG, Menu Hover BG, Active Item, Active Item Text, Hover Item, Text Color,",
+        "Active Presence, Mention Badge.",
+        "",
+        "## Ocular Rooibos (dark)",
+        "",
+        "```",
+        slack_theme_string(ROOIBOS),
+        "```",
+        "",
+        "## Ocular Manzanilla (light)",
+        "",
+        "```",
+        slack_theme_string(MANZANILLA),
+        "```",
+        "",
+        "Mapping by role: Column BG = mantle · Menu Hover BG = surface0 · Active Item",
+        "= mauve · Active Item Text = crust (dark) / base (light) · Hover Item =",
+        "surface1 · Text = text · Active Presence = green · Mention Badge = red.",
+        "Slack doesn't support automatic switching of custom themes: paste the",
+        "string for whichever mode you're using.",
+        "",
+    ])
 
 
 # --------------------------------------------------------------------------
@@ -994,7 +1041,7 @@ def main():
         keep=GLOBAL_KEEP, quoted=True,
     )
     # DESVIACIÓN: no existe un flavor catppuccin-latte.yazi instalado localmente
-    # (fleet dark-only, ver private/CATASTRO.md) — se deriva manzanilla desde el
+    # (fleet dark-only) — se deriva manzanilla desde el
     # MISMO flavor.toml Mocha (mapa hex->rol Mocha), igual que oh-my-posh.
     yazi_manzanilla = substitute_hexes(
         yazi_mocha_text, HEX2ROLE_MOCHA, MANZANILLA["colors"],
@@ -1075,6 +1122,9 @@ def main():
           json.dumps(chrome_manifest("Manzanilla", "light", MANZANILLA), indent=2, ensure_ascii=False) + "\n")
     write(OUT / "chrome/README.md", CHROME_README)
 
+    # ---------------- slack (README con custom theme, generación directa) --
+    write(OUT / "slack/README.md", slack_readme())
+
     # ---------------- delta ----------------
     write(OUT / "delta/README.md", (
         "# delta — Ocular\n\n"
@@ -1129,6 +1179,11 @@ def main():
     nvim_path = OUT / "nvim/ocular.lua"
     record("exists", nvim_path, nvim_path.exists())
     audit_hex_file("nvim", nvim_path, ALLOWED_BOTH, quoted=True)
+
+    # slack/README.md mezcla ambas paletas en un solo archivo -> allowed = unión
+    slack_path = OUT / "slack/README.md"
+    record("exists", slack_path, slack_path.exists())
+    audit_hex_file("slack", slack_path, ALLOWED_BOTH, quoted=False)
 
     # chrome: JSON parse + membresía RGB->hex propia (no usa el motor de #hex)
     for p, allowed in (

@@ -1,8 +1,7 @@
 # Chrome (developer mode) — Ocular
 
-MV3 theme (`theme.colors` in decimal RGB), same structure as
-`tools/chrome-catppuccin-mocha/manifest.json` in the Rollitos/Claude
-workspace.
+MV3 theme (`theme.colors` in decimal RGB), same structure as an equivalent
+manifest from the author's external tooling.
 
 ## Install (unpacked)
 

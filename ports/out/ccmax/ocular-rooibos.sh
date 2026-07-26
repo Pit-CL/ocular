@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Ocular Rooibos — fragmento de color para ccmax
-# Mismos nombres C_* que tools/claude-monitor-max/ccmax (líneas 83-95,
-# bloque '# --- Catppuccin Mocha ---'). R y B (reset/bold) quedan
+# Mismos nombres C_* que espera el script consumidor externo (ccmax del
+# autor, bloque '# --- Catppuccin Mocha ---'). R y B (reset/bold) quedan
 # intactos: no son roles de color, son códigos ANSI de control.
 
 R=$'\e[0m'
