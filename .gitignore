@@ -1,0 +1,5 @@
+venv.nosync/
+*.nosync
+__pycache__/
+wallpapers/*.png
+private/
