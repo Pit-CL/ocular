@@ -3,16 +3,16 @@ theme:
     colors:
         text:
             primary: "#3f372d"
-            secondary: "#4655a5"
-            inverted: "#e6e0d7"
-            faint: "#544c43"
+            secondary: "#675f57"
+            inverted: "#f5efe7"
+            faint: "#817a73"
             warning: "#835000"
             success: "#276819"
             error: "#9b393f"
         background:
-            selected: "#e3ddd4"
+            selected: "#d9d3c9"
         border:
-            primary: "#4655a5"
+            primary: "#cdc6bd"
             secondary: "#d9d3c9"
             faint: "#e3ddd4"
     ui:
