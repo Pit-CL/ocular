@@ -117,7 +117,7 @@ if [ -d "$HOME/.config/yazi" ]; then
     cp -r "$OUT/yazi/ocular-rooibos.yazi" "$HOME/.config/yazi/flavors/"
     cp -r "$OUT/yazi/ocular-manzanilla.yazi" "$HOME/.config/yazi/flavors/"
     if [ -f "$HOME/.config/yazi/theme.toml" ]; then
-        sed -i.bak -E "s/^(dark|light) = \".*\"/\\1 = \"ocular-$variant\"/" "$HOME/.config/yazi/theme.toml" 2>/dev/null || true
+        sed -i.bak -E "s/^(dark|light)[[:space:]]*=[[:space:]]*\".*\"/\\1 = \"ocular-$variant\"/" "$HOME/.config/yazi/theme.toml" 2>/dev/null || true
         rm -f "$HOME/.config/yazi/theme.toml.bak"
     fi
     ok "yazi (flavor ocular-$variant)"
@@ -164,7 +164,7 @@ else
 fi
 
 # --- gh-dash: bloque theme: (config.yml completo se preserva) ---
-if command -v gh-dash >/dev/null 2>&1 && [ -f "$HOME/.config/gh-dash/config.yml" ]; then
+if [ -f "$HOME/.config/gh-dash/config.yml" ]; then  # gh-dash es extensión de gh: no hay binario en PATH, la config es el indicador
     if replace_block "$HOME/.config/gh-dash/config.yml" $'\ntheme:\n' $'\npager:' \
         "$OUT/gh-dash/ocular-$variant.yml"; then
         ok "gh-dash (bloque theme:)"
