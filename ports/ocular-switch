@@ -8,6 +8,18 @@
 # Fuente de los artefactos: ports/out/ (generados por build_ports.py, correr
 # ANTES si no existe). Destinos: los paths estándar de ~/.config documentados
 # inline en cada sección de abajo.
+#
+# Clasificación (verificado 2026-07-26 contra docs oficiales/binario donde
+# aplica — ver detalle en cada sección):
+#   - kitty, ghostty, nvim: conmutan SOLOS por apariencia del SO/`background`
+#     de catppuccin/nvim. La instalación es ONE-TIME (mismo resultado sin
+#     importar qué `light|dark` se pida) — el argumento del switcher solo
+#     decide el `kitty @ set-colors` en caliente (efecto inmediato en
+#     sesiones abiertas) y, para oh-my-posh, hacia dónde apunta el symlink.
+#   - bat, yazi, lazygit, btop, tmux, gh-dash, statusline, herdr, oh-my-posh,
+#     delta: NO conmutan solos — el switcher re-apunta cada uno al modo
+#     pedido en cada corrida.
+#   - vscode, chrome: fuera de alcance (ver notas en sus secciones).
 set -euo pipefail
 
 mode="${1:-}"
@@ -27,28 +39,43 @@ note() { printf '  \033[33m!\033[0m %s\n' "$1"; }
 
 echo "Ocular -> $mode ($variant)"
 
-# --- kitty: dark/light-theme.auto.conf (ambos iguales — auto-switch nativo
-#     ya está anulado a propósito en el fleet, ver private/CATASTRO.md) ---
+# --- kitty: dark-theme.auto.conf / light-theme.auto.conf — CONMUTA SOLO por
+#     apariencia del SO (feature nativa de kitty, docs.kitty kittens/themes:
+#     "creating dark-theme.auto.conf, light-theme.auto.conf y
+#     no-preference-theme.auto.conf"). NO se pisan los dos con el mismo modo
+#     (eso anulaba el auto-switch, que es justo lo que se restaura acá): dark
+#     SIEMPRE = rooibos, light SIEMPRE = manzanilla, sin importar el $variant
+#     pedido. no-preference-theme.auto.conf se omite: no existe hoy en el
+#     port de referencia de esta máquina (~/.config/kitty solo trae los dos
+#     archivos dark/light), así que no se inventa un tercero. ---
 if [ -d "$HOME/.config/kitty" ]; then
-    cp "$OUT/kitty/ocular-$variant.conf" "$HOME/.config/kitty/dark-theme.auto.conf"
-    cp "$OUT/kitty/ocular-$variant.conf" "$HOME/.config/kitty/light-theme.auto.conf"
+    cp "$OUT/kitty/ocular-rooibos.conf" "$HOME/.config/kitty/dark-theme.auto.conf"
+    cp "$OUT/kitty/ocular-manzanilla.conf" "$HOME/.config/kitty/light-theme.auto.conf"
     if command -v kitty >/dev/null 2>&1; then
-        kitty @ set-colors -a "$HOME/.config/kitty/dark-theme.auto.conf" >/dev/null 2>&1 || true
+        # Efecto inmediato en sesiones abiertas — apunta al modo PEDIDO, no al
+        # auto-switch (que de todos modos ya sigue al SO desde los archivos de arriba).
+        kitty @ set-colors -a "$OUT/kitty/ocular-$variant.conf" >/dev/null 2>&1 || true
     fi
-    ok "kitty (dark/light-theme.auto.conf)"
+    ok "kitty (auto-switch nativo: dark=rooibos, light=manzanilla)"
 else
     skip "kitty"
 fi
 
-# --- ghostty: theme file + línea 'theme = ' de config ---
+# --- ghostty: conmuta SOLO por apariencia del SO vía la sintaxis nativa
+#     'light:THEME,dark:THEME' (verificado 2026-07-26 en ghostty.org/docs/
+#     config/reference: "light:theme-name,dark:theme-name... el orden no
+#     importa"; binario no está instalado en esta máquina — sintaxis tomada
+#     de la doc oficial, no de `+show-config`). Instala AMBOS theme files
+#     siempre, la línea theme= queda fija (no depende del $variant pedido). ---
 if [ -d "$HOME/.config/ghostty" ]; then
     mkdir -p "$HOME/.config/ghostty/themes"
-    cp "$OUT/ghostty/ocular-$variant" "$HOME/.config/ghostty/themes/ocular-$variant"
+    cp "$OUT/ghostty/ocular-rooibos" "$HOME/.config/ghostty/themes/ocular-rooibos"
+    cp "$OUT/ghostty/ocular-manzanilla" "$HOME/.config/ghostty/themes/ocular-manzanilla"
     if [ -f "$HOME/.config/ghostty/config" ] && grep -q '^theme = ' "$HOME/.config/ghostty/config"; then
-        sed -i.bak "s/^theme = .*/theme = ocular-$variant/" "$HOME/.config/ghostty/config"
+        sed -i.bak "s/^theme = .*/theme = light:ocular-manzanilla,dark:ocular-rooibos/" "$HOME/.config/ghostty/config"
         rm -f "$HOME/.config/ghostty/config.bak"
     fi
-    note "ghostty instalado — recárgalo con el atajo nativo de reload (no hay API por CLI)"
+    note "ghostty (auto-switch nativo: theme = light:ocular-manzanilla,dark:ocular-rooibos) — recárgalo con el atajo nativo de reload (no hay API por CLI)"
 else
     skip "ghostty"
 fi
@@ -160,16 +187,22 @@ else
     skip "btop"
 fi
 
-# --- oh-my-posh: archivo instalado + init de zshrc si matchea el patrón conocido ---
+# --- oh-my-posh: instala AMBOS + symlink estable ocular-active.omp.json que
+#     el switcher mueve al modo pedido en cada corrida. El zshrc (si aún
+#     apunta al catppuccin_mocha.omp.json original) se reapunta UNA VEZ al
+#     symlink, no al archivo del modo — así queda estable para siempre y
+#     coincide con dotfiles (cero drift; correr el switcher de nuevo solo
+#     mueve el symlink, no vuelve a tocar el zshrc). ---
 if command -v oh-my-posh >/dev/null 2>&1 && [ -d "$HOME/.config/ohmyposh" ]; then
-    cp "$OUT/ohmyposh/ocular-$variant.omp.json" "$HOME/.config/ohmyposh/"
+    cp "$OUT/ohmyposh/ocular-rooibos.omp.json" "$HOME/.config/ohmyposh/"
+    cp "$OUT/ohmyposh/ocular-manzanilla.omp.json" "$HOME/.config/ohmyposh/"
+    ln -sf "ocular-$variant.omp.json" "$HOME/.config/ohmyposh/ocular-active.omp.json"
     if [ -f "$HOME/.zshrc" ] && grep -q 'catppuccin_mocha\.omp\.json' "$HOME/.zshrc"; then
-        sed -i.bak "s#catppuccin_mocha\.omp\.json#ocular-$variant.omp.json#" "$HOME/.zshrc"
+        sed -i.bak "s#catppuccin_mocha\.omp\.json#ocular-active.omp.json#" "$HOME/.zshrc"
         rm -f "$HOME/.zshrc.bak"
-        note "oh-my-posh: ~/.zshrc actualizado — abre un shell nuevo para verlo"
-    else
-        note "oh-my-posh: archivo instalado en ~/.config/ohmyposh/ — apunta tu init a ocular-$variant.omp.json a mano"
+        note "oh-my-posh: ~/.zshrc reapuntado (una sola vez) al symlink ocular-active.omp.json — abre un shell nuevo para verlo"
     fi
+    ok "oh-my-posh (symlink ocular-active.omp.json -> ocular-$variant.omp.json)"
 else
     skip "oh-my-posh"
 fi
