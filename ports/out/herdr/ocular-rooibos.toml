@@ -1,0 +1,26 @@
+# Ocular Rooibos — fragmento [theme.custom] para ~/.config/herdr/config.toml
+# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15). Conserva la
+# decisión surface_dim=overlay0 (selección visible del sidebar) del original.
+[theme.custom]
+panel_bg = "#1e1a15"      # base
+surface_dim = "#98938d"   # bg de la fila SELECCIONADA del sidebar (verificado empíricamente
+                          # con colores chillones). El mantle oficial (#181825) es más oscuro
+                          # que panel_bg y hacía la selección invisible de noche. Se usa el
+                          # overlay0 oficial de Mocha: visible de noche y texto claro legible
+                          # (~4.6:1). Descartados: morados de Mocha (mauve/lavender, muy claros
+                          # para bg), #8839ef mauve de Latte (muy eléctrico), #574b7d custom.
+surface0 = "#2b2520"
+surface1 = "#38322b"
+overlay0 = "#98938d"
+overlay1 = "#a6a099"
+text = "#dfd9cc"
+subtext0 = "#c6c1b7"
+accent = "#bac4ff"        # lavender — resalta la selección del sidebar
+blue = "#a7c8ff"
+mauve = "#d9b9ff"
+green = "#99d694"
+red = "#ffb1c4"
+yellow = "#dbc492"
+peach = "#feb78a"
+teal = "#87d4c8"
+

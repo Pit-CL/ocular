@@ -1,0 +1,22 @@
+# Ocular Rooibos — fragmento theme: para ~/.config/gh-dash/config.yml
+theme:
+    colors:
+        text:
+            primary: "#dfd9cc"
+            secondary: "#bac4ff"
+            inverted: "#15110d"
+            faint: "#d1cbc0"
+            warning: "#dbc492"
+            success: "#99d694"
+            error: "#ffb1c4"
+        background:
+            selected: "#2b2520"
+        border:
+            primary: "#bac4ff"
+            secondary: "#38322b"
+            faint: "#2b2520"
+    ui:
+        sectionsShowCount: true
+        table:
+            showSeparator: true
+            compact: false

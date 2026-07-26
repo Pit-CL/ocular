@@ -1,0 +1,228 @@
+#!/usr/bin/env bash
+# ocular-switch — instala el theme Ocular (light|dark) en las apps presentes
+# de ESTA máquina. Genérico: sin SSH, sin hostnames — detecta cada app con
+# `command -v` / existencia de su config y solo actúa si está instalada.
+#
+# Uso: ocular-switch light|dark
+#
+# Fuente de los artefactos: ports/out/ (generados por build_ports.py, correr
+# ANTES si no existe). Destinos: los paths estándar de ~/.config documentados
+# inline en cada sección de abajo.
+set -euo pipefail
+
+mode="${1:-}"
+case "$mode" in
+    dark)  variant="rooibos"    ;;
+    light) variant="manzanilla" ;;
+    *) echo "Uso: ocular-switch light|dark" >&2; exit 1 ;;
+esac
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OUT="${OCULAR_OUT:-$SCRIPT_DIR/out}"
+[ -d "$OUT" ] || { echo "No existe $OUT — corre 'python3 ports/build_ports.py' primero." >&2; exit 1; }
+
+ok()   { printf '  \033[32m\xe2\x9c\x93\033[0m %s\n' "$1"; }
+skip() { printf '  \xc2\xb7 %s (no instalado, se omite)\n' "$1"; }
+note() { printf '  \033[33m!\033[0m %s\n' "$1"; }
+
+echo "Ocular -> $mode ($variant)"
+
+# --- kitty: dark/light-theme.auto.conf (ambos iguales — auto-switch nativo
+#     ya está anulado a propósito en el fleet, ver private/CATASTRO.md) ---
+if [ -d "$HOME/.config/kitty" ]; then
+    cp "$OUT/kitty/ocular-$variant.conf" "$HOME/.config/kitty/dark-theme.auto.conf"
+    cp "$OUT/kitty/ocular-$variant.conf" "$HOME/.config/kitty/light-theme.auto.conf"
+    if command -v kitty >/dev/null 2>&1; then
+        kitty @ set-colors -a "$HOME/.config/kitty/dark-theme.auto.conf" >/dev/null 2>&1 || true
+    fi
+    ok "kitty (dark/light-theme.auto.conf)"
+else
+    skip "kitty"
+fi
+
+# --- ghostty: theme file + línea 'theme = ' de config ---
+if [ -d "$HOME/.config/ghostty" ]; then
+    mkdir -p "$HOME/.config/ghostty/themes"
+    cp "$OUT/ghostty/ocular-$variant" "$HOME/.config/ghostty/themes/ocular-$variant"
+    if [ -f "$HOME/.config/ghostty/config" ] && grep -q '^theme = ' "$HOME/.config/ghostty/config"; then
+        sed -i.bak "s/^theme = .*/theme = ocular-$variant/" "$HOME/.config/ghostty/config"
+        rm -f "$HOME/.config/ghostty/config.bak"
+    fi
+    note "ghostty instalado — recárgalo con el atajo nativo de reload (no hay API por CLI)"
+else
+    skip "ghostty"
+fi
+
+# --- bat: themes dir + config --theme= + cache rebuild ---
+if command -v bat >/dev/null 2>&1; then
+    bat_dir="$(bat --config-dir)/themes"
+    mkdir -p "$bat_dir"
+    cp "$OUT/bat/Ocular Rooibos.tmTheme" "$bat_dir/"
+    cp "$OUT/bat/Ocular Manzanilla.tmTheme" "$bat_dir/"
+    bat cache --build >/dev/null 2>&1 || true
+    name="Ocular Rooibos"; [ "$variant" = manzanilla ] && name="Ocular Manzanilla"
+    bat_conf="$(bat --config-dir)/config"
+    if [ -f "$bat_conf" ]; then
+        sed -i.bak -E "s/--theme=\"[^\"]*\"/--theme=\"$name\"/" "$bat_conf" 2>/dev/null || true
+        rm -f "${bat_conf}.bak"
+    fi
+    ok "bat ($name)"
+else
+    skip "bat"
+fi
+
+# --- yazi: flavors/ + [flavor] dark/light de theme.toml ---
+if [ -d "$HOME/.config/yazi" ]; then
+    mkdir -p "$HOME/.config/yazi/flavors"
+    cp -r "$OUT/yazi/ocular-rooibos.yazi" "$HOME/.config/yazi/flavors/"
+    cp -r "$OUT/yazi/ocular-manzanilla.yazi" "$HOME/.config/yazi/flavors/"
+    if [ -f "$HOME/.config/yazi/theme.toml" ]; then
+        sed -i.bak -E "s/^(dark|light) = \".*\"/\\1 = \"ocular-$variant\"/" "$HOME/.config/yazi/theme.toml" 2>/dev/null || true
+        rm -f "$HOME/.config/yazi/theme.toml.bak"
+    fi
+    ok "yazi (flavor ocular-$variant)"
+else
+    skip "yazi"
+fi
+
+# --- helper: reemplaza in-place el bloque delimitado por [start, end) tanto
+#     en el archivo vivo como en el fragmento propio (ambos comparten el
+#     mismo marcador de inicio, así que no hace falta desenvolver el header) ---
+replace_block() {
+    local target="$1" start="$2" end="$3" fragment="$4"
+    [ -f "$target" ] || return 1
+    python3 - "$target" "$start" "$end" "$fragment" <<'PYEOF'
+import sys
+target, start, end, fragment = sys.argv[1:5]
+text = open(target).read()
+frag_full = open(fragment).read()
+fi = frag_full.find(start)
+if fi == -1:
+    sys.exit(2)
+frag = frag_full[fi:]
+i = text.find(start)
+if i == -1:
+    sys.exit(1)
+j = text.find(end, i + len(start))
+if j == -1:
+    sys.exit(1)
+text = text[:i] + frag.rstrip("\n") + "\n" + text[j:]
+open(target, "w").write(text)
+PYEOF
+}
+
+# --- lazygit: bloque gui.theme (config.yml completo se preserva) ---
+if command -v lazygit >/dev/null 2>&1 && [ -f "$HOME/.config/lazygit/config.yml" ]; then
+    if replace_block "$HOME/.config/lazygit/config.yml" "  theme:"$'\n' $'\n  authorColors:' \
+        "$OUT/lazygit/ocular-$variant.yml"; then
+        ok "lazygit (bloque gui.theme)"
+    else
+        note "lazygit: no se encontró el bloque theme: esperado — se omite (revisar a mano)"
+    fi
+else
+    skip "lazygit"
+fi
+
+# --- gh-dash: bloque theme: (config.yml completo se preserva) ---
+if command -v gh-dash >/dev/null 2>&1 && [ -f "$HOME/.config/gh-dash/config.yml" ]; then
+    if replace_block "$HOME/.config/gh-dash/config.yml" $'\ntheme:\n' $'\npager:' \
+        "$OUT/gh-dash/ocular-$variant.yml"; then
+        ok "gh-dash (bloque theme:)"
+    else
+        note "gh-dash: no se encontró el bloque theme: esperado — se omite (revisar a mano)"
+    fi
+else
+    skip "gh-dash"
+fi
+
+# --- herdr: bloque [theme.custom] (config.toml completo se preserva) ---
+if command -v herdr >/dev/null 2>&1 && [ -f "$HOME/.config/herdr/config.toml" ]; then
+    if replace_block "$HOME/.config/herdr/config.toml" $'\n[theme.custom]\n' $'\n[keys]' \
+        "$OUT/herdr/ocular-$variant.toml"; then
+        ok "herdr (bloque [theme.custom])"
+    else
+        note "herdr: no se encontró el bloque [theme.custom] esperado — se omite (revisar a mano)"
+    fi
+else
+    skip "herdr"
+fi
+
+# --- btop: themes dir + color_theme de btop.conf ---
+if command -v btop >/dev/null 2>&1; then
+    mkdir -p "$HOME/.config/btop/themes"
+    cp "$OUT/btop/ocular-$variant.theme" "$HOME/.config/btop/themes/"
+    if [ -f "$HOME/.config/btop/btop.conf" ]; then
+        sed -i.bak -E "s/^color_theme = \".*\"/color_theme = \"ocular-$variant\"/" "$HOME/.config/btop/btop.conf" 2>/dev/null || true
+        rm -f "$HOME/.config/btop/btop.conf.bak"
+    fi
+    ok "btop (ocular-$variant)"
+else
+    skip "btop"
+fi
+
+# --- oh-my-posh: archivo instalado + init de zshrc si matchea el patrón conocido ---
+if command -v oh-my-posh >/dev/null 2>&1 && [ -d "$HOME/.config/ohmyposh" ]; then
+    cp "$OUT/ohmyposh/ocular-$variant.omp.json" "$HOME/.config/ohmyposh/"
+    if [ -f "$HOME/.zshrc" ] && grep -q 'catppuccin_mocha\.omp\.json' "$HOME/.zshrc"; then
+        sed -i.bak "s#catppuccin_mocha\.omp\.json#ocular-$variant.omp.json#" "$HOME/.zshrc"
+        rm -f "$HOME/.zshrc.bak"
+        note "oh-my-posh: ~/.zshrc actualizado — abre un shell nuevo para verlo"
+    else
+        note "oh-my-posh: archivo instalado en ~/.config/ohmyposh/ — apunta tu init a ocular-$variant.omp.json a mano"
+    fi
+else
+    skip "oh-my-posh"
+fi
+
+# --- statusline (Claude Code): fragmento de color, el 'source' queda
+#     pendiente de cablear en tools/claude-statusline/ (otro repo) ---
+mkdir -p "$HOME/.config/claude-statusline"
+sl_theme="dark"; [ "$variant" = manzanilla ] && sl_theme="light"
+cp "$OUT/statusline/ocular-$variant.sh" "$HOME/.config/claude-statusline/colors-$sl_theme.sh"
+note "statusline: fragmento instalado en ~/.config/claude-statusline/colors-$sl_theme.sh — falta cablear el 'source' en statusline-command.sh (repo Rollitos/Claude, fuera de este switcher)"
+
+# --- tmux: archivo standalone + source-file en caliente si hay servidor ---
+if [ -d "$HOME/.config/tmux" ] || [ -f "$HOME/.tmux.conf" ]; then
+    mkdir -p "$HOME/.config/tmux"
+    cp "$OUT/tmux/ocular-$variant.tmuxtheme" "$HOME/.config/tmux/ocular-theme.tmuxtheme"
+    if command -v tmux >/dev/null 2>&1 && tmux info >/dev/null 2>&1; then
+        tmux source-file "$HOME/.config/tmux/ocular-theme.tmuxtheme" 2>/dev/null || true
+        ok "tmux (aplicado en caliente a la sesión activa)"
+    else
+        ok "tmux (instalado en ~/.config/tmux/ocular-theme.tmuxtheme)"
+    fi
+    note "tmux: para que persista entre reinicios hay que cambiar .tmux.conf (reemplazar el bloque del plugin catppuccin/tmux por 'source-file ~/.config/tmux/ocular-theme.tmuxtheme') — cambio estructural fuera de este switcher"
+else
+    skip "tmux"
+fi
+
+# --- nvim: spec lazy.nvim, auto light/dark (no depende del modo elegido acá) ---
+if [ -d "$HOME/.config/nvim/lua/plugins" ]; then
+    cp "$OUT/nvim/ocular.lua" "$HOME/.config/nvim/lua/plugins/ocular.lua"
+    ok "nvim (lazy.nvim spec instalado, flavour=auto — no depende de light|dark)"
+else
+    skip "nvim"
+fi
+
+# --- vscode: necesita empaquetarse como extensión, no es un archivo suelto ---
+vscode_settings=""
+[ -f "$HOME/Library/Application Support/Code/User/settings.json" ] && vscode_settings="$HOME/Library/Application Support/Code/User/settings.json"
+[ -f "$HOME/.config/Code/User/settings.json" ] && vscode_settings="$HOME/.config/Code/User/settings.json"
+if [ -n "$vscode_settings" ]; then
+    note "VSCode detectado — un color-theme.json suelto no alcanza, VSCode exige una extensión (package.json + contributes.themes). Instalación manual, fuera de este switcher."
+else
+    skip "vscode"
+fi
+
+# --- delta: reusa el theme de bat por nombre ---
+if command -v delta >/dev/null 2>&1; then
+    name="Ocular Rooibos"; [ "$variant" = manzanilla ] && name="Ocular Manzanilla"
+    git config --global delta.syntax-theme "$name"
+    ok "delta (delta.syntax-theme = $name)"
+else
+    skip "delta"
+fi
+
+echo
+echo "Chrome (modo desarrollador) es manual — ver ports/out/chrome/README.md (no hay API de recarga por script)."
+echo "Listo: Ocular $mode aplicado en las apps detectadas."

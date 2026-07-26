@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "name": "Ocular Rooibos",
+  "description": "Theme Ocular para Chrome — Rooibos (dark).",
+  "version": "1.0.0",
+  "theme": {
+    "colors": {
+      "frame": [
+        25,
+        21,
+        17
+      ],
+      "frame_inactive": [
+        21,
+        17,
+        13
+      ],
+      "frame_incognito": [
+        21,
+        17,
+        13
+      ],
+      "frame_incognito_inactive": [
+        21,
+        17,
+        13
+      ],
+      "toolbar": [
+        43,
+        37,
+        32
+      ],
+      "toolbar_button_icon": [
+        217,
+        185,
+        255
+      ],
+      "tab_text": [
+        223,
+        217,
+        204
+      ],
+      "tab_background_text": [
+        152,
+        147,
+        141
+      ],
+      "bookmark_text": [
+        223,
+        217,
+        204
+      ],
+      "ntp_background": [
+        30,
+        26,
+        21
+      ],
+      "ntp_text": [
+        223,
+        217,
+        204
+      ],
+      "ntp_link": [
+        217,
+        185,
+        255
+      ],
+      "button_background": [
+        25,
+        21,
+        17
+      ]
+    },
+    "tints": {
+      "buttons": [
+        -1,
+        -1,
+        -1
+      ]
+    },
+    "properties": {
+      "ntp_background_alignment": "bottom"
+    }
+  }
+}

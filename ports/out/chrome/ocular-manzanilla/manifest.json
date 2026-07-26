@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "name": "Ocular Manzanilla",
+  "description": "Theme Ocular para Chrome — Manzanilla (light).",
+  "version": "1.0.0",
+  "theme": {
+    "colors": {
+      "frame": [
+        238,
+        232,
+        223
+      ],
+      "frame_inactive": [
+        230,
+        224,
+        215
+      ],
+      "frame_incognito": [
+        230,
+        224,
+        215
+      ],
+      "frame_incognito_inactive": [
+        230,
+        224,
+        215
+      ],
+      "toolbar": [
+        227,
+        221,
+        212
+      ],
+      "toolbar_button_icon": [
+        104,
+        76,
+        158
+      ],
+      "tab_text": [
+        63,
+        55,
+        45
+      ],
+      "tab_background_text": [
+        161,
+        156,
+        148
+      ],
+      "bookmark_text": [
+        63,
+        55,
+        45
+      ],
+      "ntp_background": [
+        245,
+        239,
+        231
+      ],
+      "ntp_text": [
+        63,
+        55,
+        45
+      ],
+      "ntp_link": [
+        104,
+        76,
+        158
+      ],
+      "button_background": [
+        238,
+        232,
+        223
+      ]
+    },
+    "tints": {
+      "buttons": [
+        -1,
+        -1,
+        -1
+      ]
+    },
+    "properties": {
+      "ntp_background_alignment": "bottom"
+    }
+  }
+}
