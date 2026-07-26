@@ -6,20 +6,27 @@ switcher, a partir de palette/rooibos.json (dark) y palette/manzanilla.json
 
 Dos estrategias según el artefacto:
   1. SUSTITUCIÓN de hex sobre el port oficial Catppuccin instalado localmente
-     (bat, yazi, lazygit, btop, oh-my-posh, herdr): se recorre el
+     (bat, yazi, btop, oh-my-posh): se recorre el
      archivo de referencia, cada #hex oficial Mocha/Latte se reconoce por su
      ROL (via palette/catppuccin-oficial.json) y se reemplaza por el hex
      Ocular de ese mismo rol. Preserva estructura, comentarios y campos no
      visitados 1:1.
-  2. GENERACIÓN directa por rol (kitty, ghostty, tmux, statusline, herdr-doc,
-     nvim, vscode, gh-dash): no hay forma segura de sustituir (kitty/ghostty
-     usan el bloque `ansi` dedicado, no roles puros; tmux/statusline no
-     tienen port oficial de referencia con hex fijos). gh-dash pasó de
+  2. GENERACIÓN directa por rol (kitty, ghostty, tmux, statusline, lazygit,
+     herdr, nvim, vscode, gh-dash): no hay forma segura de sustituir (kitty/
+     ghostty usan el bloque `ansi` dedicado, no roles puros; tmux/statusline
+     no tienen port oficial de referencia con hex fijos). gh-dash pasó de
      sustitución a generación directa el 2026-07-26 (fix de rollout): el
      legado Catppuccin heredaba roles poco apropiados para su propio schema
      (p.ej. text.secondary/border.primary en lavender, un acento vívido, no
      un tono de texto secundario) — ver mapeo semántico por campo en
-     gh_dash_theme().
+     gh_dash_theme(). lazygit y herdr pasaron de sustitución a generación
+     directa el mismo 2026-07-26 (fix issue #7): usaban como fuente los
+     configs VIVOS de la máquina (~/.config/lazygit/config.yml,
+     ~/.config/herdr/config.toml), que la migración a Ocular ya reescribió
+     con hex Ocular — el motor de sustitución dejó de reconocerlos como Mocha
+     y la regeneración fallaba. El mapeo campo->rol se derivó comparando los
+     hex de ports/out/{lazygit,herdr}/*.{yml,toml} ya versionados contra
+     palette/{rooibos,manzanilla}.json — ver lazygit_theme() y herdr_theme().
 
 Mapeo sintáctico común (para los artefactos de generación directa; los de
 sustitución simplemente heredan el mapeo que ya trae el port oficial):
@@ -155,24 +162,6 @@ def find_hexes(text, quoted=False):
     pattern = QUOTED_HEX_RE if quoted else BARE_HEX_RE
     group = 2 if quoted else 1
     return {m.group(group)[:6].lower() for m in pattern.finditer(text)}
-
-
-def extract_between(text, start_marker, end_marker):
-    i = text.index(start_marker)
-    j = text.index(end_marker, i + len(start_marker))
-    return text[i:j]
-
-
-def override_toml_line(text, field, new_line):
-    """Reemplaza la línea `field = ...` (valor Y comentario) por new_line
-    completa. Para casos donde el rol heredado por substitute_hexes no es el
-    que queremos para ESE campo puntual (ver accent de herdr, 2026-07-26)."""
-    new_text, n = re.subn(
-        rf"(?m)^{re.escape(field)}\s*=.*$", lambda _m: new_line, text, count=1,
-    )
-    if n == 0:
-        raise ValueError(f"campo {field!r} no encontrado para override")
-    return new_text
 
 
 # --------------------------------------------------------------------------
@@ -413,6 +402,58 @@ def bat_tmtheme(mocha_or_latte_text, hex2role, target_colors, exceptions,
 
 
 # --------------------------------------------------------------------------
+# 3b) LAZYGIT — generación directa por rol (fix issue #7, 2026-07-26): el
+#     config vivo (~/.config/lazygit/config.yml) ya migró a hex Ocular, así
+#     que dejó de servir como fuente de sustitución. Mapeo campo->rol
+#     derivado comparando ports/out/lazygit/*.yml ya versionados contra
+#     palette/{rooibos,manzanilla}.json (cada hex mapea a un rol único):
+#       activeBorderColor / cherryPickedCommitFgColor -> mauve
+#       inactiveBorderColor                            -> subtext0
+#       searchingActiveBorderColor / markedBaseCommitBgColor -> yellow
+#       optionsTextColor / markedBaseCommitFgColor      -> blue
+#       selectedLineBgColor                             -> surface0
+#       inactiveViewSelectedLineBgColor                 -> overlay0
+#       cherryPickedCommitBgColor                       -> surface1
+#       unstagedChangesColor                            -> red
+#       defaultFgColor                                  -> text
+# --------------------------------------------------------------------------
+def lazygit_theme(label, P):
+    c = P["colors"]
+    return "\n".join([
+        f"# Ocular {label} — fragmento gui.theme para ~/.config/lazygit/config.yml",
+        "gui:",
+        "  theme:",
+        "    activeBorderColor:",
+        f"      - '{c['mauve']}'",
+        "      - bold",
+        "    inactiveBorderColor:",
+        f"      - '{c['subtext0']}'",
+        "    searchingActiveBorderColor:",
+        f"      - '{c['yellow']}'",
+        "    optionsTextColor:",
+        f"      - '{c['blue']}'",
+        "    selectedLineBgColor:",
+        f"      - '{c['surface0']}'",
+        "    inactiveViewSelectedLineBgColor:",
+        f"      - '{c['overlay0']}'",
+        "    cherryPickedCommitFgColor:",
+        f"      - '{c['mauve']}'",
+        "    cherryPickedCommitBgColor:",
+        f"      - '{c['surface1']}'",
+        "    markedBaseCommitFgColor:",
+        f"      - '{c['blue']}'",
+        "    markedBaseCommitBgColor:",
+        f"      - '{c['yellow']}'",
+        "    unstagedChangesColor:",
+        f"      - '{c['red']}'",
+        "    defaultFgColor:",
+        f"      - '{c['text']}'",
+        "",
+        "",
+    ])
+
+
+# --------------------------------------------------------------------------
 # 4) TMUX — generación directa standalone (sin plugin), estética coherente
 #    con ~/.tmux.conf líneas 50-76 (status arriba, cápsulas redondeadas)
 # --------------------------------------------------------------------------
@@ -571,6 +612,62 @@ def ccmax_sh(label, P):
         f"C_RED=$'\\e[{seq('red')}m'      # red",
         f"C_TEAL=$'\\e[{seq('teal')}m'      # teal",
         f"C_SURF=$'\\e[{seq('surface1')}m'      # surface1",
+        "",
+    ])
+
+
+# --------------------------------------------------------------------------
+# 6c) HERDR — generación directa por rol (fix issue #7, 2026-07-26): el
+#     config vivo (~/.config/herdr/config.toml) ya migró a hex Ocular, así
+#     que dejó de servir como fuente de sustitución. Mapeo campo->rol
+#     derivado comparando ports/out/herdr/*.toml ya versionados contra
+#     palette/{rooibos,manzanilla}.json — todos los campos son 1:1 con su
+#     propio nombre de rol (blue->blue, mauve->mauve, ...), salvo:
+#       panel_bg     -> base
+#       surface_dim  -> overlay0 (bg de la fila seleccionada del sidebar,
+#                       decisión conservada del config original — ver comentario)
+#       accent       -> override deliberado a peach (NO al rol heredado
+#                       lavender): el usuario reportó el marco del panel
+#                       SELECCIONADO/con foco en azul saturado pese a estar
+#                       calibrado en la paleta Ocular. `accent` es la MISMA
+#                       clave que `ui.accent` upsertea ocular-switch, y herdr
+#                       la documenta como "Accent color for highlights,
+#                       borders, and navigation UI" (`herdr --default-config`,
+#                       sección [ui]; confirmado en docs.herdr.dev/config-
+#                       reference). peach da un marco activo cálido
+#                       (identidad Rooibos/Manzanilla) y de paso tiñe la
+#                       selección del sidebar (mismo token) — cambio
+#                       intencional, no colateral (fix 2026-07-26).
+# --------------------------------------------------------------------------
+def herdr_theme(label, P):
+    c = P["colors"]
+    return "\n".join([
+        f"# Ocular {label} — fragmento [theme.custom] para ~/.config/herdr/config.toml",
+        "# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15). Conserva la",
+        "# decisión surface_dim=overlay0 (selección visible del sidebar) del original.",
+        "[theme.custom]",
+        f'panel_bg = "{c["base"]}"      # base',
+        f'surface_dim = "{c["overlay0"]}"   # bg de la fila SELECCIONADA del sidebar (verificado empíricamente',
+        "                          # con colores chillones). El mantle oficial (#181825) es más oscuro",
+        "                          # que panel_bg y hacía la selección invisible de noche. Se usa el",
+        "                          # overlay0 oficial de Mocha: visible de noche y texto claro legible",
+        "                          # (~4.6:1). Descartados: morados de Mocha (mauve/lavender, muy claros",
+        "                          # para bg), #8839ef mauve de Latte (muy eléctrico), #574b7d custom.",
+        f'surface0 = "{c["surface0"]}"',
+        f'surface1 = "{c["surface1"]}"',
+        f'overlay0 = "{c["overlay0"]}"',
+        f'overlay1 = "{c["overlay1"]}"',
+        f'text = "{c["text"]}"',
+        f'subtext0 = "{c["subtext0"]}"',
+        f'accent = "{c["peach"]}"        # peach — marco activo cálido + selección del sidebar (fix bordes azules, 2026-07-26)',
+        f'blue = "{c["blue"]}"',
+        f'mauve = "{c["mauve"]}"',
+        f'green = "{c["green"]}"',
+        f'red = "{c["red"]}"',
+        f'yellow = "{c["yellow"]}"',
+        f'peach = "{c["peach"]}"',
+        f'teal = "{c["teal"]}"',
+        "",
         "",
     ])
 
@@ -853,12 +950,13 @@ def main():
         "bat_mocha": HOME / ".config/bat/themes/Catppuccin Mocha.tmTheme",
         "bat_latte": HOME / ".config/catppuccin/bat/themes/Catppuccin Latte.tmTheme",
         "yazi_mocha": HOME / ".config/yazi/flavors/catppuccin-mocha.yazi/flavor.toml",
-        "lazygit": HOME / ".config/lazygit/config.yml",
         "btop_mocha": HOME / ".config/btop/themes/catppuccin_mocha.theme",
         "btop_latte": HOME / ".config/catppuccin/btop/themes/catppuccin_latte.theme",
         "ghdash": HOME / ".config/gh-dash/config.yml",
         "ohmyposh": HOME / ".config/ohmyposh/catppuccin_mocha.omp.json",
-        "herdr": HOME / ".config/herdr/config.toml",
+        # lazygit y herdr NO llevan entrada aquí: desde el fix del issue #7
+        # (2026-07-26) generan directo por rol (lazygit_theme/herdr_theme),
+        # sin leer ningún config vivo — ver docstring del módulo.
     }
     missing = [str(p) for p in ref.values() if not p.exists()]
     if missing:
@@ -907,19 +1005,10 @@ def main():
     write(OUT / "yazi/ocular-rooibos.yazi/tmtheme.xml", rooibos_bat)
     write(OUT / "yazi/ocular-manzanilla.yazi/tmtheme.xml", manzanilla_bat)
 
-    # ---------------- lazygit (solo bloque gui.theme) ----------------
-    lazygit_text = ref["lazygit"].read_text()
-    theme_block = extract_between(lazygit_text, "  theme:\n", "\n  authorColors:")
-    rooibos_lg = "gui:\n" + substitute_hexes(
-        theme_block, HEX2ROLE_MOCHA, ROOIBOS["colors"], quoted=True,
-    ) + "\n"
-    manzanilla_lg = "gui:\n" + substitute_hexes(
-        theme_block, HEX2ROLE_MOCHA, MANZANILLA["colors"], quoted=True,
-    ) + "\n"
-    header_r = "# Ocular Rooibos — fragmento gui.theme para ~/.config/lazygit/config.yml\n"
-    header_m = "# Ocular Manzanilla — fragmento gui.theme para ~/.config/lazygit/config.yml\n"
-    write(OUT / "lazygit/ocular-rooibos.yml", header_r + rooibos_lg)
-    write(OUT / "lazygit/ocular-manzanilla.yml", header_m + manzanilla_lg)
+    # ---------------- lazygit (generación directa por rol — fix issue #7,
+    # ver lazygit_theme() para el mapeo campo->rol) ----------------
+    write(OUT / "lazygit/ocular-rooibos.yml", lazygit_theme("Rooibos", ROOIBOS))
+    write(OUT / "lazygit/ocular-manzanilla.yml", lazygit_theme("Manzanilla", MANZANILLA))
 
     # ---------------- btop (archivo completo) ----------------
     btop_mocha_text = ref["btop_mocha"].read_text()
@@ -953,40 +1042,10 @@ def main():
     write(OUT / "ccmax/ocular-rooibos.sh", ccmax_sh("Rooibos", ROOIBOS))
     write(OUT / "ccmax/ocular-manzanilla.sh", ccmax_sh("Manzanilla", MANZANILLA))
 
-    # ---------------- herdr (solo bloque [theme.custom]) ----------------
-    # accent: override deliberado sobre el rol heredado (lavender) — fix
-    # 2026-07-26. El usuario reportó el marco del panel SELECCIONADO/con foco
-    # en azul saturado (los NO seleccionados armonizan bien). `accent` es el
-    # único candidato: es la MISMA clave que `ui.accent` upsertea en
-    # ocular-switch (ver ese script), y herdr documenta esa clave como
-    # "Accent color for highlights, borders, and navigation UI" (`herdr
-    # --default-config`, sección [ui]; confirmado también en
-    # docs.herdr.dev/config-reference). El valor heredado por sustitución
-    # (lavender: #bac4ff rooibos / #4655a5 manzanilla) sigue leyéndose azul
-    # en pantalla pese a estar calibrado en la paleta Ocular — se reemplaza
-    # por peach (marco activo cálido, identidad Rooibos/Manzanilla), que de
-    # paso también tiñe la selección del sidebar (mismo token, ver comentario
-    # "resalta la selección" en el config vivo) — cambio intencional, no
-    # colateral.
-    herdr_text = ref["herdr"].read_text()
-    herdr_block = extract_between(herdr_text, "\n[theme.custom]\n", "\n[keys]")
-    header = ("# Ocular {label} — fragmento [theme.custom] para ~/.config/herdr/config.toml\n"
-              "# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15). Conserva la\n"
-              "# decisión surface_dim=overlay0 (selección visible del sidebar) del original.\n")
-    rooibos_herdr = substitute_hexes(herdr_block, HEX2ROLE_MOCHA, ROOIBOS["colors"], quoted=True)
-    rooibos_herdr = override_toml_line(
-        rooibos_herdr, "accent",
-        f'accent = "{ROOIBOS["colors"]["peach"]}"        '
-        '# peach — marco activo cálido + selección del sidebar (fix bordes azules, 2026-07-26)',
-    )
-    manzanilla_herdr = substitute_hexes(herdr_block, HEX2ROLE_MOCHA, MANZANILLA["colors"], quoted=True)
-    manzanilla_herdr = override_toml_line(
-        manzanilla_herdr, "accent",
-        f'accent = "{MANZANILLA["colors"]["peach"]}"        '
-        '# peach — marco activo cálido + selección del sidebar (fix bordes azules, 2026-07-26)',
-    )
-    write(OUT / "herdr/ocular-rooibos.toml", header.format(label="Rooibos") + rooibos_herdr.lstrip("\n") + "\n")
-    write(OUT / "herdr/ocular-manzanilla.toml", header.format(label="Manzanilla") + manzanilla_herdr.lstrip("\n") + "\n")
+    # ---------------- herdr (generación directa por rol — fix issue #7; ver
+    # herdr_theme() para el mapeo campo->rol y el override accent=peach) ----------------
+    write(OUT / "herdr/ocular-rooibos.toml", herdr_theme("Rooibos", ROOIBOS))
+    write(OUT / "herdr/ocular-manzanilla.toml", herdr_theme("Manzanilla", MANZANILLA))
 
     # ---------------- nvim ----------------
     write(OUT / "nvim/ocular.lua", nvim_lua())
