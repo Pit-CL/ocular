@@ -257,7 +257,7 @@ fi
 #     symlink, no al archivo del modo — así queda estable para siempre y
 #     coincide con dotfiles (cero drift; correr el switcher de nuevo solo
 #     mueve el symlink, no vuelve a tocar el zshrc). ---
-if command -v oh-my-posh >/dev/null 2>&1 && [ -d "$HOME/.config/ohmyposh" ]; then
+if [ -d "$HOME/.config/ohmyposh" ]; then  # detección por config, NO command -v: en el Mac brew solo está en PATH de login shell (el watcher de launchd nunca lo vería); esta sección solo copia archivos y mueve un symlink
     cp "$OUT/ohmyposh/ocular-rooibos.omp.json" "$HOME/.config/ohmyposh/"
     cp "$OUT/ohmyposh/ocular-manzanilla.omp.json" "$HOME/.config/ohmyposh/"
     ln -sf "ocular-$variant.omp.json" "$HOME/.config/ohmyposh/ocular-active.omp.json"
