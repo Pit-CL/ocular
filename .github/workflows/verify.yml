@@ -1,0 +1,20 @@
+name: Verificar artefactos sincronizados
+
+on: pull_request
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Regenerar artefactos desde la fuente
+        run: |
+          python3 build.py
+          python3 audit.py
+          python3 ports/build_ports.py
+
+      - name: Verificar que no hay drift (cambios o archivos nuevos)
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"
