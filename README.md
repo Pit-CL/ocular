@@ -11,7 +11,10 @@ structure and accent hues of [Catppuccin](https://github.com/catppuccin/catppucc
 | **Rooibos** | dark | warm dark background, warm off-white text, accents at Lc 71 |
 | **Manzanilla** (chamomile) | light | warm paper, warm ink, accents at Lc 74 |
 
-Caffeine-free drinks: this theme exists to rest your eyes.
+About the names: Catppuccin names its flavors after coffee drinks (Latte,
+Mocha…). Ocular's variants are named after **caffeine-free infusions** instead —
+rooibos and chamomile — because this theme is built to relax your eyes, not to
+stimulate them.
 
 ## Wallpapers
 
