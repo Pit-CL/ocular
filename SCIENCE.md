@@ -32,8 +32,11 @@ and only automatic switching delivers that — never a fixed mode.
 
 ## 2. APCA contrast: controlled bands, not maximum contrast
 
-APCA (WCAG 3's perceptual algorithm) reports contrast as Lc; unlike WCAG
-2.x, it correctly models dark mode's asymmetry.
+APCA is a perceptual contrast algorithm developed as a candidate for WCAG
+3, removed from the draft process in 2023; as of April 2026, WCAG 3's
+contrast algorithm remains undetermined. It reports contrast as Lc and,
+unlike WCAG 2.x, correctly models dark mode's asymmetry — the theme uses
+it for that technical merit, not for its standardization status.
 
 - APCA guidance: **Lc 90 preferred** for body text ≥14px/400; **Lc 75
   minimum** for text columns ≥18px; Lc 60 usable for large text; Lc 15 =
@@ -49,6 +52,11 @@ APCA (WCAG 3's perceptual algorithm) reports contrast as Lc; unlike WCAG
 | `subtext1` / `subtext0` | Lc 74 / 68 | Lc 80 / 72 |
 | `overlay2/1/0` (non-text UI) | Lc 58 / 50 / 43 | Lc 60 / 52 / 44 |
 | 14 accents | Lc 71 ± 1.5 | Lc 74 ± 1.5 |
+
+Code comments map to `subtext0` (Lc 68 dark / 72 light), not the overlay
+band: they're text read continuously, not UI chrome — Lc 58/60 falls below
+the APCA floor of Lc 60 for non-body content text, and the subtext band
+preserves the hierarchy against body (82/88).
 
 In dark mode the body target deliberately sits at 82 (above the fluent
 minimum of 75, below the "preferred" 90) because 90 is meant for positive
@@ -112,6 +120,12 @@ pathway). This is the same principle validated in this workspace's
 Crepúsculo theme, now applied to Catppuccin's hues extracted from the
 official palette (hue delta ≤ 2°).
 
+**Trade-off:** equal-luminance accents drop the brightness cue that
+color-vision-deficient users rely on when hues collapse (e.g. red vs.
+green under deuteranopia). Ocular optimizes for typical trichromatic
+vision; a colorblind-safe variant would require deliberately unequal
+luminances (cf. Modus themes' -deuteranopia/-tritanopia variants).
+
 ## 7. Wallpaper: low-emission flat background + low-frequency waves
 
 Keeps the style of the MacBook's current dynamic wallpaper (wave-mauve:
@@ -135,6 +149,6 @@ with the Ocular palette:
 ## Sources
 
 - Dark/light and polarity: [ETRA 2025](https://dl.acm.org/doi/10.1145/3715669.3725879) · [MDPI IJERPH 2025](https://www.mdpi.com/1660-4601/22/4/609) · [ACHI 2024](https://personales.upv.es/thinkmind/dl/conferences/achi/achi_2024/achi_2024_3_150_20069.pdf) · [arXiv 2409.10841](https://arxiv.org/html/2409.10841v2) · [NN/g](https://www.nngroup.com/articles/dark-mode/)
-- APCA: [APCA in a Nutshell](https://git.apcacontrast.com/documentation/APCA_in_a_Nutshell.html) · [Why APCA](https://git.apcacontrast.com/documentation/WhyAPCA)
+- APCA: [APCA in a Nutshell](https://git.apcacontrast.com/documentation/APCA_in_a_Nutshell.html) · [Why APCA](https://git.apcacontrast.com/documentation/WhyAPCA) · [WCAG3 Contrast as of April 2026 — Adrian Roselli](https://adrianroselli.com/2026/04/wcag3-contrast-as-of-april-2026.html)
 - Halation/astigmatism: [Level Access](https://www.levelaccess.com/blog/accessibility-for-people-with-astigmatism/) · [BOIA](https://www.boia.org/blog/dark-mode-can-improve-text-readability-but-not-for-everyone)
 - Circadian: [Nature Human Behaviour 2024](https://www.nature.com/articles/s41562-023-01791-7) · [MDPI Life 2025](https://www.mdpi.com/2075-1729/15/5/715) · [Chronobiology in Medicine 2024](https://www.chronobiologyinmedicine.org/journal/view.php?number=167)

@@ -37,7 +37,8 @@ sustitución simplemente heredan el mapeo que ya trae el port oficial):
     function              -> blue
     number/constant/bool  -> peach
     type/class             -> yellow
-    comment                -> overlay2
+    comment                -> subtext0 (texto leído de forma sostenida, no
+                                chrome; Lc 68/72 vs 58/60 de overlay2)
     variable                -> text
     operator/punctuation    -> sky / subtext0
     error                    -> red
@@ -901,7 +902,7 @@ def vscode_theme(mode, label, P):
         return {"name": name, "scope": scopes, "settings": s}
 
     tokens = [
-        tk("Comment", ["comment", "punctuation.definition.comment"], N["muted"], "italic"),
+        tk("Comment", ["comment", "punctuation.definition.comment"], P["colors"]["subtext0"], "italic"),
         tk("String", ["string", "string.quoted", "string.template"], S["green"]),
         tk("String escape", ["constant.character.escape"], S["cyan"]),
         tk("Number", ["constant.numeric"], S["orange"]),
