@@ -31,8 +31,11 @@ automático, nunca un modo fijo.
 
 ## 2. Contraste APCA: bandas controladas, no contraste máximo
 
-APCA (algoritmo perceptual de WCAG 3) reporta contraste como Lc; a diferencia de
-WCAG 2.x modela correctamente la asimetría del dark mode.
+APCA es un algoritmo de contraste perceptual desarrollado como candidato para
+WCAG 3, removido del proceso del draft en 2023; a abril de 2026 el algoritmo de
+contraste de WCAG 3 sigue sin determinarse. Reporta contraste como Lc y, a
+diferencia de WCAG 2.x, modela correctamente la asimetría del dark mode — el
+theme lo usa por ese mérito técnico, no por su estatus de estandarización.
 
 - Guía APCA: **Lc 90 preferido** para texto cuerpo ≥14px/400; **Lc 75 mínimo** para
   columnas de texto ≥18px; Lc 60 usable para texto grande; Lc 15 = umbral de
@@ -48,6 +51,11 @@ WCAG 2.x modela correctamente la asimetría del dark mode.
 | `subtext1` / `subtext0` | Lc 74 / 68 | Lc 80 / 72 |
 | `overlay2/1/0` (UI no-texto) | Lc 58 / 50 / 43 | Lc 60 / 52 / 44 |
 | 14 acentos | Lc 71 ± 1.5 | Lc 74 ± 1.5 |
+
+Los comentarios de código mapean a `subtext0` (Lc 68 dark / 72 light), no a la
+banda overlay: son texto que se lee de forma sostenida, no chrome de UI — Lc
+58/60 queda bajo el piso APCA de Lc 60 para texto de contenido no-cuerpo, y la
+banda subtext preserva la jerarquía frente al cuerpo (82/88).
 
 En dark el target de cuerpo queda deliberadamente en 82 (sobre el mínimo fluent 75,
 bajo el 90 "preferido") porque el 90 está pensado para polaridad positiva; en fondo
@@ -103,6 +111,13 @@ hue queda como canal puramente categórico (vía parvocelular). Es el mismo prin
 validado en el theme Crepúsculo de este workspace, ahora aplicado a los hues de
 Catppuccin extraídos de la paleta oficial (delta de hue ≤ 2°).
 
+**Trade-off:** acentos a luminancia uniforme eliminan la señal de brillo que
+usuarios con deficiencia de visión de color usan cuando los matices colapsan
+(p. ej. red vs green bajo deuteranopia). Ocular optimiza para visión
+tricrómata típica; una variante para daltonismo requeriría luminancias
+deliberadamente desiguales (cf. las variantes -deuteranopia/-tritanopia de
+Modus themes).
+
 ## 7. Wallpaper: fondo plano de baja emisión + olas de baja frecuencia
 
 Mantiene el estilo del wallpaper dinámico actual del MacBook (wave-mauve: fondo casi
@@ -124,6 +139,6 @@ plano + olas en capas en dos esquinas opuestas), re-derivado con la paleta Ocula
 ## Fuentes
 
 - Dark/light y polaridad: [ETRA 2025](https://dl.acm.org/doi/10.1145/3715669.3725879) · [MDPI IJERPH 2025](https://www.mdpi.com/1660-4601/22/4/609) · [ACHI 2024](https://personales.upv.es/thinkmind/dl/conferences/achi/achi_2024/achi_2024_3_150_20069.pdf) · [arXiv 2409.10841](https://arxiv.org/html/2409.10841v2) · [NN/g](https://www.nngroup.com/articles/dark-mode/)
-- APCA: [APCA in a Nutshell](https://git.apcacontrast.com/documentation/APCA_in_a_Nutshell.html) · [Why APCA](https://git.apcacontrast.com/documentation/WhyAPCA)
+- APCA: [APCA in a Nutshell](https://git.apcacontrast.com/documentation/APCA_in_a_Nutshell.html) · [Why APCA](https://git.apcacontrast.com/documentation/WhyAPCA) · [WCAG3 Contrast as of April 2026 — Adrian Roselli](https://adrianroselli.com/2026/04/wcag3-contrast-as-of-april-2026.html)
 - Halación/astigmatismo: [Level Access](https://www.levelaccess.com/blog/accessibility-for-people-with-astigmatism/) · [BOIA](https://www.boia.org/blog/dark-mode-can-improve-text-readability-but-not-for-everyone)
 - Circadiano: [Nature Human Behaviour 2024](https://www.nature.com/articles/s41562-023-01791-7) · [MDPI Life 2025](https://www.mdpi.com/2075-1729/15/5/715) · [Chronobiology in Medicine 2024](https://www.chronobiologyinmedicine.org/journal/view.php?number=167)

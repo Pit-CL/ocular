@@ -61,7 +61,7 @@ Detalle completo con fuentes: [CIENCIA.md](CIENCIA.md).
 ```bash
 python3 -m venv venv && venv/bin/pip install numpy pillow   # solo para wallpapers
 python3 build.py        # regenera la paleta y falla si un check no pasa
-python3 audit.py        # auditoría cruzada texto × superficie (228 pares)
+python3 audit.py        # auditoría cruzada texto × superficie (216 pares)
 venv/bin/python wallpaper.py   # regenera los 6 wallpapers + previews
 ```
 

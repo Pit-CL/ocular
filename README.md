@@ -63,7 +63,7 @@ Full detail with sources: [SCIENCE.md](SCIENCE.md).
 ```bash
 python3 -m venv venv && venv/bin/pip install numpy pillow   # only for wallpapers
 python3 build.py        # regenerates the palette and fails if a check doesn't pass
-python3 audit.py        # cross-audit text × surface (228 pairs)
+python3 audit.py        # cross-audit text × surface (216 pairs)
 venv/bin/python wallpaper.py   # regenerates the 6 wallpapers + previews
 ```
 
