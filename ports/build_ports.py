@@ -66,6 +66,9 @@ ROOT = Path(__file__).resolve().parent.parent
 PORTS = ROOT / "ports"
 OUT = PORTS / "out"
 
+sys.path.insert(0, str(ROOT))
+from color_science import lc as apca_lc  # noqa: E402 (requiere ROOT en sys.path)
+
 # --------------------------------------------------------------------------
 # Paletas Ocular + oficiales Catppuccin (para reconocer hex por rol)
 # --------------------------------------------------------------------------
@@ -116,6 +119,63 @@ OFICIAL_ALL_HEX = {h(v) for d in OFICIAL.values() for v in d.values()}
 
 BARE_HEX_RE = re.compile(r"#([0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?)")
 QUOTED_HEX_RE = re.compile(r"([\"'])#([0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?)\1")
+
+# --------------------------------------------------------------------------
+# Guarda de pares APCA EMITIDOS (audit 2026-07-26): tabla ESTÁTICA de los
+# pares fg/bg que los generadores de este archivo de verdad producen — KISS,
+# no un parser genérico de artefactos. Nace de encontrar acentos/neutros
+# oscuros usados como fondo con Lc≈0 (yazi indicator/progress_error, lazygit
+# markedBaseCommit, herdr surface_dim). Cada vez que se agregue un rol nuevo
+# usado como bg en alguno de estos generadores, se agrega su par aquí.
+# Piso por clase (color_science.lc, ver ese módulo para la fórmula APCA):
+#   cuerpo (60)     -> texto largo/leído normalmente
+#   chrome (55)     -> bordes, tabs, marcas de selección puntuales
+#   decorativo (45) -> marks/highlights que no se leen como texto corrido
+PAIR_FLOORS = {"cuerpo": 60, "chrome": 55, "decorativo": 45}
+
+EMITTED_PAIRS = [
+    # (app, campo, clase, rol_fg, rol_bg)
+    ("yazi", "indicator.parent/preview", "cuerpo", "text", "surface1"),
+    ("yazi", "indicator.current", "chrome", "base", "peach"),
+    ("yazi", "status.progress_error", "chrome", "base", "red"),
+    ("yazi", "status.count_copied", "chrome", "base", "green"),
+    ("yazi", "status.count_cut", "chrome", "base", "red"),
+    ("yazi", "status.count_selected", "chrome", "base", "mauve"),
+    ("lazygit", "markedBaseCommit(fg/bg)", "chrome", "blue", "surface1"),
+    ("lazygit", "cherryPickedCommit(fg/bg)", "chrome", "mauve", "surface1"),
+    ("lazygit", "selectedLineBgColor (fg=defaultFgColor)", "cuerpo", "text", "surface0"),
+    ("lazygit", "inactiveViewSelectedLineBgColor (fg=defaultFgColor)", "cuerpo", "text", "surface1"),
+    ("herdr", "surface_dim (fg=text)", "cuerpo", "text", "surface1"),
+    ("kitty", "selection_foreground/background", "chrome", "base", "rosewater"),
+    ("kitty", "cursor/cursor_text_color", "chrome", "base", "rosewater"),
+    ("kitty", "active_tab_foreground/background", "chrome", "crust", "mauve"),
+    ("kitty", "inactive_tab_foreground/background", "chrome", "text", "mantle"),
+    ("kitty", "mark1_foreground/background", "decorativo", "base", "lavender"),
+    ("kitty", "mark2_foreground/background", "decorativo", "base", "mauve"),
+    ("kitty", "mark3_foreground/background", "decorativo", "base", "sapphire"),
+    ("tmux", "status-style", "cuerpo", "text", "mantle"),
+    ("tmux", "window-status-current-style/mode-style", "chrome", "crust", "mauve"),
+    ("ghostty", "cursor-color/cursor-text", "chrome", "crust", "rosewater"),
+    ("ghostty", "selection-background/foreground", "cuerpo", "text", "surface1"),
+]
+
+
+def check_emitted_pairs():
+    """Recorre EMITTED_PAIRS con la paleta real de cada modo y registra un
+    check APCA (color_science.lc) por par — exit≠0 si alguno baja del piso
+    de su clase. Vigila la clase entera de "acento/neutro-oscuro como bg"
+    para siempre, no solo los casos puntuales de este audit."""
+    for mode_name, P in (("rooibos", ROOIBOS), ("manzanilla", MANZANILLA)):
+        for app, field, clase, fg_role, bg_role in EMITTED_PAIRS:
+            fg_hex, bg_hex = P["colors"][fg_role], P["colors"][bg_role]
+            val = apca_lc(fg_hex, bg_hex)
+            floor = PAIR_FLOORS[clase]
+            ok = val >= floor
+            label = ROOT / "ports" / f"pares-apca:{app}:{mode_name}:{field}"
+            record(
+                "apca-pares", label, ok,
+                f"Lc={val:.2f} (piso {clase}={floor}) fg={fg_role} bg={bg_role}",
+            )
 
 
 # --------------------------------------------------------------------------
@@ -1245,6 +1305,9 @@ def main():
         record("exists", p, p.exists())
         validate_bash(p)
         audit_ansi_rgb_file(p, allowed)
+
+    # pares fg/bg emitidos (guarda APCA permanente, ver EMITTED_PAIRS arriba)
+    check_emitted_pairs()
 
     # ------------------------------------------------------------------
     # Imprimir reporte
