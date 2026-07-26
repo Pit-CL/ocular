@@ -11,7 +11,10 @@ estructura de roles y los matices de acento de [Catppuccin](https://github.com/c
 | **Rooibos** | dark | fondo oscuro cálido, texto off-white cálido, acentos a Lc 71 |
 | **Manzanilla** | light | papel cálido, tinta cálida, acentos a Lc 74 |
 
-Bebidas **sin cafeína**: este theme existe para descansar la vista.
+Sobre los nombres: Catppuccin nombra sus variantes con bebidas con café (Latte,
+Mocha…). Las variantes de Ocular llevan nombres de **infusiones sin cafeína** —
+rooibos y manzanilla — porque este theme está hecho para relajar la vista, no
+para estimularla.
 
 ## Wallpapers
 
