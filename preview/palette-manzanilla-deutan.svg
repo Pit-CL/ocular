@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="230" viewBox="0 0 840 230">
+  <rect x="0" y="0" width="840" height="230" rx="12" fill="#f5efe7"/>
+  <text x="24" y="34" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="15" font-weight="bold" fill="#3f372d">Ocular Manzanilla Deutan (light)</text>
+  <rect x="24" y="54" width="48" height="48" rx="6" fill="#69433c"/>
+  <text x="48" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">rosewater</text>
+  <rect x="80" y="54" width="48" height="48" rx="6" fill="#884f5d"/>
+  <text x="104" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">flamingo</text>
+  <rect x="136" y="54" width="48" height="48" rx="6" fill="#8c406e"/>
+  <text x="160" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">pink</text>
+  <rect x="192" y="54" width="48" height="48" rx="6" fill="#824992"/>
+  <text x="216" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">mauve</text>
+  <rect x="248" y="54" width="48" height="48" rx="6" fill="#983c41"/>
+  <text x="272" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">red</text>
+  <rect x="304" y="54" width="48" height="48" rx="6" fill="#914e36"/>
+  <text x="328" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">maroon</text>
+  <rect x="360" y="54" width="48" height="48" rx="6" fill="#8c4900"/>
+  <text x="384" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">peach</text>
+  <rect x="416" y="54" width="48" height="48" rx="6" fill="#614a00"/>
+  <text x="440" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">yellow</text>
+  <rect x="472" y="54" width="48" height="48" rx="6" fill="#3f6b26"/>
+  <text x="496" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">green</text>
+  <rect x="528" y="54" width="48" height="48" rx="6" fill="#006561"/>
+  <text x="552" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">teal</text>
+  <rect x="584" y="54" width="48" height="48" rx="6" fill="#005460"/>
+  <text x="608" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">sky</text>
+  <rect x="640" y="54" width="48" height="48" rx="6" fill="#006d9d"/>
+  <text x="664" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">sapphire</text>
+  <rect x="696" y="54" width="48" height="48" rx="6" fill="#2c5aa3"/>
+  <text x="720" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">blue</text>
+  <rect x="752" y="54" width="48" height="48" rx="6" fill="#4f4480"/>
+  <text x="776" y="115" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="9" fill="#675f57" text-anchor="middle">lavender</text>
+  <rect x="24" y="150" width="62" height="26" fill="#e6e0d7" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="55" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">crust</text>
+  <rect x="86" y="150" width="62" height="26" fill="#eee8df" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="117" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">mantle</text>
+  <rect x="148" y="150" width="62" height="26" fill="#f5efe7" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="179" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">base</text>
+  <rect x="210" y="150" width="62" height="26" fill="#e3ddd4" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="241" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">surface0</text>
+  <rect x="272" y="150" width="62" height="26" fill="#d9d3c9" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="303" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">surface1</text>
+  <rect x="334" y="150" width="62" height="26" fill="#cdc6bd" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="365" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">surface2</text>
+  <rect x="396" y="150" width="62" height="26" fill="#a19c94" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="427" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">overlay0</text>
+  <rect x="458" y="150" width="62" height="26" fill="#918b84" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="489" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">overlay1</text>
+  <rect x="520" y="150" width="62" height="26" fill="#817a73" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="551" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">overlay2</text>
+  <rect x="582" y="150" width="62" height="26" fill="#675f57" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="613" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">subtext0</text>
+  <rect x="644" y="150" width="62" height="26" fill="#544c43" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="675" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">subtext1</text>
+  <rect x="706" y="150" width="62" height="26" fill="#3f372d" stroke="#cdc6bd" stroke-width="1"/>
+  <text x="737" y="189" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="8" fill="#675f57" text-anchor="middle">text</text>
+</svg>

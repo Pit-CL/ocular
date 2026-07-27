@@ -1,0 +1,224 @@
+{
+  "comment": "Perfil CVD-safe (deuteranopia + protanopia) de los 14 acentos: hue, sat y dlc (offset de Lc APCA aplicado en dark 71+dlc / light 74+dlc) por rol, derivados por multi-start determinista (3 inicializaciones fijas) + coordinate ascent + perturbacion dirigida post-convergencia, maximizando el ΔE OKLab minimo sobre {normal, deutan, protan} x {dark, light} x 91 pares, con piso duro de audit.floor_for sobre 6 superficies en ambas variantes. Rompe a proposito el equal-weight de hues.json (SCIENCE.md §6): bajo deuteranopia el hue colapsa, asi que la distincion pasa a depender del brillo. Congelado y versionado; build.py solo LEE esta tabla.",
+  "windows": {
+    "red": {
+      "hue": [
+        20,
+        30
+      ],
+      "sat": [
+        0.95,
+        1.0
+      ]
+    },
+    "maroon": {
+      "hue": [
+        35,
+        50
+      ],
+      "sat": [
+        0.6,
+        0.8
+      ]
+    },
+    "peach": {
+      "hue": [
+        50,
+        65
+      ],
+      "sat": [
+        0.95,
+        1.0
+      ]
+    },
+    "yellow": {
+      "hue": [
+        80,
+        95
+      ],
+      "sat": [
+        0.95,
+        1.0
+      ]
+    },
+    "green": {
+      "hue": [
+        130,
+        150
+      ],
+      "sat": [
+        0.75,
+        0.95
+      ]
+    },
+    "teal": {
+      "hue": [
+        175,
+        195
+      ],
+      "sat": [
+        0.8,
+        1.0
+      ]
+    },
+    "sky": {
+      "hue": [
+        210,
+        228
+      ],
+      "sat": [
+        0.75,
+        0.95
+      ]
+    },
+    "sapphire": {
+      "hue": [
+        238,
+        252
+      ],
+      "sat": [
+        0.9,
+        1.0
+      ]
+    },
+    "blue": {
+      "hue": [
+        256,
+        270
+      ],
+      "sat": [
+        0.95,
+        1.0
+      ]
+    },
+    "lavender": {
+      "hue": [
+        282,
+        298
+      ],
+      "sat": [
+        0.65,
+        0.85
+      ]
+    },
+    "mauve": {
+      "hue": [
+        300,
+        320
+      ],
+      "sat": [
+        0.85,
+        1.0
+      ]
+    },
+    "pink": {
+      "hue": [
+        335,
+        355
+      ],
+      "sat": [
+        0.8,
+        1.0
+      ]
+    },
+    "flamingo": {
+      "hue": [
+        5,
+        25
+      ],
+      "sat": [
+        0.5,
+        0.7
+      ]
+    },
+    "rosewater": {
+      "hue": [
+        15,
+        40
+      ],
+      "sat": [
+        0.3,
+        0.45
+      ]
+    }
+  },
+  "table": {
+    "rosewater": {
+      "hue": 32,
+      "sat": 0.425,
+      "dlc": 6.0
+    },
+    "flamingo": {
+      "hue": 5,
+      "sat": 0.6,
+      "dlc": -2.0
+    },
+    "pink": {
+      "hue": 345,
+      "sat": 0.9,
+      "dlc": 0.0
+    },
+    "mauve": {
+      "hue": 318,
+      "sat": 0.975,
+      "dlc": -2.0
+    },
+    "red": {
+      "hue": 20,
+      "sat": 0.95,
+      "dlc": 0.0
+    },
+    "maroon": {
+      "hue": 40,
+      "sat": 0.75,
+      "dlc": -2.0
+    },
+    "peach": {
+      "hue": 58,
+      "sat": 0.975,
+      "dlc": 0.0
+    },
+    "yellow": {
+      "hue": 88,
+      "sat": 0.975,
+      "dlc": 6.0
+    },
+    "green": {
+      "hue": 136,
+      "sat": 0.85,
+      "dlc": -2.0
+    },
+    "teal": {
+      "hue": 189,
+      "sat": 0.9,
+      "dlc": 0.0
+    },
+    "sky": {
+      "hue": 210,
+      "sat": 0.85,
+      "dlc": 6.0
+    },
+    "sapphire": {
+      "hue": 238,
+      "sat": 0.925,
+      "dlc": -5.0
+    },
+    "blue": {
+      "hue": 259,
+      "sat": 0.975,
+      "dlc": 0.0
+    },
+    "lavender": {
+      "hue": 290,
+      "sat": 0.75,
+      "dlc": 6.0
+    }
+  },
+  "meta": {
+    "min_delta_e_normal": 0.032785,
+    "min_delta_e_deutan": 0.02136,
+    "min_delta_e_protan": 0.020114,
+    "min_delta_e": 0.020114,
+    "generated_by": "derive_hues.py --profile deutan"
+  }
+}
