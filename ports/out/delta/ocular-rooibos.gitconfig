@@ -1,0 +1,34 @@
+# delta — feature 'ocular' (Ocular Rooibos)
+# Generado por ports/build_ports.py — plus/minus derivados por mezcla
+# OKLab (base + green/red @ 12%/28%, ver mix_oklab/delta_diff_tints) +
+# gate APCA obligatorio (check_delta_pairs, piso cuerpo=60 Lc). Comparte
+# el tmTheme de bat (syntax-theme = Ocular Rooibos). Nombre de feature
+# FIJO 'ocular' en ambos modos: ocular-switch reescribe el CONTENIDO de
+# este archivo, nunca el include de ~/.gitconfig.
+
+[delta]
+    features = ocular
+
+[delta "ocular"]
+    syntax-theme = Ocular Rooibos
+    true-color = always
+    plus-style = syntax "#2c2d23"
+    plus-emph-style = syntax "#414836"
+    minus-style = syntax "#352a24"
+    minus-emph-style = syntax "#55403a"
+    zero-style = syntax
+    line-numbers-plus-style = "#a4d399"
+    line-numbers-minus-style = "#ffb4ad"
+    line-numbers-zero-style = "#a6a099"
+    line-numbers-left-style = "#453f38"
+    line-numbers-right-style = "#453f38"
+    file-style = "#e3c372" bold
+    file-decoration-style = "#38322b" ul
+    hunk-header-style = "#aac8ff" bold
+    hunk-header-decoration-style = "#2b2520" box
+    hunk-header-file-style = "#c6c1b7"
+    hunk-header-line-number-style = "#e3c372"
+    blame-palette = "#191511" "#1e1a15" "#2b2520" "#15110d"
+    whitespace-error-style = "#ffb4ad" reverse
+    merge-conflict-ours-style = "#feb782" bold
+    merge-conflict-theirs-style = "#aac8ff" bold

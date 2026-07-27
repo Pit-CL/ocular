@@ -458,11 +458,21 @@ else
     skip "vscode"
 fi
 
-# --- delta: reusa el theme de bat por nombre ---
-if command -v delta >/dev/null 2>&1; then
+# --- delta: feature file propio ([delta "ocular"], fondos de diff por rol,
+#     ver ports/out/delta/README.md) + syntax-theme de bat por nombre.
+#     Detección por directorio de config, NO command -v: mismo gotcha de
+#     PATH bajo launchd del Mac que herdr/oh-my-posh (brew fuera del PATH no-
+#     login). El nombre de feature es FIJO "ocular" en ambas variantes: el
+#     ~/.gitconfig del usuario y su [include] no cambian nunca, solo el
+#     CONTENIDO de ocular.gitconfig — delta no cachea, el próximo diff ya lo
+#     toma. git config --global delta.syntax-theme queda igual que antes
+#     (mismo valor que ya fija el feature; no hay contradicción, el feature
+#     de todos modos pisa el [delta] principal). ---
+if [ -d "$HOME/.config/delta" ]; then
+    cp "$OUT/delta/ocular-$variant.gitconfig" "$HOME/.config/delta/ocular.gitconfig"
     name="Ocular Rooibos"; [ "$variant" = manzanilla ] && name="Ocular Manzanilla"
     git config --global delta.syntax-theme "$name"
-    ok "delta (delta.syntax-theme = $name)"
+    ok "delta (feature ocular + delta.syntax-theme = $name)"
 else
     skip "delta"
 fi

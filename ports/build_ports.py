@@ -69,6 +69,7 @@ OUT = PORTS / "out"
 
 sys.path.insert(0, str(ROOT))
 from color_science import lc as apca_lc  # noqa: E402 (requiere ROOT en sys.path)
+from color_science import hex_to_oklab, oklch_to_hex  # noqa: E402 (mezcla OKLab de delta_theme)
 
 # --------------------------------------------------------------------------
 # Paletas Ocular + oficiales Catppuccin (para reconocer hex por rol)
@@ -1085,6 +1086,216 @@ def slack_readme():
     ])
 
 
+DELTA_README = """# delta — Ocular
+
+Antes este directorio solo documentaba que delta reusa el tmTheme de bat por
+nombre (`syntax-theme`). Eso sigue siendo cierto, pero delta también tiene
+FONDOS de diff propios (plus/minus/blame/line-numbers) que el `syntax-theme`
+no cubre — sin un feature dedicado quedan en los defaults de delta o, peor,
+en los de un feature legado ajeno (ver "Por qué existe" abajo). Este puerto
+genera un feature file `[delta "ocular"]` completo por modo.
+
+## Archivos
+
+- `ocular-rooibos.gitconfig` — dark.
+- `ocular-manzanilla.gitconfig` — light.
+
+Mismo nombre de feature **fijo** `ocular` en ambos: el `~/.gitconfig` del
+usuario nunca cambia, solo el CONTENIDO del archivo incluido cambia por modo.
+
+## Instalación (la hace `ocular-switch`)
+
+```
+cp ports/out/delta/ocular-<variante>.gitconfig ~/.config/delta/ocular.gitconfig
+```
+
+Y en `~/.gitconfig` (una sola vez, a mano):
+
+```
+[include]
+    path = ~/.config/delta/ocular.gitconfig
+```
+
+delta no cachea nada: el próximo `git diff`/`git log -p | delta` ya toma el
+archivo reescrito, sin reiniciar nada.
+
+## Derivación de color
+
+Todos los valores salen por ROL de `palette/{rooibos,manzanilla}.json`
+(`build_ports.py`, función `delta_theme()`), igual que el resto de los ports:
+
+- `syntax-theme` = el tmTheme de bat del mismo modo (`ports/out/bat/`).
+- `plus-style`/`minus-style` = mezcla perceptual OKLab de `base` con
+  `green`/`red` (~12%, `mix_oklab()`/`TINT_NORMAL`) — nunca el acento puro
+  como fondo: los acentos Ocular están calibrados al mismo Lc que el texto
+  normal frente a un neutro, así que usarlos de fondo colapsaría el
+  contraste de lo que se dibuja encima.
+- `plus-emph-style`/`minus-emph-style` = misma mezcla, más intensa (~28%,
+  `TINT_EMPH`), para las palabras resaltadas dentro de la línea.
+- `line-numbers-plus/minus-style` = `green`/`red` puros (ya calibrados).
+- `line-numbers-zero/left/right-style`, `file-decoration-style`,
+  `hunk-header-decoration-style`, `blame-palette` = neutros de superficie
+  del mismo modo.
+- `file-style`, `hunk-header-style`, `hunk-header-line-number-style`,
+  `merge-conflict-*-style` = acentos directos (yellow/blue/peach).
+
+Gate obligatorio (`check_delta_pairs()` en `build_ports.py`, corre en cada
+`python3 ports/build_ports.py`): `Lc(text, bg) >= 60` (APCA,
+`color_science.lc`) para los 4 fondos de diff y los 4 neutros de
+blame-palette, más `Lc(green/red, base)` para line-numbers — exit != 0 si
+alguno falla.
+
+## Por qué existe este port
+
+Sin un feature propio, cualquier feature LEGADO que un `~/.gitconfig` traiga
+incluido (p.ej. uno pre-Ocular con fondos oscuros hardcodeados) pisa el
+`[delta] syntax-theme` principal y deja el diff con fondos dark sobre
+terminal light — el síntoma que motivó este port. `ocular-switch` instala
+SIEMPRE el feature `ocular` del modo activo; basta con apuntar el `[include]`
+de `~/.gitconfig` a `~/.config/delta/ocular.gitconfig` una vez.
+"""
+
+
+# --------------------------------------------------------------------------
+# 10) DELTA — feature file propio (`[delta "ocular"]`), reemplaza el README-
+#    only anterior (delta reusaba SOLO el tmTheme de bat por nombre; no
+#    tenía fondos de diff propios). Nombre de feature FIJO "ocular" en
+#    AMBOS modos — así ~/.gitconfig no cambia nunca, solo el CONTENIDO del
+#    archivo incluido cambia por modo (ver ocular-switch). Estructura calcada
+#    del feature legado pre-Ocular '~/.config/delta/crepusculo.gitconfig'
+#    (dark hardcodeado) pero con TODOS los colores derivados por ROL de la
+#    paleta Ocular del modo — ese era justo el bug que motivó el port: el
+#    feature legado pisaba syntax-theme/plus-style/minus-style del [delta]
+#    principal con fondos oscuros fijos, ilegibles en Manzanilla (light).
+#
+#    plus-style/minus-style: fondo = mezcla OKLab base+green/red al
+#    TINT_NORMAL (~12%) — NUNCA el acento puro como bg: los 14 acentos están
+#    calibrados al MISMO Lc que texto normal frente a neutros (ver nota
+#    "Pares acento-como-fondo" del runbook ocular-theme), así que usarlos de
+#    fondo colapsa el contraste de lo que se dibuja encima. plus-emph/minus-
+#    emph: mezcla al TINT_EMPH (~28%), mismo mecanismo con más intensidad
+#    para las palabras resaltadas dentro de la línea. zero-style = syntax
+#    (colores de sintaxis normales, sin tinte de fondo, para contexto).
+#
+#    line-numbers-zero/left/right-style son DECORATIVOS (columna de números
+#    sin cambios / separador visual entre paneles) — no se leen como cuerpo
+#    de texto, así que no están sujetos al piso de lectura (60 Lc) que sí
+#    aplica a los fondos de diff y a blame-palette (ver check_delta_pairs).
+#    Se elige el neutro de mayor Lc frente a `base` entre los roles
+#    ofrecidos (overlay1 sobre overlay0; surface2 sobre surface1) — en
+#    Rooibos ninguno de los dos candidatos de left/right despega de Lc≈0
+#    frente a base (son neutros de SUPERFICIE, pensados para verse como
+#    fondo adyacente, no como texto encima de `base`): es la misma sutileza
+#    intencional que ya tenía el separador del legado crepusculo
+#    ("#36322c" casi idéntico a su propio fondo).
+# --------------------------------------------------------------------------
+TINT_NORMAL = 0.12
+TINT_EMPH = 0.28
+
+
+def mix_oklab(hex_a: str, hex_b: str, t: float) -> str:
+    """Mezcla perceptual hex_a<-hex_b en OKLab (t=peso de hex_b, 0..1), con
+    el mismo pipeline de color_science (OKLab + gamut mapping por reducción
+    de chroma vía oklch_to_hex) — sin dependencias nuevas."""
+    import math
+    L1, a1, b1 = hex_to_oklab(hex_a)
+    L2, a2, b2 = hex_to_oklab(hex_b)
+    L = L1 + (L2 - L1) * t
+    a = a1 + (a2 - a1) * t
+    bb = b1 + (b2 - b1) * t
+    C = math.hypot(a, bb)
+    H = math.degrees(math.atan2(bb, a)) % 360
+    return oklch_to_hex(L, C, H)
+
+
+def delta_diff_tints(P):
+    """(plus, plus_emph, minus, minus_emph) — fondos derivados por mezcla
+    OKLab base+green/red, NUNCA el acento puro (ver docstring de arriba)."""
+    c = P["colors"]
+    return (
+        mix_oklab(c["base"], c["green"], TINT_NORMAL),
+        mix_oklab(c["base"], c["green"], TINT_EMPH),
+        mix_oklab(c["base"], c["red"], TINT_NORMAL),
+        mix_oklab(c["base"], c["red"], TINT_EMPH),
+    )
+
+
+def delta_theme(label, P):
+    c = P["colors"]
+    plus, plus_emph, minus, minus_emph = delta_diff_tints(P)
+    return "\n".join([
+        f"# delta — feature 'ocular' (Ocular {label})",
+        "# Generado por ports/build_ports.py — plus/minus derivados por mezcla",
+        "# OKLab (base + green/red @ 12%/28%, ver mix_oklab/delta_diff_tints) +",
+        "# gate APCA obligatorio (check_delta_pairs, piso cuerpo=60 Lc). Comparte",
+        f"# el tmTheme de bat (syntax-theme = Ocular {label}). Nombre de feature",
+        "# FIJO 'ocular' en ambos modos: ocular-switch reescribe el CONTENIDO de",
+        "# este archivo, nunca el include de ~/.gitconfig.",
+        "",
+        "[delta]",
+        "    features = ocular",
+        "",
+        '[delta "ocular"]',
+        f"    syntax-theme = Ocular {label}",
+        "    true-color = always",
+        f'    plus-style = syntax "{plus}"',
+        f'    plus-emph-style = syntax "{plus_emph}"',
+        f'    minus-style = syntax "{minus}"',
+        f'    minus-emph-style = syntax "{minus_emph}"',
+        "    zero-style = syntax",
+        f'    line-numbers-plus-style = "{c["green"]}"',
+        f'    line-numbers-minus-style = "{c["red"]}"',
+        f'    line-numbers-zero-style = "{c["overlay1"]}"',
+        f'    line-numbers-left-style = "{c["surface2"]}"',
+        f'    line-numbers-right-style = "{c["surface2"]}"',
+        f'    file-style = "{c["yellow"]}" bold',
+        f'    file-decoration-style = "{c["surface1"]}" ul',
+        f'    hunk-header-style = "{c["blue"]}" bold',
+        f'    hunk-header-decoration-style = "{c["surface0"]}" box',
+        f'    hunk-header-file-style = "{c["subtext0"]}"',
+        f'    hunk-header-line-number-style = "{c["yellow"]}"',
+        f'    blame-palette = "{c["mantle"]}" "{c["base"]}" "{c["surface0"]}" "{c["crust"]}"',
+        f'    whitespace-error-style = "{c["red"]}" reverse',
+        f'    merge-conflict-ours-style = "{c["peach"]}" bold',
+        f'    merge-conflict-theirs-style = "{c["blue"]}" bold',
+        "",
+    ])
+
+
+def check_delta_pairs():
+    """Gate APCA obligatorio de delta (exit != 0 si falla): los 4 fondos de
+    diff derivados (mezcla OKLab, no son un rol directo de la paleta -> no
+    caben en la tabla estática EMITTED_PAIRS) + los 4 neutros de blame-
+    palette + line-numbers green/red frente a base deben leerse con
+    Lc(text, bg) >= 60 (piso 'cuerpo', mismo criterio que check_emitted_pairs
+    salvo que aquí el bg es calculado, no un P["colors"][rol] fijo)."""
+    floor = PAIR_FLOORS["cuerpo"]
+    for mode_name, P in (("rooibos", ROOIBOS), ("manzanilla", MANZANILLA)):
+        c = P["colors"]
+        plus, plus_emph, minus, minus_emph = delta_diff_tints(P)
+        # (campo, fg, bg) — fg="text" para los fondos de diff/blame (se lee
+        # texto normal encima); fg=green/red, bg=base para line-numbers (el
+        # propio acento ES el texto, ya calibrado, se vigila igual por drift).
+        checks = [
+            ("plus-style", "text", plus),
+            ("plus-emph-style", "text", plus_emph),
+            ("minus-style", "text", minus),
+            ("minus-emph-style", "text", minus_emph),
+            ("blame-palette:mantle", "text", c["mantle"]),
+            ("blame-palette:base", "text", c["base"]),
+            ("blame-palette:surface0", "text", c["surface0"]),
+            ("blame-palette:crust", "text", c["crust"]),
+            ("line-numbers-plus-style", c["green"], c["base"]),
+            ("line-numbers-minus-style", c["red"], c["base"]),
+        ]
+        for field, fg, bg in checks:
+            fg_hex = c["text"] if fg == "text" else fg
+            val = apca_lc(fg_hex, bg)
+            ok = val >= floor
+            label = ROOT / "ports" / f"delta-apca:{mode_name}:{field}"
+            record("apca-pares", label, ok, f"Lc={val:.2f} (piso cuerpo={floor}) fg={fg_hex} bg={bg}")
+
+
 # --------------------------------------------------------------------------
 # MAIN — orquesta generación + validación de cada artefacto
 # --------------------------------------------------------------------------
@@ -1264,20 +1475,11 @@ def main():
     # ---------------- slack (README con custom theme, generación directa) --
     write(OUT / "slack/README.md", slack_readme())
 
-    # ---------------- delta ----------------
-    write(OUT / "delta/README.md", (
-        "# delta — Ocular\n\n"
-        "delta has no theme of its own: it reuses bat's tmTheme by name\n"
-        "(`git config --global delta.syntax-theme`).\n\n"
-        "```\n"
-        'git config --global delta.syntax-theme "Ocular Rooibos"     # dark\n'
-        'git config --global delta.syntax-theme "Ocular Manzanilla" # light\n'
-        "```\n\n"
-        "Requires `ports/out/bat/Ocular Rooibos.tmTheme` and `Ocular\n"
-        "Manzanilla.tmTheme` to be installed in bat's theme dir (`bat\n"
-        "--config-dir`/themes, with `bat cache --build` after copying them) —\n"
-        "`ocular-switch` takes care of both steps.\n"
-    ))
+    # ---------------- delta (feature file propio, generación directa por rol
+    # + mezcla OKLab — ver delta_theme()/mix_oklab arriba) ----------------
+    write(OUT / "delta/ocular-rooibos.gitconfig", delta_theme("Rooibos", ROOIBOS))
+    write(OUT / "delta/ocular-manzanilla.gitconfig", delta_theme("Manzanilla", MANZANILLA))
+    write(OUT / "delta/README.md", DELTA_README)
 
     # ------------------------------------------------------------------
     # VALIDACIÓN
@@ -1344,8 +1546,27 @@ def main():
         validate_bash(p)
         audit_ansi_rgb_file(p, allowed)
 
+    # delta: gitconfig con hex derivados por mezcla OKLab (plus/plus-emph/
+    # minus/minus-emph) que NO pertenecen a la paleta base -> allowed =
+    # paleta del modo + los 4 derivados de ESTE generador (ver delta_theme()/
+    # mix_oklab arriba; agregarlos como "derivados válidos" en vez de tocar
+    # ALLOWED_ROOIBOS/MANZANILLA global, que representan la paleta canónica).
+    for p, allowed in (
+        (OUT / "delta/ocular-rooibos.gitconfig",
+         ALLOWED_ROOIBOS | {h(x) for x in delta_diff_tints(ROOIBOS)}),
+        (OUT / "delta/ocular-manzanilla.gitconfig",
+         ALLOWED_MANZANILLA | {h(x) for x in delta_diff_tints(MANZANILLA)}),
+    ):
+        exists = p.exists()
+        record("exists", p, exists)
+        if not exists:
+            continue
+        audit_hex_file("delta", p, allowed, quoted=True)
+
     # pares fg/bg emitidos (guarda APCA permanente, ver EMITTED_PAIRS arriba)
     check_emitted_pairs()
+    # gate APCA obligatorio de delta (fondos derivados, ver check_delta_pairs)
+    check_delta_pairs()
 
     # ------------------------------------------------------------------
     # Imprimir reporte
