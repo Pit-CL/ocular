@@ -265,6 +265,54 @@ def render_accent_de_section(colors):
     return "\n".join(lines)
 
 
+SVG_FONT = "-apple-system, 'Segoe UI', sans-serif"
+NEUTRAL_ORDER = ALL_ROLE_ORDER[:12]  # crust..text, sin acentos
+
+
+def render_palette_svg(title, colors):
+    """SVG determinista de preview (sin timestamps ni floats sin redondear):
+    fila 1 = 14 acentos (cuadrados), fila 2 = 12 neutrales (barra contigua)."""
+    width, height = 840, 230
+    base, text, subtext0, surface2 = (colors["base"], colors["text"],
+                                       colors["subtext0"], colors["surface2"])
+
+    parts = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}">',
+        f'  <rect x="0" y="0" width="{width}" height="{height}" rx="12" fill="{base}"/>',
+        f'  <text x="24" y="34" font-family="{SVG_FONT}" font-size="15" font-weight="bold" '
+        f'fill="{text}">{title}</text>',
+    ]
+
+    sq, gap, row1_y = 48, 8, 54
+    for i, name in enumerate(ACCENTS):
+        x = 24 + i * (sq + gap)
+        cx = x + sq // 2
+        parts.append(f'  <rect x="{x}" y="{row1_y}" width="{sq}" height="{sq}" rx="6" '
+                      f'fill="{colors[name]}"/>')
+        parts.append(f'  <text x="{cx}" y="{row1_y + sq + 13}" font-family="{SVG_FONT}" '
+                      f'font-size="9" fill="{subtext0}" text-anchor="middle">{name}</text>')
+
+    bw, bh, row2_y = 62, 26, 150
+    for i, name in enumerate(NEUTRAL_ORDER):
+        x = 24 + i * bw
+        cx = x + bw // 2
+        parts.append(f'  <rect x="{x}" y="{row2_y}" width="{bw}" height="{bh}" '
+                      f'fill="{colors[name]}" stroke="{surface2}" stroke-width="1"/>')
+        parts.append(f'  <text x="{cx}" y="{row2_y + bh + 13}" font-family="{SVG_FONT}" '
+                      f'font-size="8" fill="{subtext0}" text-anchor="middle">{name}</text>')
+
+    parts.append('</svg>')
+    return "\n".join(parts) + "\n"
+
+
+def dump_svg(name, title, colors):
+    path = os.path.join(HERE, "preview", f"palette-{name}.svg")
+    with open(path, "w") as f:
+        f.write(render_palette_svg(title, colors))
+    return path
+
+
 def main():
     dark = build_with_wcag_check(DARK_NEUTRALS, DARK_TEXT_TARGETS, DARK_ACCENT_LC,
                                   DARK_ACCENT_CAP, lighter=True)
@@ -298,6 +346,9 @@ def main():
 
     dump("rooibos", "dark", d_colors, d_ansi, d_lc, d_targets, d_wcag)
     dump("manzanilla", "light", l_colors, l_ansi, l_lc, l_targets, l_wcag)
+
+    dump_svg("rooibos", "Ocular Rooibos (dark)", d_colors)
+    dump_svg("manzanilla", "Ocular Manzanilla (light)", l_colors)
 
     md = ["# Validacion — Ocular (Rooibos / Manzanilla)", "",
           "## Rooibos (dark)", "",

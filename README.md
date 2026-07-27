@@ -58,6 +58,10 @@ Full detail with sources: [SCIENCE.md](SCIENCE.md).
 
 ## Palette
 
+| Manzanilla (light) | Rooibos (dark) |
+|---|---|
+| ![Manzanilla palette](preview/palette-manzanilla.svg) | ![Rooibos palette](preview/palette-rooibos.svg) |
+
 - [`palette/rooibos.json`](palette/rooibos.json) ·
   [`palette/manzanilla.json`](palette/manzanilla.json) — full Catppuccin roles
   + ANSI16, with the actual Lc of each role in its metadata.
