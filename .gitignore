@@ -4,3 +4,4 @@ venv.nosync/
 __pycache__/
 wallpapers/*.png
 private/
+.claude/

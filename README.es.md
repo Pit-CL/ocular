@@ -57,6 +57,10 @@ Detalle completo con fuentes: [CIENCIA.md](CIENCIA.md).
 
 ## Paleta
 
+| Manzanilla (light) | Rooibos (dark) |
+|---|---|
+| ![Paleta Manzanilla](preview/palette-manzanilla.svg) | ![Paleta Rooibos](preview/palette-rooibos.svg) |
+
 - [`palette/rooibos.json`](palette/rooibos.json) · [`palette/manzanilla.json`](palette/manzanilla.json) —
   roles Catppuccin completos + ANSI16, con la Lc real de cada rol en su metadata.
 - [`palette/VALIDACION.md`](palette/VALIDACION.md) — tabla de validación completa.
