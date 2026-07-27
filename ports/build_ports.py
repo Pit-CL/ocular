@@ -106,17 +106,10 @@ EXC_OMP = {"acb0be": "subtext0"}         # "os" de oh-my-posh, aproximación a s
 # líneas 274-276) — el fragmento Ocular solo lo MENCIONA en un comentario.
 GLOBAL_KEEP = {"ffffff", "000000", "42a0fa"}
 
-ALLOWED_ROOIBOS = (
-    {h(v) for v in ROOIBOS["colors"].values()}
-    | {h(v) for v in ROOIBOS["ansi"]["normal"].values()}
-    | {h(v) for v in ROOIBOS["ansi"]["bright"].values()}
-)
-ALLOWED_MANZANILLA = (
-    {h(v) for v in MANZANILLA["colors"].values()}
-    | {h(v) for v in MANZANILLA["ansi"]["normal"].values()}
-    | {h(v) for v in MANZANILLA["ansi"]["bright"].values()}
-)
-ALLOWED_BOTH = ALLOWED_ROOIBOS | ALLOWED_MANZANILLA
+# Los sets ALLOWED_* (hex permitidos por paleta) ya NO son globales: se
+# construyen por perfil dentro de emit_profile(), a partir de dark_pal/
+# light_pal — evita duplicar la fórmula para cada perfil nuevo (ver PR de
+# refactor "build_ports emite por perfil").
 OFICIAL_ALL_HEX = {h(v) for d in OFICIAL.values() for v in d.values()}
 
 BARE_HEX_RE = re.compile(r"#([0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?)")
@@ -775,7 +768,7 @@ def claude_theme(base, P):
 # 6) NVIM — spec lazy.nvim para catppuccin/nvim (API verificada por WebFetch
 #    al README oficial: color_overrides + flavour="auto" + background map)
 # --------------------------------------------------------------------------
-def nvim_lua():
+def nvim_lua(dark_pal, light_pal):
     def block(P):
         c = P["colors"]
         rows = "\n".join(f'        {role} = "{hexv}",' for role, hexv in c.items())
@@ -799,10 +792,10 @@ def nvim_lua():
         "    },",
         "    color_overrides = {",
         "      mocha = {",
-        block(ROOIBOS),
+        block(dark_pal),
         "      },",
         "      latte = {",
-        block(MANZANILLA),
+        block(light_pal),
         "      },",
         "    },",
         "  },",
@@ -1056,7 +1049,7 @@ def slack_theme_string(P):
     return ",".join(f"#{r.lstrip('#').upper()}" for r in roles)
 
 
-def slack_readme():
+def slack_readme(dark_pal, light_pal):
     return "\n".join([
         "# Slack — Ocular custom theme",
         "",
@@ -1068,13 +1061,13 @@ def slack_readme():
         "## Ocular Rooibos (dark)",
         "",
         "```",
-        slack_theme_string(ROOIBOS),
+        slack_theme_string(dark_pal),
         "```",
         "",
         "## Ocular Manzanilla (light)",
         "",
         "```",
-        slack_theme_string(MANZANILLA),
+        slack_theme_string(light_pal),
         "```",
         "",
         "Mapping by role: Column BG = mantle · Menu Hover BG = surface0 · Active Item",
@@ -1297,62 +1290,83 @@ def check_delta_pairs():
 
 
 # --------------------------------------------------------------------------
-# MAIN — orquesta generación + validación de cada artefacto
+# Plantillas de referencia (Catppuccin oficial vendorizado) — las mismas para
+# cualquier perfil: lo único que cambia por perfil es el mapeo rol->hex de
+# destino, no la plantilla fuente.
 # --------------------------------------------------------------------------
-def main():
-    ref = {
-        "bat_mocha": PORTS / "reference/bat-catppuccin-mocha.tmTheme",
-        "bat_latte": PORTS / "reference/bat-catppuccin-latte.tmTheme",
-        "yazi_mocha": PORTS / "reference/yazi-catppuccin-mocha-flavor.toml",
-        "btop_mocha": PORTS / "reference/btop-catppuccin-mocha.theme",
-        "btop_latte": PORTS / "reference/btop-catppuccin-latte.theme",
-        "ohmyposh": PORTS / "reference/ohmyposh-catppuccin-mocha.omp.json",
-        # kitty y ghdash NO llevan entrada aquí: generan directo por rol (sin
-        # leer ninguna plantilla) desde siempre. lazygit y herdr tampoco: desde
-        # el fix del issue #7 (2026-07-26) generan directo por rol
-        # (lazygit_theme/herdr_theme), sin leer ningún config vivo — ver
-        # docstring del módulo.
-    }
-    missing = [str(p) for p in ref.values() if not p.exists()]
-    if missing:
-        print("FALTAN referencias locales:", missing, file=sys.stderr)
-        sys.exit(1)
+REF = {
+    "bat_mocha": PORTS / "reference/bat-catppuccin-mocha.tmTheme",
+    "bat_latte": PORTS / "reference/bat-catppuccin-latte.tmTheme",
+    "yazi_mocha": PORTS / "reference/yazi-catppuccin-mocha-flavor.toml",
+    "btop_mocha": PORTS / "reference/btop-catppuccin-mocha.theme",
+    "btop_latte": PORTS / "reference/btop-catppuccin-latte.theme",
+    "ohmyposh": PORTS / "reference/ohmyposh-catppuccin-mocha.omp.json",
+    # kitty y ghdash NO llevan entrada aquí: generan directo por rol (sin
+    # leer ninguna plantilla) desde siempre. lazygit y herdr tampoco: desde
+    # el fix del issue #7 (2026-07-26) generan directo por rol
+    # (lazygit_theme/herdr_theme), sin leer ningún config vivo — ver
+    # docstring del módulo.
+}
+
+
+# --------------------------------------------------------------------------
+# EMIT_PROFILE — genera + valida todos los ports de UN perfil (paleta dark +
+# paleta light). slug: sufijo de archivo ("" default, "-deutan" perfil CVD
+# futuro). label: sufijo legible (""  default, " Deutan" perfil CVD futuro).
+# Con el perfil default (slug="", label="", dark_pal=ROOIBOS,
+# light_pal=MANZANILLA) produce EXACTAMENTE los mismos bytes que el main()
+# monolítico previo al refactor de este archivo.
+# --------------------------------------------------------------------------
+def emit_profile(slug, label, dark_pal, light_pal):
+    dark_label, light_label = f"Rooibos{label}", f"Manzanilla{label}"
+
+    allowed_dark = (
+        {h(v) for v in dark_pal["colors"].values()}
+        | {h(v) for v in dark_pal["ansi"]["normal"].values()}
+        | {h(v) for v in dark_pal["ansi"]["bright"].values()}
+    )
+    allowed_light = (
+        {h(v) for v in light_pal["colors"].values()}
+        | {h(v) for v in light_pal["ansi"]["normal"].values()}
+        | {h(v) for v in light_pal["ansi"]["bright"].values()}
+    )
+    allowed_both = allowed_dark | allowed_light
 
     # ---------------- kitty ----------------
-    write(OUT / "kitty/ocular-rooibos.conf", kitty_conf("Rooibos", ROOIBOS))
-    write(OUT / "kitty/ocular-manzanilla.conf", kitty_conf("Manzanilla", MANZANILLA))
+    write(OUT / f"kitty/ocular-rooibos{slug}.conf", kitty_conf(dark_label, dark_pal))
+    write(OUT / f"kitty/ocular-manzanilla{slug}.conf", kitty_conf(light_label, light_pal))
 
     # ---------------- ghostty ----------------
-    write(OUT / "ghostty/ocular-rooibos", ghostty_theme("Rooibos", ROOIBOS))
-    write(OUT / "ghostty/ocular-manzanilla", ghostty_theme("Manzanilla", MANZANILLA))
+    write(OUT / f"ghostty/ocular-rooibos{slug}", ghostty_theme(dark_label, dark_pal))
+    write(OUT / f"ghostty/ocular-manzanilla{slug}", ghostty_theme(light_label, light_pal))
 
     # ---------------- bat ----------------
-    mocha_text = ref["bat_mocha"].read_text()
-    latte_text = ref["bat_latte"].read_text()
-    rooibos_bat = bat_tmtheme(
-        mocha_text, HEX2ROLE_MOCHA, ROOIBOS["colors"], EXC_BAT_MOCHA,
-        "Catppuccin Mocha", "Ocular Rooibos",
-        "theme.dark.catppuccin-mocha", "theme.dark.ocular-rooibos",
+    mocha_text = REF["bat_mocha"].read_text()
+    latte_text = REF["bat_latte"].read_text()
+    dark_bat = bat_tmtheme(
+        mocha_text, HEX2ROLE_MOCHA, dark_pal["colors"], EXC_BAT_MOCHA,
+        "Catppuccin Mocha", f"Ocular Rooibos{label}",
+        "theme.dark.catppuccin-mocha", f"theme.dark.ocular-rooibos{slug}",
     )
-    manzanilla_bat = bat_tmtheme(
-        latte_text, HEX2ROLE_LATTE, MANZANILLA["colors"], EXC_BAT_LATTE,
-        "Catppuccin Latte", "Ocular Manzanilla",
-        "theme.light.catppuccin-latte", "theme.light.ocular-manzanilla",
+    light_bat = bat_tmtheme(
+        latte_text, HEX2ROLE_LATTE, light_pal["colors"], EXC_BAT_LATTE,
+        "Catppuccin Latte", f"Ocular Manzanilla{label}",
+        "theme.light.catppuccin-latte", f"theme.light.ocular-manzanilla{slug}",
     )
-    write(OUT / "bat/Ocular Rooibos.tmTheme", rooibos_bat)
-    write(OUT / "bat/Ocular Manzanilla.tmTheme", manzanilla_bat)
+    write(OUT / f"bat/Ocular Rooibos{label}.tmTheme", dark_bat)
+    write(OUT / f"bat/Ocular Manzanilla{label}.tmTheme", light_bat)
 
     # ---------------- yazi (flavor.toml + tmtheme.xml reusado de bat) ----------------
-    yazi_mocha_text = ref["yazi_mocha"].read_text()
-    yazi_rooibos = substitute_hexes(
-        yazi_mocha_text, HEX2ROLE_MOCHA, ROOIBOS["colors"],
+    yazi_mocha_text = REF["yazi_mocha"].read_text()
+    yazi_dark = substitute_hexes(
+        yazi_mocha_text, HEX2ROLE_MOCHA, dark_pal["colors"],
         keep=GLOBAL_KEEP, quoted=True,
     )
     # DESVIACIÓN: no existe un flavor catppuccin-latte.yazi instalado localmente
     # (fleet dark-only) — se deriva manzanilla desde el
     # MISMO flavor.toml Mocha (mapa hex->rol Mocha), igual que oh-my-posh.
-    yazi_manzanilla = substitute_hexes(
-        yazi_mocha_text, HEX2ROLE_MOCHA, MANZANILLA["colors"],
+    yazi_light = substitute_hexes(
+        yazi_mocha_text, HEX2ROLE_MOCHA, light_pal["colors"],
         keep=GLOBAL_KEEP, quoted=True,
     )
     # EXCEPCIÓN post-sustitución (audit 2026-07-26): el mapeo genérico por rol
@@ -1364,9 +1378,9 @@ def main():
     # identidad cálida del acento (fg=base/bg=peach). Y status.progress_error
     # (yellow sobre red, Lc=0) -> fg=base sobre bg=red, mismo patrón que los
     # chips count_* de arriba (fg=base/bg=acento).
-    for name, P in (("rooibos", ROOIBOS), ("manzanilla", MANZANILLA)):
+    for name, P in (("rooibos", dark_pal), ("manzanilla", light_pal)):
         c = P["colors"]
-        text = yazi_rooibos if name == "rooibos" else yazi_manzanilla
+        text = yazi_dark if name == "rooibos" else yazi_light
         text = re.sub(
             r'parent = \{ fg = "#[0-9a-fA-F]{6}", bg = "#[0-9a-fA-F]{6}" \}',
             f'parent = {{ fg = "{c["text"]}", bg = "{c["surface1"]}" }}',
@@ -1388,35 +1402,35 @@ def main():
             text,
         )
         if name == "rooibos":
-            yazi_rooibos = text
+            yazi_dark = text
         else:
-            yazi_manzanilla = text
-    write(OUT / "yazi/ocular-rooibos.yazi/flavor.toml", yazi_rooibos)
-    write(OUT / "yazi/ocular-manzanilla.yazi/flavor.toml", yazi_manzanilla)
-    write(OUT / "yazi/ocular-rooibos.yazi/tmtheme.xml", rooibos_bat)
-    write(OUT / "yazi/ocular-manzanilla.yazi/tmtheme.xml", manzanilla_bat)
+            yazi_light = text
+    write(OUT / f"yazi/ocular-rooibos{slug}.yazi/flavor.toml", yazi_dark)
+    write(OUT / f"yazi/ocular-manzanilla{slug}.yazi/flavor.toml", yazi_light)
+    write(OUT / f"yazi/ocular-rooibos{slug}.yazi/tmtheme.xml", dark_bat)
+    write(OUT / f"yazi/ocular-manzanilla{slug}.yazi/tmtheme.xml", light_bat)
 
     # ---------------- lazygit (generación directa por rol — fix issue #7,
     # ver lazygit_theme() para el mapeo campo->rol) ----------------
-    write(OUT / "lazygit/ocular-rooibos.yml", lazygit_theme("Rooibos", ROOIBOS))
-    write(OUT / "lazygit/ocular-manzanilla.yml", lazygit_theme("Manzanilla", MANZANILLA))
+    write(OUT / f"lazygit/ocular-rooibos{slug}.yml", lazygit_theme(dark_label, dark_pal))
+    write(OUT / f"lazygit/ocular-manzanilla{slug}.yml", lazygit_theme(light_label, light_pal))
 
     # ---------------- btop (archivo completo) ----------------
-    btop_mocha_text = ref["btop_mocha"].read_text()
-    btop_latte_text = ref["btop_latte"].read_text()
-    write(OUT / "btop/ocular-rooibos.theme",
-          substitute_hexes(btop_mocha_text, HEX2ROLE_MOCHA, ROOIBOS["colors"], quoted=True))
-    write(OUT / "btop/ocular-manzanilla.theme",
-          substitute_hexes(btop_latte_text, HEX2ROLE_LATTE, MANZANILLA["colors"], quoted=True))
+    btop_mocha_text = REF["btop_mocha"].read_text()
+    btop_latte_text = REF["btop_latte"].read_text()
+    write(OUT / f"btop/ocular-rooibos{slug}.theme",
+          substitute_hexes(btop_mocha_text, HEX2ROLE_MOCHA, dark_pal["colors"], quoted=True))
+    write(OUT / f"btop/ocular-manzanilla{slug}.theme",
+          substitute_hexes(btop_latte_text, HEX2ROLE_LATTE, light_pal["colors"], quoted=True))
 
     # ---------------- tmux (generación directa) ----------------
-    write(OUT / "tmux/ocular-rooibos.tmuxtheme", tmux_theme("Rooibos", ROOIBOS))
-    write(OUT / "tmux/ocular-manzanilla.tmuxtheme", tmux_theme("Manzanilla", MANZANILLA))
+    write(OUT / f"tmux/ocular-rooibos{slug}.tmuxtheme", tmux_theme(dark_label, dark_pal))
+    write(OUT / f"tmux/ocular-manzanilla{slug}.tmuxtheme", tmux_theme(light_label, light_pal))
 
     # ---------------- gh-dash (solo bloque theme:, generación directa por
     # rol semántico — NO sustitución del legado; ver gh_dash_theme()) ----------------
-    write(OUT / "gh-dash/ocular-rooibos.yml", gh_dash_theme("Rooibos", ROOIBOS))
-    write(OUT / "gh-dash/ocular-manzanilla.yml", gh_dash_theme("Manzanilla", MANZANILLA))
+    write(OUT / f"gh-dash/ocular-rooibos{slug}.yml", gh_dash_theme(dark_label, dark_pal))
+    write(OUT / f"gh-dash/ocular-manzanilla{slug}.yml", gh_dash_theme(light_label, light_pal))
 
     # ---------------- oh-my-posh ----------------
     # Override de identidad (2026-07-26, feedback del usuario): el prompt es UI
@@ -1431,78 +1445,78 @@ def main():
         c["lavender"] = c["mauve"]
         return c
 
-    omp_text = ref["ohmyposh"].read_text()
-    write(OUT / "ohmyposh/ocular-rooibos.omp.json",
-          substitute_hexes(omp_text, HEX2ROLE_MOCHA, omp_colors(ROOIBOS), exceptions=EXC_OMP, quoted=True))
-    write(OUT / "ohmyposh/ocular-manzanilla.omp.json",
-          substitute_hexes(omp_text, HEX2ROLE_MOCHA, omp_colors(MANZANILLA), exceptions=EXC_OMP, quoted=True))
+    omp_text = REF["ohmyposh"].read_text()
+    write(OUT / f"ohmyposh/ocular-rooibos{slug}.omp.json",
+          substitute_hexes(omp_text, HEX2ROLE_MOCHA, omp_colors(dark_pal), exceptions=EXC_OMP, quoted=True))
+    write(OUT / f"ohmyposh/ocular-manzanilla{slug}.omp.json",
+          substitute_hexes(omp_text, HEX2ROLE_MOCHA, omp_colors(light_pal), exceptions=EXC_OMP, quoted=True))
 
     # ---------------- statusline (generación directa) ----------------
-    write(OUT / "statusline/ocular-rooibos.sh", statusline_sh("Rooibos", ROOIBOS))
-    write(OUT / "statusline/ocular-manzanilla.sh", statusline_sh("Manzanilla", MANZANILLA))
+    write(OUT / f"statusline/ocular-rooibos{slug}.sh", statusline_sh(dark_label, dark_pal))
+    write(OUT / f"statusline/ocular-manzanilla{slug}.sh", statusline_sh(light_label, light_pal))
 
     # ---------------- ccmax (generación directa) ----------------
-    write(OUT / "ccmax/ocular-rooibos.sh", ccmax_sh("Rooibos", ROOIBOS))
-    write(OUT / "ccmax/ocular-manzanilla.sh", ccmax_sh("Manzanilla", MANZANILLA))
+    write(OUT / f"ccmax/ocular-rooibos{slug}.sh", ccmax_sh(dark_label, dark_pal))
+    write(OUT / f"ccmax/ocular-manzanilla{slug}.sh", ccmax_sh(light_label, light_pal))
 
     # ---------------- herdr (generación directa por rol — fix issue #7; ver
     # herdr_theme() para el mapeo campo->rol y el override accent=peach) ----------------
-    write(OUT / "herdr/ocular-rooibos.toml", herdr_theme("Rooibos", ROOIBOS))
-    write(OUT / "herdr/ocular-manzanilla.toml", herdr_theme("Manzanilla", MANZANILLA))
+    write(OUT / f"herdr/ocular-rooibos{slug}.toml", herdr_theme(dark_label, dark_pal))
+    write(OUT / f"herdr/ocular-manzanilla{slug}.toml", herdr_theme(light_label, light_pal))
 
     # ---------------- claude code (theme custom, solo tokens de subagentes) --
-    write(OUT / "claude/ocular-rooibos.json",
-          json.dumps(claude_theme("dark", ROOIBOS), indent=2, ensure_ascii=False) + "\n")
-    write(OUT / "claude/ocular-manzanilla.json",
-          json.dumps(claude_theme("light", MANZANILLA), indent=2, ensure_ascii=False) + "\n")
+    write(OUT / f"claude/ocular-rooibos{slug}.json",
+          json.dumps(claude_theme("dark", dark_pal), indent=2, ensure_ascii=False) + "\n")
+    write(OUT / f"claude/ocular-manzanilla{slug}.json",
+          json.dumps(claude_theme("light", light_pal), indent=2, ensure_ascii=False) + "\n")
 
     # ---------------- nvim ----------------
-    write(OUT / "nvim/ocular.lua", nvim_lua())
+    write(OUT / f"nvim/ocular{slug}.lua", nvim_lua(dark_pal, light_pal))
 
     # ---------------- vscode ----------------
-    write(OUT / "vscode/ocular-rooibos-color-theme.json",
-          json.dumps(vscode_theme("dark", "Rooibos", ROOIBOS), indent=2, ensure_ascii=False) + "\n")
-    write(OUT / "vscode/ocular-manzanilla-color-theme.json",
-          json.dumps(vscode_theme("light", "Manzanilla", MANZANILLA), indent=2, ensure_ascii=False) + "\n")
+    write(OUT / f"vscode/ocular-rooibos{slug}-color-theme.json",
+          json.dumps(vscode_theme("dark", dark_label, dark_pal), indent=2, ensure_ascii=False) + "\n")
+    write(OUT / f"vscode/ocular-manzanilla{slug}-color-theme.json",
+          json.dumps(vscode_theme("light", light_label, light_pal), indent=2, ensure_ascii=False) + "\n")
 
     # ---------------- chrome (modo desarrollador) ----------------
-    write(OUT / "chrome/ocular-rooibos/manifest.json",
-          json.dumps(chrome_manifest("Rooibos", "dark", ROOIBOS), indent=2, ensure_ascii=False) + "\n")
-    write(OUT / "chrome/ocular-manzanilla/manifest.json",
-          json.dumps(chrome_manifest("Manzanilla", "light", MANZANILLA), indent=2, ensure_ascii=False) + "\n")
+    write(OUT / f"chrome/ocular-rooibos{slug}/manifest.json",
+          json.dumps(chrome_manifest(dark_label, "dark", dark_pal), indent=2, ensure_ascii=False) + "\n")
+    write(OUT / f"chrome/ocular-manzanilla{slug}/manifest.json",
+          json.dumps(chrome_manifest(light_label, "light", light_pal), indent=2, ensure_ascii=False) + "\n")
     write(OUT / "chrome/README.md", CHROME_README)
 
     # ---------------- slack (README con custom theme, generación directa) --
-    write(OUT / "slack/README.md", slack_readme())
+    write(OUT / "slack/README.md", slack_readme(dark_pal, light_pal))
 
     # ---------------- delta (feature file propio, generación directa por rol
     # + mezcla OKLab — ver delta_theme()/mix_oklab arriba) ----------------
-    write(OUT / "delta/ocular-rooibos.gitconfig", delta_theme("Rooibos", ROOIBOS))
-    write(OUT / "delta/ocular-manzanilla.gitconfig", delta_theme("Manzanilla", MANZANILLA))
+    write(OUT / f"delta/ocular-rooibos{slug}.gitconfig", delta_theme(dark_label, dark_pal))
+    write(OUT / f"delta/ocular-manzanilla{slug}.gitconfig", delta_theme(light_label, light_pal))
     write(OUT / "delta/README.md", DELTA_README)
 
     # ------------------------------------------------------------------
     # VALIDACIÓN
     # ------------------------------------------------------------------
     pairs = [
-        ("kitty", OUT / "kitty/ocular-rooibos.conf", OUT / "kitty/ocular-manzanilla.conf", "bare", "text"),
-        ("ghostty", OUT / "ghostty/ocular-rooibos", OUT / "ghostty/ocular-manzanilla", "bare", "text"),
-        ("bat", OUT / "bat/Ocular Rooibos.tmTheme", OUT / "bat/Ocular Manzanilla.tmTheme", "bare", "xml"),
-        ("yazi-flavor", OUT / "yazi/ocular-rooibos.yazi/flavor.toml", OUT / "yazi/ocular-manzanilla.yazi/flavor.toml", "quoted", "toml"),
-        ("yazi-tmtheme", OUT / "yazi/ocular-rooibos.yazi/tmtheme.xml", OUT / "yazi/ocular-manzanilla.yazi/tmtheme.xml", "bare", "xml"),
-        ("lazygit", OUT / "lazygit/ocular-rooibos.yml", OUT / "lazygit/ocular-manzanilla.yml", "quoted", "text"),
-        ("btop", OUT / "btop/ocular-rooibos.theme", OUT / "btop/ocular-manzanilla.theme", "quoted", "text"),
-        ("tmux", OUT / "tmux/ocular-rooibos.tmuxtheme", OUT / "tmux/ocular-manzanilla.tmuxtheme", "bare", "text"),
-        ("gh-dash", OUT / "gh-dash/ocular-rooibos.yml", OUT / "gh-dash/ocular-manzanilla.yml", "quoted", "text"),
-        ("ohmyposh", OUT / "ohmyposh/ocular-rooibos.omp.json", OUT / "ohmyposh/ocular-manzanilla.omp.json", "quoted", "json"),
-        ("statusline", OUT / "statusline/ocular-rooibos.sh", OUT / "statusline/ocular-manzanilla.sh", "bare", "bash"),
-        ("herdr", OUT / "herdr/ocular-rooibos.toml", OUT / "herdr/ocular-manzanilla.toml", "quoted", "toml"),
-        ("vscode", OUT / "vscode/ocular-rooibos-color-theme.json", OUT / "vscode/ocular-manzanilla-color-theme.json", "quoted", "json"),
-        ("claude", OUT / "claude/ocular-rooibos.json", OUT / "claude/ocular-manzanilla.json", "quoted", "json"),
+        ("kitty", OUT / f"kitty/ocular-rooibos{slug}.conf", OUT / f"kitty/ocular-manzanilla{slug}.conf", "bare", "text"),
+        ("ghostty", OUT / f"ghostty/ocular-rooibos{slug}", OUT / f"ghostty/ocular-manzanilla{slug}", "bare", "text"),
+        ("bat", OUT / f"bat/Ocular Rooibos{label}.tmTheme", OUT / f"bat/Ocular Manzanilla{label}.tmTheme", "bare", "xml"),
+        ("yazi-flavor", OUT / f"yazi/ocular-rooibos{slug}.yazi/flavor.toml", OUT / f"yazi/ocular-manzanilla{slug}.yazi/flavor.toml", "quoted", "toml"),
+        ("yazi-tmtheme", OUT / f"yazi/ocular-rooibos{slug}.yazi/tmtheme.xml", OUT / f"yazi/ocular-manzanilla{slug}.yazi/tmtheme.xml", "bare", "xml"),
+        ("lazygit", OUT / f"lazygit/ocular-rooibos{slug}.yml", OUT / f"lazygit/ocular-manzanilla{slug}.yml", "quoted", "text"),
+        ("btop", OUT / f"btop/ocular-rooibos{slug}.theme", OUT / f"btop/ocular-manzanilla{slug}.theme", "quoted", "text"),
+        ("tmux", OUT / f"tmux/ocular-rooibos{slug}.tmuxtheme", OUT / f"tmux/ocular-manzanilla{slug}.tmuxtheme", "bare", "text"),
+        ("gh-dash", OUT / f"gh-dash/ocular-rooibos{slug}.yml", OUT / f"gh-dash/ocular-manzanilla{slug}.yml", "quoted", "text"),
+        ("ohmyposh", OUT / f"ohmyposh/ocular-rooibos{slug}.omp.json", OUT / f"ohmyposh/ocular-manzanilla{slug}.omp.json", "quoted", "json"),
+        ("statusline", OUT / f"statusline/ocular-rooibos{slug}.sh", OUT / f"statusline/ocular-manzanilla{slug}.sh", "bare", "bash"),
+        ("herdr", OUT / f"herdr/ocular-rooibos{slug}.toml", OUT / f"herdr/ocular-manzanilla{slug}.toml", "quoted", "toml"),
+        ("vscode", OUT / f"vscode/ocular-rooibos{slug}-color-theme.json", OUT / f"vscode/ocular-manzanilla{slug}-color-theme.json", "quoted", "json"),
+        ("claude", OUT / f"claude/ocular-rooibos{slug}.json", OUT / f"claude/ocular-manzanilla{slug}.json", "quoted", "json"),
     ]
 
     for name, rpath, mpath, mode, kind in pairs:
-        for p, allowed in ((rpath, ALLOWED_ROOIBOS), (mpath, ALLOWED_MANZANILLA)):
+        for p, allowed in ((rpath, allowed_dark), (mpath, allowed_light)):
             exists = p.exists()
             record("exists", p, exists)
             if not exists:
@@ -1518,19 +1532,19 @@ def main():
                 validate_bash(p)
 
     # nvim.lua mezcla ambas paletas en un solo archivo -> allowed = unión
-    nvim_path = OUT / "nvim/ocular.lua"
+    nvim_path = OUT / f"nvim/ocular{slug}.lua"
     record("exists", nvim_path, nvim_path.exists())
-    audit_hex_file("nvim", nvim_path, ALLOWED_BOTH, quoted=True)
+    audit_hex_file("nvim", nvim_path, allowed_both, quoted=True)
 
     # slack/README.md mezcla ambas paletas en un solo archivo -> allowed = unión
     slack_path = OUT / "slack/README.md"
     record("exists", slack_path, slack_path.exists())
-    audit_hex_file("slack", slack_path, ALLOWED_BOTH, quoted=False)
+    audit_hex_file("slack", slack_path, allowed_both, quoted=False)
 
     # chrome: JSON parse + membresía RGB->hex propia (no usa el motor de #hex)
     for p, allowed in (
-        (OUT / "chrome/ocular-rooibos/manifest.json", ALLOWED_ROOIBOS),
-        (OUT / "chrome/ocular-manzanilla/manifest.json", ALLOWED_MANZANILLA),
+        (OUT / f"chrome/ocular-rooibos{slug}/manifest.json", allowed_dark),
+        (OUT / f"chrome/ocular-manzanilla{slug}/manifest.json", allowed_light),
     ):
         record("exists", p, p.exists())
         validate_json(p)
@@ -1539,8 +1553,8 @@ def main():
     # ccmax: bash -n + auditoría RGB->hex (mismo patrón que statusline, pero
     # con check explícito de las secuencias ANSI truecolor, no solo #hex)
     for p, allowed in (
-        (OUT / "ccmax/ocular-rooibos.sh", ALLOWED_ROOIBOS),
-        (OUT / "ccmax/ocular-manzanilla.sh", ALLOWED_MANZANILLA),
+        (OUT / f"ccmax/ocular-rooibos{slug}.sh", allowed_dark),
+        (OUT / f"ccmax/ocular-manzanilla{slug}.sh", allowed_light),
     ):
         record("exists", p, p.exists())
         validate_bash(p)
@@ -1549,13 +1563,13 @@ def main():
     # delta: gitconfig con hex derivados por mezcla OKLab (plus/plus-emph/
     # minus/minus-emph) que NO pertenecen a la paleta base -> allowed =
     # paleta del modo + los 4 derivados de ESTE generador (ver delta_theme()/
-    # mix_oklab arriba; agregarlos como "derivados válidos" en vez de tocar
-    # ALLOWED_ROOIBOS/MANZANILLA global, que representan la paleta canónica).
+    # mix_oklab arriba; se agregan como "derivados válidos" en vez de tocar
+    # el set allowed_* del perfil, que representa la paleta canónica).
     for p, allowed in (
-        (OUT / "delta/ocular-rooibos.gitconfig",
-         ALLOWED_ROOIBOS | {h(x) for x in delta_diff_tints(ROOIBOS)}),
-        (OUT / "delta/ocular-manzanilla.gitconfig",
-         ALLOWED_MANZANILLA | {h(x) for x in delta_diff_tints(MANZANILLA)}),
+        (OUT / f"delta/ocular-rooibos{slug}.gitconfig",
+         allowed_dark | {h(x) for x in delta_diff_tints(dark_pal)}),
+        (OUT / f"delta/ocular-manzanilla{slug}.gitconfig",
+         allowed_light | {h(x) for x in delta_diff_tints(light_pal)}),
     ):
         exists = p.exists()
         record("exists", p, exists)
@@ -1567,6 +1581,21 @@ def main():
     check_emitted_pairs()
     # gate APCA obligatorio de delta (fondos derivados, ver check_delta_pairs)
     check_delta_pairs()
+
+
+# --------------------------------------------------------------------------
+# MAIN — orquesta la emisión de cada perfil + el reporte final. Este PR NO
+# emite variantes nuevas: llama a emit_profile() UNA vez con el perfil
+# default. La firma queda lista para que un PR posterior agregue el perfil
+# ("-deutan", " Deutan", rooibos_deutan, manzanilla_deutan).
+# --------------------------------------------------------------------------
+def main():
+    missing = [str(p) for p in REF.values() if not p.exists()]
+    if missing:
+        print("FALTAN referencias locales:", missing, file=sys.stderr)
+        sys.exit(1)
+
+    emit_profile("", "", ROOIBOS, MANZANILLA)
 
     # ------------------------------------------------------------------
     # Imprimir reporte
