@@ -87,7 +87,7 @@ nunca el optimizador.
 ## Ports y switcher
 
 `ports/build_ports.py` genera desde los JSON de paleta los themes listos para:
-kitty, ghostty, bat (tmTheme, reusado por delta), yazi, lazygit, btop, tmux,
+kitty, ghostty, bat (tmTheme), delta (fondos de diff por rol + tmTheme de bat), yazi, lazygit, btop, tmux,
 gh-dash, oh-my-posh, nvim (spec de `catppuccin/nvim` con `color_overrides` y
 flavour automático por `background`), VSCode, Chrome (theme MV3), Slack (cadena
 de tema custom) y fragmentos shell genéricos — todo ×2 modos y validado
