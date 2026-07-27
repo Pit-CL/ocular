@@ -1,0 +1,14 @@
+{
+  "name": "Ocular",
+  "base": "dark",
+  "overrides": {
+    "red_FOR_SUBAGENTS_ONLY": "#ffb4ad",
+    "blue_FOR_SUBAGENTS_ONLY": "#aac8ff",
+    "green_FOR_SUBAGENTS_ONLY": "#a4d399",
+    "yellow_FOR_SUBAGENTS_ONLY": "#e3c372",
+    "purple_FOR_SUBAGENTS_ONLY": "#deb7fc",
+    "orange_FOR_SUBAGENTS_ONLY": "#feb782",
+    "pink_FOR_SUBAGENTS_ONLY": "#fab1d9",
+    "cyan_FOR_SUBAGENTS_ONLY": "#70d8cb"
+  }
+}

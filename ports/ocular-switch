@@ -17,16 +17,25 @@
 #     decide el `kitty @ set-colors` en caliente (efecto inmediato en
 #     sesiones abiertas) y, para oh-my-posh, hacia dónde apunta el symlink.
 #   - bat, yazi, lazygit, btop, tmux, gh-dash, statusline, ccmax, herdr,
-#     oh-my-posh, delta: NO conmutan solos — el switcher re-apunta cada uno
-#     al modo pedido en cada corrida.
+#     oh-my-posh, delta, claude code: NO conmutan solos — el switcher
+#     re-apunta cada uno al modo pedido en cada corrida. herdr, además,
+#     dispara `server reload-config` tras reescribir su config (fix
+#     2026-07-27: antes el cliente quedaba con el theme viejo hasta un
+#     reload manual).
 #   - vscode, chrome: fuera de alcance (ver notas en sus secciones).
 #
 # Límite conocido — TUIs de larga vida (reportado por el usuario con btop,
-# 2026-07-26): btop, lazygit, gh-dash y yazi leen su config SOLO al arrancar
-# — no tienen reload en caliente. Una instancia ya abierta antes de correr
-# el switcher se queda con los colores viejos hasta que se cierra y se abre
-# de nuevo; instancias NUEVAS sí toman el modo correcto de inmediato. No es
-# un bug de este script, es una limitación de esas apps.
+# 2026-07-26): btop, lazygit y yazi leen su config SOLO al arrancar — no
+# tienen reload en caliente. Una instancia ya abierta antes de correr el
+# switcher se queda con los colores viejos hasta que se cierra y se abre de
+# nuevo; instancias NUEVAS sí toman el modo correcto de inmediato. No es un
+# bug de este script, es una limitación de esas apps.
+# gh-dash tiene la misma limitación, PERO cuando corre dentro de un pane de
+# herdr con servidor local (hoy: nube) el switcher lo recarga solo: mata el
+# proceso `gh dash` en foreground con SIGTERM (determinístico, no depende
+# del estado de la UI) y lo relanza en el mismo pane — fix 2026-07-27, ver
+# bloque más abajo. Fuera de un pane de herdr (o en mac/omen, sin server),
+# sigue aplicando la limitación general: cerrar y abrir a mano.
 # Gotcha específico de btop: reescribe btop.conf completo AL SALIR. Si una
 # instancia vieja de btop sigue abierta cuando corre el switcher y luego se
 # cierra, su propio btop.conf (con el color_theme viejo en memoria) pisa el
@@ -203,8 +212,86 @@ else
     skip "gh-dash"
 fi
 
+# --- gh-dash: reinicio automático de las instancias corriendo dentro de
+#     panes de herdr — gh-dash no tiene recarga en caliente (ver nota de
+#     TUIs de larga vida arriba); sin esto quedan pintando el theme viejo
+#     hasta que alguien las cierre y reabra a mano. Solo aplica donde hay un
+#     servidor herdr LOCAL corriendo (hoy: nube); en mac/omen no existe
+#     server — note, nunca error. Mecanismo verificado en vivo 2026-07-27:
+#     matar el proceso "gh dash" en foreground con SIGTERM (determinístico,
+#     no depende del estado de la UI) y relanzarlo en el MISMO pane con
+#     'pane send-text' — nunca tocar panes/sesiones/agentes ajenos. ---
+HERDR_BIN="$(command -v herdr)" || HERDR_BIN="$HOME/.local/bin/herdr"
+if [ -x "$HERDR_BIN" ]; then
+    pane_list_json="$("$HERDR_BIN" pane list 2>/dev/null)" && has_herdr_server=1 || has_herdr_server=0
+else
+    has_herdr_server=0
+fi
+if [ "$has_herdr_server" -eq 1 ]; then
+    pane_ids="$(printf '%s' "$pane_list_json" | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+for p in data.get("result", {}).get("panes", []):
+    print(p["pane_id"])
+')"
+    restarted=0
+    while IFS= read -r pane_id; do
+        [ -n "$pane_id" ] || continue
+        info="$("$HERDR_BIN" pane process-info --pane "$pane_id" 2>/dev/null)" || continue
+        parsed="$(printf '%s' "$info" | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    print("")
+    sys.exit(0)
+pi = data.get("result", {}).get("process_info", {})
+gh_pid = ""
+for p in pi.get("foreground_processes", []):
+    if p.get("argv") == ["gh", "dash"]:
+        gh_pid = p["pid"]
+        break
+print(gh_pid, pi.get("shell_pid", ""))
+')"
+        gh_pid="${parsed%% *}"
+        shell_pid="${parsed##* }"
+        [ -n "$gh_pid" ] || continue
+        kill -TERM "$gh_pid" 2>/dev/null || continue
+        # esperar a que el pane vuelva al prompt del shell (foreground == shell_pid)
+        tries=0
+        while [ "$tries" -lt 10 ]; do
+            fg="$("$HERDR_BIN" pane process-info --pane "$pane_id" 2>/dev/null | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    procs = data["result"]["process_info"]["foreground_processes"]
+    print(procs[0]["pid"] if procs else "")
+except Exception:
+    print("")
+')"
+            [ "$fg" = "$shell_pid" ] && break
+            tries=$((tries + 1))
+            sleep 0.2
+        done
+        "$HERDR_BIN" pane send-text "$pane_id" "gh dash"$'\n' >/dev/null 2>&1 || continue
+        restarted=$((restarted + 1))
+    done <<EOF
+$pane_ids
+EOF
+    if [ "$restarted" -gt 0 ]; then
+        ok "gh-dash: $restarted instancia(s) reiniciada(s) con el theme nuevo"
+    else
+        note "gh-dash: servidor herdr local sin instancias gh-dash corriendo"
+    fi
+else
+    note "gh-dash: sin servidor herdr local — reinicio automático omitido (normal en mac/omen)"
+fi
+
 # --- herdr: bloque [theme.custom] (config.toml completo se preserva) ---
-if command -v herdr >/dev/null 2>&1 && [ -f "$HOME/.config/herdr/config.toml" ]; then
+if [ -f "$HOME/.config/herdr/config.toml" ]; then  # detección por config, NO command -v: mismo gotcha del LaunchAgent del Mac que oh-my-posh (PATH launchd = /usr/bin:/bin:/usr/sbin:/sbin, binario en ~/.local/bin) — dejaba el config.toml del Mac sin reescribir bajo el watcher automático (bug real 2026-07-27)
     rc=0
     replace_block "$HOME/.config/herdr/config.toml" $'\n[theme.custom]\n' $'\n[keys]' \
         "$OUT/herdr/ocular-$variant.toml" '^\[' || rc=$?
@@ -257,6 +344,21 @@ PYEOF
     else
         note "herdr: no se pudo leer accent del fragmento generado — ui.accent no actualizado"
     fi
+    # --- herdr: reload-config del servidor tras reescribir el config — sin
+    #     esto el cliente attach queda con el theme viejo hasta un reload
+    #     manual (bug real 2026-07-27). El server SOLO existe en nube; en
+    #     mac/omen esto es un no-op tolerado (note, nunca error). Resuelve el
+    #     binario con fallback explícito: mismo gotcha de PATH bajo launchd. ---
+    HERDR_BIN="$(command -v herdr)" || HERDR_BIN="$HOME/.local/bin/herdr"
+    if [ -x "$HERDR_BIN" ]; then
+        if "$HERDR_BIN" server reload-config >/dev/null 2>&1; then
+            ok "herdr server reload-config"
+        else
+            note "herdr: sin servidor local corriendo — reload-config omitido (normal en mac/omen)"
+        fi
+    else
+        note "herdr: binario no encontrado (ni en PATH ni en ~/.local/bin/herdr) — reload-config omitido"
+    fi
 else
     skip "herdr"
 fi
@@ -299,6 +401,22 @@ mkdir -p "$HOME/.config/claude-statusline"
 sl_theme="dark"; [ "$variant" = manzanilla ] && sl_theme="light"
 cp "$OUT/statusline/ocular-$variant.sh" "$HOME/.config/claude-statusline/colors-$sl_theme.sh"
 note "statusline: fragmento instalado en ~/.config/claude-statusline/colors-$sl_theme.sh — falta cablear el 'source' en statusline-command.sh (herramienta externa del autor, fuera de este switcher)"
+
+# --- claude code: theme custom (~/.claude/themes/ocular.json). Detección por
+#     directorio de config, NUNCA `command -v claude` (mismo gotcha de PATH
+#     bajo launchd que herdr). Claude Code vigila esa carpeta: reescribir el
+#     archivo (SIEMPRE cp, jamás symlink — el file-watch necesita escritura
+#     real) repinta las sesiones abiertas sin reinicio (verificado 2026-07-27
+#     contra code.claude.com/docs/en/terminal-config). Requiere
+#     "theme": "custom:ocular" en ~/.claude/settings.json (fuera de este
+#     switcher, se setea una sola vez). ---
+if [ -d "$HOME/.claude" ]; then
+    mkdir -p "$HOME/.claude/themes"
+    cp "$OUT/claude/ocular-$variant.json" "$HOME/.claude/themes/ocular.json"
+    ok "claude code (theme ocular; sesiones abiertas repintan solas)"
+else
+    skip "claude code"
+fi
 
 # --- ccmax: sin condición de comando (el archivo no estorba si ccmax no
 #     está instalado) — el 'source' queda pendiente de cablear en el script
