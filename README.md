@@ -4,7 +4,9 @@
 
 A **light + dark** theme for eye comfort: the luminance and saturation of every
 color are set by **science** (OKLCH + APCA), not aesthetics. Built on the role
-structure and accent hues of [Catppuccin](https://github.com/catppuccin/catppuccin).
+structure of [Catppuccin](https://github.com/catppuccin/catppuccin) — the hue
+of each of the 14 accents is Ocular's own, derived by max-min ΔE optimization
+within name-based families (`derive_hues.py`, see [SCIENCE.md](SCIENCE.md)).
 
 | Variant | Mode | Character |
 |---|---|---|
@@ -44,7 +46,12 @@ iPad 2420×1668.
    anti-chromostereopsis, less fatigue from sustained saturation.
 6. **Equal-weight accents**: all 14 accents sit at the same Lc — no token
    shouts; luminance reads, hue categorizes.
-7. **Low-spatial-frequency wallpaper**: wide bands with low local contrast,
+7. **Own hues, not inherited**: each accent's hue lives inside a name-based
+   family window (red = some red, green = some green…) and is optimized by
+   deterministic coordinate ascent to maximize the minimum OKLab ΔE between
+   the 14 accents — gate `MIN_ACCENT_DE = 0.025` (~2× the OKLab
+   just-noticeable-difference), verified in both `build.py` and `audit.py`.
+8. **Low-spatial-frequency wallpaper**: wide bands with low local contrast,
    that don't compete for attention with windows.
 
 Full detail with sources: [SCIENCE.md](SCIENCE.md).
@@ -69,6 +76,11 @@ venv/bin/python wallpaper.py   # regenerates the 6 wallpapers + previews
 
 `build.py` and `audit.py` have no external dependencies (only
 `color_science.py`, included).
+
+`derive_hues.py` is a dev-only tool: it optimizes and (re)writes the frozen
+hue table `palette/hues.json`. It only needs to run again if the per-role hue
+windows change — `build.py` always just reads that table, never the
+optimizer.
 
 ## Ports and switcher
 
@@ -105,12 +117,13 @@ switch:
 
 ## Credits
 
-- **[Catppuccin](https://github.com/catppuccin)** (MIT) — role structure,
-  naming, and reference accent hues (`palette/catppuccin-oficial.json` is an
-  extract of their official palette), **and several ports under `ports/out/`
-  derive directly from their official ports** (bat, yazi, btop, lazygit,
-  among others) with the palette substituted: full detail and copyright
-  notice in [`ports/ATTRIBUTION.md`](ports/ATTRIBUTION.md).
+- **[Catppuccin](https://github.com/catppuccin)** (MIT) — role structure and
+  naming; `palette/catppuccin-oficial.json` is an extract of their official
+  palette, used by `ports/build_ports.py` as a hex→role map to substitute
+  official templates with Ocular's own hues, **and several ports under
+  `ports/out/` derive directly from their official ports** (bat, yazi, btop,
+  lazygit, among others) with the palette substituted: full detail and
+  copyright notice in [`ports/ATTRIBUTION.md`](ports/ATTRIBUTION.md).
 - **[Björn Ottosson](https://bottosson.github.io/posts/oklab/)** — the
   OKLab/OKLCH color space.
 - **[APCA](https://git.apcacontrast.com/)** (Andrew Somers / Myndex) — the

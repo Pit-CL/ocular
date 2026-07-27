@@ -10,24 +10,24 @@ set -g status-position top
 set -g status-style "bg=#eee8df,fg=#3f372d"
 
 set -g window-status-style "fg=#918b84,bg=#eee8df"
-set -g window-status-current-style "fg=#e6e0d7,bg=#684c9e,bold"
+set -g window-status-current-style "fg=#e6e0d7,bg=#744991,bold"
 set -g window-status-format " #I:#W "
 set -g window-status-current-format " #I:#W "
 set -g window-status-separator ""
 
 set -g pane-border-style "fg=#d9d3c9"
-set -g pane-active-border-style "fg=#4655a5"
+set -g pane-active-border-style "fg=#5d5391"
 
 set -g message-style "bg=#e3ddd4,fg=#3f372d"
 set -g message-command-style "bg=#e3ddd4,fg=#3f372d"
 
-set -g mode-style "bg=#684c9e,fg=#e6e0d7"
+set -g mode-style "bg=#744991,fg=#e6e0d7"
 
 set -g status-left-style "fg=#544c43,bg=#eee8df"
 set -g status-right-style "fg=#544c43,bg=#eee8df"
 
-set -g status-left "#[fg=#e6e0d7,bg=#684c9e,bold] #S #[fg=#544c43,bg=#eee8df,nobold]"
+set -g status-left "#[fg=#e6e0d7,bg=#744991,bold] #S #[fg=#544c43,bg=#eee8df,nobold]"
 set -g status-right "#[fg=#675f57] #h #[default]· %d-%m %H:%M "
 
-set -g clock-mode-colour "#3259a4"
+set -g clock-mode-colour "#3458a3"
 set -g clock-mode-style 24

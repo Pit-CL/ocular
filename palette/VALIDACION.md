@@ -16,20 +16,20 @@
 | subtext0 | #c6c1b7 | 68.01 | 68 | 9.65 | OK |
 | subtext1 | #d1cbc0 | 73.99 | 74 | 10.72 | OK |
 | text | #dfd9cc | 82.39 | 82 | 12.30 | OK |
-| rosewater | #d7c2bf | 71.02 | 71 | 10.18 | OK |
-| flamingo | #e3bebe | 71.12 | 71 | 10.20 | OK |
-| pink | #eab8dc | 71.21 | 71 | 10.21 | OK |
-| mauve | #d9b9ff | 70.95 | 71 | 10.16 | OK |
-| red | #ffb1c4 | 71.06 | 71 | 10.16 | OK |
-| maroon | #feb2be | 71.00 | 71 | 10.15 | OK |
-| peach | #feb78a | 71.14 | 71 | 10.18 | OK |
-| yellow | #dbc492 | 70.88 | 71 | 10.15 | OK |
-| green | #99d694 | 71.30 | 71 | 10.22 | OK |
-| teal | #87d4c8 | 70.77 | 71 | 10.12 | OK |
-| sky | #80d3e1 | 70.99 | 71 | 10.15 | OK |
-| sapphire | #7dd1f6 | 71.01 | 71 | 10.15 | OK |
-| blue | #a7c8ff | 71.02 | 71 | 10.17 | OK |
-| lavender | #bac4ff | 71.36 | 71 | 10.24 | OK |
+| rosewater | #e2bfb9 | 71.17 | 71 | 10.20 | OK |
+| flamingo | #f1b8c2 | 71.16 | 71 | 10.20 | OK |
+| pink | #fab1d9 | 71.12 | 71 | 10.18 | OK |
+| mauve | #deb7fc | 70.74 | 71 | 10.12 | OK |
+| red | #ffb4ad | 71.26 | 71 | 10.20 | OK |
+| maroon | #f1baa1 | 70.72 | 71 | 10.12 | OK |
+| peach | #feb782 | 70.95 | 71 | 10.14 | OK |
+| yellow | #e3c372 | 70.90 | 71 | 10.15 | OK |
+| green | #a4d399 | 71.06 | 71 | 10.18 | OK |
+| teal | #70d8cb | 71.29 | 71 | 10.19 | OK |
+| sky | #7ad2ed | 70.77 | 71 | 10.11 | OK |
+| sapphire | #89cdff | 70.60 | 71 | 10.08 | OK |
+| blue | #aac8ff | 71.32 | 71 | 10.23 | OK |
+| lavender | #c7bffb | 70.65 | 71 | 10.11 | OK |
 
 WCAG text/base = 12.30 (target >= 7.0)
 
@@ -37,13 +37,25 @@ WCAG text/base = 12.30 (target >= 7.0)
 | color | normal hex | Lc normal | bright hex | Lc bright (+6 sobre normal) |
 |---|---|---|---|---|
 | black | #38322b | 0.00 | #464038 | 7.33 |
-| red | #ffb1c4 | 71.06 | #ffc0cf | 77.09 |
-| green | #99d694 | 71.30 | #a3e19e | 77.67 |
-| yellow | #dbc492 | 70.88 | #e6ce9c | 76.96 |
-| blue | #a7c8ff | 71.02 | #b8d2ff | 77.07 |
-| magenta | #eab8dc | 71.21 | #f5c2e6 | 77.28 |
-| cyan | #87d4c8 | 70.77 | #91dfd2 | 77.11 |
+| red | #ffb4ad | 71.26 | #ffc2bd | 77.14 |
+| green | #a4d399 | 71.06 | #aedda3 | 76.97 |
+| yellow | #e3c372 | 70.90 | #eecd7c | 76.94 |
+| blue | #aac8ff | 71.32 | #bad3ff | 77.73 |
+| magenta | #fab1d9 | 71.12 | #ffbee1 | 77.15 |
+| cyan | #70d8cb | 71.29 | #7be3d5 | 77.64 |
 | white | #d1cbc0 | 73.99 | #dbd5ca | 80.02 |
+
+### Separacion de acentos (ΔE OKLab) — dark
+
+min ΔE entre acentos = 0.0326 (gate >= 0.025)
+
+| par | ΔE OKLab |
+|---|---|
+| flamingo — red | 0.0326 |
+| rosewater — flamingo | 0.0333 |
+| red — maroon | 0.0334 |
+| rosewater — maroon | 0.0350 |
+| sky — sapphire | 0.0363 |
 
 ## Manzanilla (light)
 
@@ -61,20 +73,20 @@ WCAG text/base = 12.30 (target >= 7.0)
 | subtext0 | #675f57 | 72.16 | 72 | 5.49 | OK |
 | subtext1 | #544c43 | 79.98 | 80 | 7.38 | OK |
 | text | #3f372d | 87.81 | 88 | 10.24 | OK |
-| rosewater | #8f4536 | 74.10 | 74 | 5.98 | OK |
-| flamingo | #993c3f | 73.86 | 74 | 5.98 | OK |
-| pink | #8d3d78 | 74.03 | 74 | 5.99 | OK |
-| mauve | #684c9e | 73.93 | 74 | 5.90 | OK |
-| red | #9b393f | 73.97 | 74 | 6.03 | OK |
-| maroon | #9a393e | 74.17 | 74 | 6.07 | OK |
-| peach | #983f15 | 73.96 | 74 | 6.01 | OK |
-| yellow | #835000 | 73.83 | 74 | 5.91 | OK |
-| green | #276819 | 74.12 | 74 | 5.97 | OK |
-| teal | #00656a | 74.02 | 74 | 5.99 | OK |
-| sky | #006188 | 74.02 | 74 | 6.00 | OK |
-| sapphire | #006474 | 73.97 | 74 | 5.98 | OK |
-| blue | #3259a4 | 73.98 | 74 | 5.93 | OK |
-| lavender | #4655a5 | 74.04 | 74 | 5.92 | OK |
+| rosewater | #77534e | 73.93 | 74 | 5.87 | OK |
+| flamingo | #834b57 | 74.00 | 74 | 5.91 | OK |
+| pink | #8c406e | 74.08 | 74 | 5.98 | OK |
+| mauve | #744991 | 74.02 | 74 | 5.92 | OK |
+| red | #9a3b38 | 73.95 | 74 | 6.01 | OK |
+| maroon | #854d32 | 73.99 | 74 | 5.92 | OK |
+| peach | #8c4900 | 74.07 | 74 | 5.99 | OK |
+| yellow | #725800 | 73.98 | 74 | 5.91 | OK |
+| green | #326726 | 74.03 | 74 | 5.92 | OK |
+| teal | #00665e | 74.09 | 74 | 6.00 | OK |
+| sky | #006379 | 74.09 | 74 | 6.01 | OK |
+| sapphire | #006090 | 73.90 | 74 | 5.98 | OK |
+| blue | #3458a3 | 74.26 | 74 | 5.99 | OK |
+| lavender | #5d5391 | 74.09 | 74 | 5.91 | OK |
 
 WCAG text/base = 10.24 (target >= 7.0)
 
@@ -82,10 +94,22 @@ WCAG text/base = 10.24 (target >= 7.0)
 | color | normal hex | Lc normal | bright hex | Lc bright (+6 sobre normal) |
 |---|---|---|---|---|
 | black | #d9d3c9 | 13.90 | #cec9bf | 19.68 |
-| red | #9b393f | 73.97 | #892830 | 79.82 |
-| green | #276819 | 74.12 | #155903 | 79.79 |
-| yellow | #835000 | 73.83 | #6e4300 | 79.91 |
-| blue | #3259a4 | 73.98 | #244a93 | 79.75 |
-| magenta | #8d3d78 | 74.03 | #7c2d68 | 79.91 |
-| cyan | #00656a | 74.02 | #005559 | 79.96 |
+| red | #9a3b38 | 73.95 | #882a29 | 79.87 |
+| green | #326726 | 74.03 | #225815 | 79.84 |
+| yellow | #725800 | 73.98 | #604a00 | 79.93 |
+| blue | #3458a3 | 74.26 | #264992 | 80.02 |
+| magenta | #8c406e | 74.08 | #7b305e | 80.05 |
+| cyan | #00665e | 74.09 | #00554f | 80.28 |
 | white | #544c43 | 79.98 | #443d34 | 85.75 |
+
+### Separacion de acentos (ΔE OKLab) — light
+
+min ΔE entre acentos = 0.0357 (gate >= 0.025)
+
+| par | ΔE OKLab |
+|---|---|
+| maroon — peach | 0.0357 |
+| rosewater — flamingo | 0.0361 |
+| rosewater — maroon | 0.0417 |
+| sky — sapphire | 0.0418 |
+| mauve — lavender | 0.0448 |

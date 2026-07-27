@@ -1,0 +1,207 @@
+{
+  "comment": "Matices propios de los 14 acentos de Ocular, derivados por coordinate ascent maximizando el minimo ΔE OKLab entre acentos. Catppuccin ya no es la fuente de hues: solo aporta el esqueleto de nombres de rol. Congelado y versionado; build.py solo LEE esta tabla (nunca corre este optimizador en CI).",
+  "windows": {
+    "red": {
+      "hue": [
+        20,
+        30
+      ],
+      "sat": [
+        0.95,
+        1.0
+      ]
+    },
+    "maroon": {
+      "hue": [
+        35,
+        50
+      ],
+      "sat": [
+        0.6,
+        0.8
+      ]
+    },
+    "peach": {
+      "hue": [
+        50,
+        65
+      ],
+      "sat": [
+        0.95,
+        1.0
+      ]
+    },
+    "yellow": {
+      "hue": [
+        80,
+        95
+      ],
+      "sat": [
+        0.95,
+        1.0
+      ]
+    },
+    "green": {
+      "hue": [
+        130,
+        150
+      ],
+      "sat": [
+        0.75,
+        0.95
+      ]
+    },
+    "teal": {
+      "hue": [
+        175,
+        195
+      ],
+      "sat": [
+        0.8,
+        1.0
+      ]
+    },
+    "sky": {
+      "hue": [
+        210,
+        228
+      ],
+      "sat": [
+        0.75,
+        0.95
+      ]
+    },
+    "sapphire": {
+      "hue": [
+        238,
+        252
+      ],
+      "sat": [
+        0.9,
+        1.0
+      ]
+    },
+    "blue": {
+      "hue": [
+        256,
+        270
+      ],
+      "sat": [
+        0.95,
+        1.0
+      ]
+    },
+    "lavender": {
+      "hue": [
+        282,
+        298
+      ],
+      "sat": [
+        0.65,
+        0.85
+      ]
+    },
+    "mauve": {
+      "hue": [
+        300,
+        320
+      ],
+      "sat": [
+        0.85,
+        1.0
+      ]
+    },
+    "pink": {
+      "hue": [
+        335,
+        355
+      ],
+      "sat": [
+        0.8,
+        1.0
+      ]
+    },
+    "flamingo": {
+      "hue": [
+        5,
+        25
+      ],
+      "sat": [
+        0.5,
+        0.7
+      ]
+    },
+    "rosewater": {
+      "hue": [
+        15,
+        40
+      ],
+      "sat": [
+        0.3,
+        0.45
+      ]
+    }
+  },
+  "table": {
+    "rosewater": {
+      "hue": 28,
+      "sat": 0.375
+    },
+    "flamingo": {
+      "hue": 7,
+      "sat": 0.6
+    },
+    "pink": {
+      "hue": 345,
+      "sat": 0.9
+    },
+    "mauve": {
+      "hue": 310,
+      "sat": 0.925
+    },
+    "red": {
+      "hue": 25,
+      "sat": 0.975
+    },
+    "maroon": {
+      "hue": 46,
+      "sat": 0.65
+    },
+    "peach": {
+      "hue": 58,
+      "sat": 0.975
+    },
+    "yellow": {
+      "hue": 88,
+      "sat": 0.975
+    },
+    "green": {
+      "hue": 140,
+      "sat": 0.85
+    },
+    "teal": {
+      "hue": 185,
+      "sat": 0.9
+    },
+    "sky": {
+      "hue": 219,
+      "sat": 0.85
+    },
+    "sapphire": {
+      "hue": 241,
+      "sat": 0.95
+    },
+    "blue": {
+      "hue": 263,
+      "sat": 0.975
+    },
+    "lavender": {
+      "hue": 290,
+      "sat": 0.75
+    }
+  },
+  "meta": {
+    "min_delta_e": 0.032612,
+    "generated_by": "derive_hues.py"
+  }
+}

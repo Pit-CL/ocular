@@ -4,7 +4,9 @@
 
 Theme **light + dark** para descanso ocular: la luminancia y la saturación de cada
 color las fija la **ciencia** (OKLCH + APCA), no la estética. Construido sobre la
-estructura de roles y los matices de acento de [Catppuccin](https://github.com/catppuccin/catppuccin).
+estructura de roles de [Catppuccin](https://github.com/catppuccin/catppuccin) — el
+matiz de cada uno de los 14 acentos es propio de Ocular, derivado por optimización
+max-min ΔE dentro de familias por nombre (`derive_hues.py`, ver [CIENCIA.md](CIENCIA.md)).
 
 | Variante | Modo | Carácter |
 |---|---|---|
@@ -43,7 +45,12 @@ derivados de la misma paleta. Desktop 3840×2160 · iPhone 1284×2778 · iPad 24
    anti-chromostereopsis, menos fatiga por saturación sostenida.
 6. **Acentos equal-weight**: los 14 acentos a la misma Lc — ningún token grita; la
    luminancia lee, el matiz categoriza.
-7. **Wallpaper de baja frecuencia espacial**: bandas anchas con contraste local
+7. **Matices propios, no heredados**: el matiz de cada acento vive dentro de una
+   ventana por familia del nombre (red = algún rojo, green = algún verde…) y se
+   optimiza con coordinate ascent determinista para maximizar el ΔE OKLab mínimo
+   entre los 14 acentos — gate `MIN_ACCENT_DE = 0.025` (≈2× el JND de OKLab),
+   verificado en `build.py` y `audit.py`.
+8. **Wallpaper de baja frecuencia espacial**: bandas anchas con contraste local
    bajo, que no compiten por atención con las ventanas.
 
 Detalle completo con fuentes: [CIENCIA.md](CIENCIA.md).
@@ -67,6 +74,11 @@ venv/bin/python wallpaper.py   # regenera los 6 wallpapers + previews
 
 `build.py` y `audit.py` no tienen dependencias externas (solo `color_science.py`,
 incluido).
+
+`derive_hues.py` es una herramienta dev-only: optimiza y (re)escribe la tabla
+congelada de matices `palette/hues.json`. Solo hace falta correrla de nuevo si
+cambian las ventanas de hue por rol — `build.py` siempre solo LEE esa tabla,
+nunca el optimizador.
 
 ## Ports y switcher
 
@@ -103,12 +115,13 @@ derivan de esta paleta). Limitaciones honestas del switch automático:
 
 ## Créditos
 
-- **[Catppuccin](https://github.com/catppuccin)** (MIT) — estructura de roles,
-  nombres y matices de acento de referencia (`palette/catppuccin-oficial.json` es
-  un extracto de su paleta oficial), **y varios ports de `ports/out/` derivan
-  directamente de sus ports oficiales** (bat, yazi, btop, lazygit, entre otros)
-  con la paleta sustituida: detalle completo y aviso de copyright en
-  [`ports/ATTRIBUTION.md`](ports/ATTRIBUTION.md).
+- **[Catppuccin](https://github.com/catppuccin)** (MIT) — estructura de roles y
+  nombres; `palette/catppuccin-oficial.json` es un extracto de su paleta oficial,
+  usado por `ports/build_ports.py` como mapa hex→rol para sustituir las
+  plantillas oficiales por los matices propios de Ocular, **y varios ports de
+  `ports/out/` derivan directamente de sus ports oficiales** (bat, yazi, btop,
+  lazygit, entre otros) con la paleta sustituida: detalle completo y aviso de
+  copyright en [`ports/ATTRIBUTION.md`](ports/ATTRIBUTION.md).
 - **[Björn Ottosson](https://bottosson.github.io/posts/oklab/)** — espacio de color
   OKLab/OKLCH.
 - **[APCA](https://git.apcacontrast.com/)** (Andrew Somers / Myndex) — algoritmo de

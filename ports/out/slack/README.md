@@ -8,13 +8,13 @@ Active Presence, Mention Badge.
 ## Ocular Rooibos (dark)
 
 ```
-#191511,#2B2520,#D9B9FF,#15110D,#38322B,#DFD9CC,#99D694,#FFB1C4
+#191511,#2B2520,#DEB7FC,#15110D,#38322B,#DFD9CC,#A4D399,#FFB4AD
 ```
 
 ## Ocular Manzanilla (light)
 
 ```
-#EEE8DF,#E3DDD4,#684C9E,#F5EFE7,#D9D3C9,#3F372D,#276819,#9B393F
+#EEE8DF,#E3DDD4,#744991,#F5EFE7,#D9D3C9,#3F372D,#326726,#9A3B38
 ```
 
 Mapping by role: Column BG = mantle · Menu Hover BG = surface0 · Active Item

@@ -92,6 +92,17 @@ def hex_to_oklch(h: str):
     H = math.degrees(math.atan2(bb, a)) % 360
     return L, C, H
 
+def hex_to_oklab(h: str):
+    """Convierte un hex sRGB a coordenadas OKLab (L, a, b)."""
+    r, g, b = (srgb_to_linear(c) for c in hex_to_srgb(h))
+    return linsrgb_to_oklab(r, g, b)
+
+def delta_e_oklab(h1: str, h2: str) -> float:
+    """Distancia euclidiana en OKLab entre dos colores hex (proxy perceptual simple)."""
+    L1, a1, b1 = hex_to_oklab(h1)
+    L2, a2, b2 = hex_to_oklab(h2)
+    return math.sqrt((L1 - L2) ** 2 + (a1 - a2) ** 2 + (b1 - b2) ** 2)
+
 def clamp_chroma(L: float, C: float, H: float) -> float:
     """Devuelve el chroma efectivo tras gamut mapping (para auditar saturacion real)."""
     return hex_to_oklch(oklch_to_hex(L, C, H))[1]
@@ -197,3 +208,7 @@ if __name__ == "__main__":
     print()
     print("Gamut map (chroma alto se reduce):")
     print("  OKLCH(0.7, 0.4, 30) ->", oklch_to_hex(0.7, 0.4, 30), "C_real=", round(clamp_chroma(0.7, 0.4, 30), 3))
+    print()
+    print("Delta E OKLab (distancia perceptual simple):")
+    print("  #ff0000 vs #ff0000 ->", round(delta_e_oklab("#ff0000", "#ff0000"), 4), "(esperado 0.0)")
+    print("  #ff0000 vs #00ff00 ->", round(delta_e_oklab("#ff0000", "#00ff00"), 4), "(esperado alto, colores muy distintos)")
