@@ -53,8 +53,8 @@ set -euo pipefail
 
 mode="${1:-}"
 case "$mode" in
-    dark)  variant="rooibos"    ;;
-    light) variant="manzanilla" ;;
+    dark)  base_variant="rooibos"    ;;
+    light) base_variant="manzanilla" ;;
     *) echo "Uso: ocular-switch light|dark" >&2; exit 1 ;;
 esac
 
@@ -66,7 +66,27 @@ ok()   { printf '  \033[32m\xe2\x9c\x93\033[0m %s\n' "$1"; }
 skip() { printf '  \xc2\xb7 %s (no instalado, se omite)\n' "$1"; }
 note() { printf '  \033[33m!\033[0m %s\n' "$1"; }
 
+# --- perfil: default | deutan — ~/.config/ocular/profile (ausente/vacío/
+#     ilegible = default; valor desconocido = note + default). El perfil
+#     deutan usa variantes con luminancias desiguales entre acentos
+#     (CVD-safe frente a deuteranopía/protanopía, ver SCIENCE.md) — mismo
+#     fleet, un solo archivo de config, sin flags nuevos en el switcher.
+#     Se activa con 'echo deutan > ~/.config/ocular/profile'; el próximo
+#     switch ya lo aplica. ---
+profile_suffix=""
+profile_label=""
+if [ -r "$HOME/.config/ocular/profile" ]; then
+    profile="$(cat "$HOME/.config/ocular/profile")"
+    case "$profile" in
+        ""|default) : ;;
+        deutan) profile_suffix="-deutan"; profile_label=" Deutan" ;;
+        *) note "perfil desconocido en ~/.config/ocular/profile: '$profile' — se usa default" ;;
+    esac
+fi
+variant="${base_variant}${profile_suffix}"
+
 echo "Ocular -> $mode ($variant)"
+[ -n "$profile_label" ] && echo "Perfil activo:$profile_label"
 
 # --- archivo de modo activo: fuente única para consumidores que no leen
 #     ports/out/ directo (statusline, ccmax) ---
@@ -83,8 +103,8 @@ echo "$mode" > "$HOME/.config/ocular/mode"
 #     port de referencia de esta máquina (~/.config/kitty solo trae los dos
 #     archivos dark/light), así que no se inventa un tercero. ---
 if [ -d "$HOME/.config/kitty" ]; then
-    cp "$OUT/kitty/ocular-rooibos.conf" "$HOME/.config/kitty/dark-theme.auto.conf"
-    cp "$OUT/kitty/ocular-manzanilla.conf" "$HOME/.config/kitty/light-theme.auto.conf"
+    cp "$OUT/kitty/ocular-rooibos${profile_suffix}.conf" "$HOME/.config/kitty/dark-theme.auto.conf"
+    cp "$OUT/kitty/ocular-manzanilla${profile_suffix}.conf" "$HOME/.config/kitty/light-theme.auto.conf"
     if command -v kitty >/dev/null 2>&1; then
         # Efecto inmediato en sesiones abiertas — apunta al modo PEDIDO, no al
         # auto-switch (que de todos modos ya sigue al SO desde los archivos de arriba).
@@ -103,13 +123,13 @@ fi
 #     siempre, la línea theme= queda fija (no depende del $variant pedido). ---
 if [ -d "$HOME/.config/ghostty" ]; then
     mkdir -p "$HOME/.config/ghostty/themes"
-    cp "$OUT/ghostty/ocular-rooibos" "$HOME/.config/ghostty/themes/ocular-rooibos"
-    cp "$OUT/ghostty/ocular-manzanilla" "$HOME/.config/ghostty/themes/ocular-manzanilla"
+    cp "$OUT/ghostty/ocular-rooibos${profile_suffix}" "$HOME/.config/ghostty/themes/ocular-rooibos${profile_suffix}"
+    cp "$OUT/ghostty/ocular-manzanilla${profile_suffix}" "$HOME/.config/ghostty/themes/ocular-manzanilla${profile_suffix}"
     if [ -f "$HOME/.config/ghostty/config" ] && grep -q '^theme = ' "$HOME/.config/ghostty/config"; then
-        sed -i.bak "s/^theme = .*/theme = light:ocular-manzanilla,dark:ocular-rooibos/" "$HOME/.config/ghostty/config"
+        sed -i.bak "s/^theme = .*/theme = light:ocular-manzanilla${profile_suffix},dark:ocular-rooibos${profile_suffix}/" "$HOME/.config/ghostty/config"
         rm -f "$HOME/.config/ghostty/config.bak"
     fi
-    note "ghostty (auto-switch nativo: theme = light:ocular-manzanilla,dark:ocular-rooibos) — recárgalo con el atajo nativo de reload (no hay API por CLI)"
+    note "ghostty (auto-switch nativo: theme = light:ocular-manzanilla${profile_suffix},dark:ocular-rooibos${profile_suffix}) — recárgalo con el atajo nativo de reload (no hay API por CLI)"
 else
     skip "ghostty"
 fi
@@ -118,10 +138,10 @@ fi
 if command -v bat >/dev/null 2>&1; then
     bat_dir="$(bat --config-dir)/themes"
     mkdir -p "$bat_dir"
-    cp "$OUT/bat/Ocular Rooibos.tmTheme" "$bat_dir/"
-    cp "$OUT/bat/Ocular Manzanilla.tmTheme" "$bat_dir/"
+    cp "$OUT/bat/Ocular Rooibos${profile_label}.tmTheme" "$bat_dir/"
+    cp "$OUT/bat/Ocular Manzanilla${profile_label}.tmTheme" "$bat_dir/"
     bat cache --build >/dev/null 2>&1 || true
-    name="Ocular Rooibos"; [ "$variant" = manzanilla ] && name="Ocular Manzanilla"
+    name="Ocular Rooibos${profile_label}"; [ "$base_variant" = manzanilla ] && name="Ocular Manzanilla${profile_label}"
     bat_conf="$(bat --config-dir)/config"
     if [ -f "$bat_conf" ]; then
         sed -i.bak -E "s/--theme=\"[^\"]*\"/--theme=\"$name\"/" "$bat_conf" 2>/dev/null || true
@@ -383,8 +403,8 @@ fi
 #     coincide con dotfiles (cero drift; correr el switcher de nuevo solo
 #     mueve el symlink, no vuelve a tocar el zshrc). ---
 if [ -d "$HOME/.config/ohmyposh" ]; then  # detección por config, NO command -v: en el Mac brew solo está en PATH de login shell (el watcher de launchd nunca lo vería); esta sección solo copia archivos y mueve un symlink
-    cp "$OUT/ohmyposh/ocular-rooibos.omp.json" "$HOME/.config/ohmyposh/"
-    cp "$OUT/ohmyposh/ocular-manzanilla.omp.json" "$HOME/.config/ohmyposh/"
+    cp "$OUT/ohmyposh/ocular-rooibos${profile_suffix}.omp.json" "$HOME/.config/ohmyposh/"
+    cp "$OUT/ohmyposh/ocular-manzanilla${profile_suffix}.omp.json" "$HOME/.config/ohmyposh/"
     ln -sf "ocular-$variant.omp.json" "$HOME/.config/ohmyposh/ocular-active.omp.json"
     # El zshrc NO se toca desde acá: la config canónica viene de dotfiles y ya
     # apunta al symlink con fallback a catppuccin_mocha. (El antiguo sed
@@ -398,7 +418,7 @@ fi
 # --- statusline (Claude Code): fragmento de color, el 'source' queda
 #     pendiente de cablear en el script consumidor externo (otro repo) ---
 mkdir -p "$HOME/.config/claude-statusline"
-sl_theme="dark"; [ "$variant" = manzanilla ] && sl_theme="light"
+sl_theme="dark"; [ "$base_variant" = manzanilla ] && sl_theme="light"
 cp "$OUT/statusline/ocular-$variant.sh" "$HOME/.config/claude-statusline/colors-$sl_theme.sh"
 note "statusline: fragmento instalado en ~/.config/claude-statusline/colors-$sl_theme.sh — falta cablear el 'source' en statusline-command.sh (herramienta externa del autor, fuera de este switcher)"
 
@@ -442,7 +462,7 @@ fi
 
 # --- nvim: spec lazy.nvim, auto light/dark (no depende del modo elegido acá) ---
 if [ -d "$HOME/.config/nvim/lua/plugins" ]; then
-    cp "$OUT/nvim/ocular.lua" "$HOME/.config/nvim/lua/plugins/ocular.lua"
+    cp "$OUT/nvim/ocular${profile_suffix}.lua" "$HOME/.config/nvim/lua/plugins/ocular.lua"
     ok "nvim (lazy.nvim spec instalado, flavour=auto — no depende de light|dark)"
 else
     skip "nvim"
@@ -470,7 +490,7 @@ fi
 #     de todos modos pisa el [delta] principal). ---
 if [ -d "$HOME/.config/delta" ]; then
     cp "$OUT/delta/ocular-$variant.gitconfig" "$HOME/.config/delta/ocular.gitconfig"
-    name="Ocular Rooibos"; [ "$variant" = manzanilla ] && name="Ocular Manzanilla"
+    name="Ocular Rooibos${profile_label}"; [ "$base_variant" = manzanilla ] && name="Ocular Manzanilla${profile_label}"
     git config --global delta.syntax-theme "$name"
     ok "delta (feature ocular + delta.syntax-theme = $name)"
 else

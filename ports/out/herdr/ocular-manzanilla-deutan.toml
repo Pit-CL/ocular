@@ -1,0 +1,27 @@
+# Ocular Manzanilla Deutan — fragmento [theme.custom] para ~/.config/herdr/config.toml
+# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15).
+[theme.custom]
+panel_bg = "#f5efe7"      # base
+surface_dim = "#d9d3c9"   # bg de la fila SELECCIONADA del sidebar (fix APCA 2026-07-26:
+                          # overlay0 media Lc 38-42 con el texto por encima — WCAG 2.x aprueba
+                          # pares que APCA rechaza, y los pares de Ocular se validan con APCA
+                          # (color_science.lc), no con el ratio WCAG. surface1 da texto legible
+                          # (Lc ≥ 71 en ambos modos) y sigue siendo más oscuro que panel_bg, así
+                          # que la selección se ve. Descartados: morados de Mocha (mauve/
+                          # lavender, muy claros para bg), #8839ef mauve de Latte (muy
+                          # eléctrico), #574b7d custom.
+surface0 = "#e3ddd4"
+surface1 = "#d9d3c9"
+overlay0 = "#a19c94"
+overlay1 = "#918b84"
+text = "#3f372d"
+subtext0 = "#675f57"
+accent = "#8c4900"        # peach — marco activo cálido + selección del sidebar (fix bordes azules, 2026-07-26)
+blue = "#2c5aa3"
+mauve = "#824992"
+green = "#3f6b26"
+red = "#983c41"
+yellow = "#614a00"
+peach = "#8c4900"
+teal = "#006561"
+

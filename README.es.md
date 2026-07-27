@@ -12,6 +12,8 @@ max-min ΔE dentro de familias por nombre (`derive_hues.py`, ver [CIENCIA.md](CI
 |---|---|---|
 | **Rooibos** | dark | fondo oscuro cálido, texto off-white cálido, acentos a Lc 71 |
 | **Manzanilla** | light | papel cálido, tinta cálida, acentos a Lc 74 |
+| **Rooibos Deutan** | dark | misma base que Rooibos; los 14 acentos quedan con **Lc desigual por diseño** (~66-77) para que la deuteranopía/protanopía conserven una pista de brillo cuando el matiz colapsa — gate: ΔE simulado ≥ 0.02 (deutan/protan) |
+| **Manzanilla Deutan** | light | misma base que Manzanilla; acentos a Lc desigual (~69-80), mismo gate CVD |
 
 Sobre los nombres: Catppuccin nombra sus variantes con bebidas con café (Latte,
 Mocha…). Las variantes de Ocular llevan nombres de **infusiones sin cafeína** —
@@ -26,6 +28,9 @@ derivados de la misma paleta. Desktop 3840×2160 · iPhone 1284×2778 · iPad 24
 | Manzanilla (light) | Rooibos (dark) |
 |---|---|
 | ![Manzanilla](preview/manzanilla-pv.png) | ![Rooibos](preview/rooibos-pv.png) |
+
+Compartidos entre perfiles: los neutros son idénticos entre default y
+Deutan, así que estos wallpapers sirven para ambos.
 
 ## La ciencia, en corto
 
@@ -61,8 +66,17 @@ Detalle completo con fuentes: [CIENCIA.md](CIENCIA.md).
 |---|---|
 | ![Paleta Manzanilla](preview/palette-manzanilla.svg) | ![Paleta Rooibos](preview/palette-rooibos.svg) |
 
+| Manzanilla Deutan (light) | Rooibos Deutan (dark) |
+|---|---|
+| ![Paleta Manzanilla Deutan](preview/palette-manzanilla-deutan.svg) | ![Paleta Rooibos Deutan](preview/palette-rooibos-deutan.svg) |
+
 - [`palette/rooibos.json`](palette/rooibos.json) · [`palette/manzanilla.json`](palette/manzanilla.json) —
   roles Catppuccin completos + ANSI16, con la Lc real de cada rol en su metadata.
+- [`palette/rooibos-deutan.json`](palette/rooibos-deutan.json) ·
+  [`palette/manzanilla-deutan.json`](palette/manzanilla-deutan.json) — variante
+  CVD-safe (deuteranopía/protanopía simuladas con las matrices de Viénot,
+  Brettel & Mollon), mismos roles/ANSI16, acentos a Lc desigual por diseño —
+  ver [CIENCIA.md](CIENCIA.md) para el método y el gate.
 - [`palette/VALIDACION.md`](palette/VALIDACION.md) — tabla de validación completa.
 - Estructura 100 % compatible con los roles de Catppuccin: cualquier port se adapta
   cambiando solo los hex.
@@ -97,6 +111,19 @@ de tema custom) y fragmentos shell genéricos — todo ×2 modos y validado
 máquina. kitty, ghostty y nvim quedan con **conmutación nativa** (se instalan
 una vez y siguen la apariencia del sistema solos); el resto se re-apunta por
 modo en cada corrida.
+
+### Perfil CVD-safe (Deutan)
+
+`ocular-switch` también lee una dimensión de **perfil** — default o Deutan —
+desde `~/.config/ocular/profile`. Se activa una sola vez:
+
+```bash
+echo deutan > ~/.config/ocular/profile    # echo default > ... para volver
+```
+
+El siguiente `ocular-switch light|dark` ya lo aplica solo — sin flags
+nuevos. Archivo ausente, vacío o ilegible = default; un valor desconocido
+cae a default con una advertencia.
 
 ## Estado y limitaciones conocidas
 

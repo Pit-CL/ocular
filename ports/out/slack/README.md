@@ -17,6 +17,18 @@ Active Presence, Mention Badge.
 #EEE8DF,#E3DDD4,#744991,#F5EFE7,#D9D3C9,#3F372D,#326726,#9A3B38
 ```
 
+## Ocular Rooibos Deutan (dark)
+
+```
+#191511,#2B2520,#E4B1F4,#15110D,#38322B,#DFD9CC,#A5CE92,#FFB2B1
+```
+
+## Ocular Manzanilla Deutan (light)
+
+```
+#EEE8DF,#E3DDD4,#824992,#F5EFE7,#D9D3C9,#3F372D,#3F6B26,#983C41
+```
+
 Mapping by role: Column BG = mantle · Menu Hover BG = surface0 · Active Item
 = mauve · Active Item Text = crust (dark) / base (light) · Hover Item =
 surface1 · Text = text · Active Presence = green · Mention Badge = red.
