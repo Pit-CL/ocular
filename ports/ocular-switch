@@ -139,13 +139,18 @@ fi
 
 # --- helper: reemplaza in-place el bloque delimitado por [start, end) tanto
 #     en el archivo vivo como en el fragmento propio (ambos comparten el
-#     mismo marcador de inicio, así que no hace falta desenvolver el header) ---
+#     mismo marcador de inicio, así que no hace falta desenvolver el header).
+#     Guarda de contenido ajeno: empalmar sin inspeccionar lo que se descarta
+#     borraba en silencio cualquier clave ajena que cayera en el tramo — si
+#     `foreign_re` matchea algo dentro de [start, end), no se escribe nada y
+#     se sale con 3. ---
 replace_block() {
-    local target="$1" start="$2" end="$3" fragment="$4"
+    local target="$1" start="$2" end="$3" fragment="$4" foreign_re="${5:-}"
     [ -f "$target" ] || return 1
-    python3 - "$target" "$start" "$end" "$fragment" <<'PYEOF'
+    python3 - "$target" "$start" "$end" "$fragment" "$foreign_re" <<'PYEOF'
+import re
 import sys
-target, start, end, fragment = sys.argv[1:5]
+target, start, end, fragment, foreign_re = sys.argv[1:6]
 text = open(target).read()
 frag_full = open(fragment).read()
 fi = frag_full.find(start)
@@ -158,6 +163,9 @@ if i == -1:
 j = text.find(end, i + len(start))
 if j == -1:
     sys.exit(1)
+span = text[i + len(start):j]
+if foreign_re and re.search(foreign_re, span, re.M):
+    sys.exit(3)
 text = text[:i] + frag.rstrip("\n") + "\n" + text[j:]
 open(target, "w").write(text)
 PYEOF
@@ -165,9 +173,13 @@ PYEOF
 
 # --- lazygit: bloque gui.theme (config.yml completo se preserva) ---
 if command -v lazygit >/dev/null 2>&1 && [ -f "$HOME/.config/lazygit/config.yml" ]; then
-    if replace_block "$HOME/.config/lazygit/config.yml" "  theme:"$'\n' $'\n  authorColors:' \
-        "$OUT/lazygit/ocular-$variant.yml"; then
+    rc=0
+    replace_block "$HOME/.config/lazygit/config.yml" "  theme:"$'\n' $'\n  authorColors:' \
+        "$OUT/lazygit/ocular-$variant.yml" '^ {0,2}[A-Za-z_-]+ *:' || rc=$?
+    if [ "$rc" -eq 0 ]; then
         ok "lazygit (bloque gui.theme)"
+    elif [ "$rc" -eq 3 ]; then
+        note "lazygit: contenido ajeno dentro del tramo del bloque theme — no se tocó (revisar a mano)"
     else
         note "lazygit: no se encontró el bloque theme: esperado — se omite (revisar a mano)"
     fi
@@ -177,9 +189,13 @@ fi
 
 # --- gh-dash: bloque theme: (config.yml completo se preserva) ---
 if [ -f "$HOME/.config/gh-dash/config.yml" ]; then  # gh-dash es extensión de gh: no hay binario en PATH, la config es el indicador
-    if replace_block "$HOME/.config/gh-dash/config.yml" $'\ntheme:\n' $'\npager:' \
-        "$OUT/gh-dash/ocular-$variant.yml"; then
+    rc=0
+    replace_block "$HOME/.config/gh-dash/config.yml" $'\ntheme:\n' $'\npager:' \
+        "$OUT/gh-dash/ocular-$variant.yml" '^[A-Za-z_-]+ *:' || rc=$?
+    if [ "$rc" -eq 0 ]; then
         ok "gh-dash (bloque theme:)"
+    elif [ "$rc" -eq 3 ]; then
+        note "gh-dash: contenido ajeno dentro del tramo del bloque theme — no se tocó (revisar a mano)"
     else
         note "gh-dash: no se encontró el bloque theme: esperado — se omite (revisar a mano)"
     fi
@@ -189,9 +205,13 @@ fi
 
 # --- herdr: bloque [theme.custom] (config.toml completo se preserva) ---
 if command -v herdr >/dev/null 2>&1 && [ -f "$HOME/.config/herdr/config.toml" ]; then
-    if replace_block "$HOME/.config/herdr/config.toml" $'\n[theme.custom]\n' $'\n[keys]' \
-        "$OUT/herdr/ocular-$variant.toml"; then
+    rc=0
+    replace_block "$HOME/.config/herdr/config.toml" $'\n[theme.custom]\n' $'\n[keys]' \
+        "$OUT/herdr/ocular-$variant.toml" '^\[' || rc=$?
+    if [ "$rc" -eq 0 ]; then
         ok "herdr (bloque [theme.custom])"
+    elif [ "$rc" -eq 3 ]; then
+        note "herdr: contenido ajeno dentro del tramo del bloque theme — no se tocó (revisar a mano)"
     else
         note "herdr: no se encontró el bloque [theme.custom] esperado — se omite (revisar a mano)"
     fi
@@ -209,7 +229,7 @@ if command -v herdr >/dev/null 2>&1 && [ -f "$HOME/.config/herdr/config.toml" ];
     #     existente (crea la línea si falta, la reemplaza si ya está).
     accent_hex="$(grep -m1 '^accent = ' "$OUT/herdr/ocular-$variant.toml" | sed -E 's/^accent = "([^"]+)".*/\1/')"
     if [ -n "$accent_hex" ]; then
-        python3 - "$HOME/.config/herdr/config.toml" "$accent_hex" <<'PYEOF'
+        if python3 - "$HOME/.config/herdr/config.toml" "$accent_hex" <<'PYEOF'
 import re
 import sys
 
@@ -229,7 +249,11 @@ else:
     section = section.rstrip("\n") + "\n" + new_line + "\n"
 open(path, "w").write(text[:i] + section + text[j:])
 PYEOF
-        ok "herdr (ui.accent = $accent_hex, bordes de panel)"
+        then
+            ok "herdr (ui.accent = $accent_hex, bordes de panel)"
+        else
+            note "herdr: sección [ui] no encontrada — ui.accent no actualizado (revisar a mano)"
+        fi
     else
         note "herdr: no se pudo leer accent del fragmento generado — ui.accent no actualizado"
     fi
