@@ -1,24 +1,24 @@
 # Ocular Manzanilla — port Ghostty (estructura de catppuccin-mocha oficial)
 
 palette = 0=d9d3c9
-palette = 1=9b393f
-palette = 2=276819
-palette = 3=835000
-palette = 4=3259a4
-palette = 5=8d3d78
-palette = 6=00656a
+palette = 1=9a3b38
+palette = 2=326726
+palette = 3=725800
+palette = 4=3458a3
+palette = 5=8c406e
+palette = 6=00665e
 palette = 7=544c43
 palette = 8=cec9bf
-palette = 9=892830
-palette = 10=155903
-palette = 11=6e4300
-palette = 12=244a93
-palette = 13=7c2d68
-palette = 14=005559
+palette = 9=882a29
+palette = 10=225815
+palette = 11=604a00
+palette = 12=264992
+palette = 13=7b305e
+palette = 14=00554f
 palette = 15=443d34
 background = f5efe7
 foreground = 3f372d
-cursor-color = 8f4536
+cursor-color = 77534e
 cursor-text = e6e0d7
 selection-background = d9d3c9
 selection-foreground = 3f372d

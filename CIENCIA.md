@@ -2,8 +2,9 @@
 
 > 🇬🇧 [English version](SCIENCE.md)
 
-> Theme basado en Catppuccin (estructura de roles + 14 hues de acento oficiales) donde
-> la **luminancia y la saturación las fija la ciencia**, no la estética. Variantes:
+> Theme basado en la estructura de roles de Catppuccin — el matiz de sus 14 acentos
+> es propio de Ocular, derivado por optimización (§8) — donde la **luminancia y la
+> saturación las fija la ciencia**, no la estética. Variantes:
 > **Rooibos** (dark) y **Manzanilla** (light) — bebidas sin cafeína, coherentes con el
 > naming de bebidas de Catppuccin y con la meta del theme: descanso.
 > Fuentes verificadas por WebSearch el 2026-07-26.
@@ -90,9 +91,10 @@ que deslumbra en pantallas ≥400 nits).
   Rooibos usa neutros cálidos (H 70–85, azul mínimo) y Manzanilla papel cálido:
   menos energía en 460–490 nm a igual luminancia percibida que los neutros azulados
   de Mocha/Latte originales (H ~285).
-- Los **14 acentos fríos** (blue, sky, sapphire, lavender) se conservan: ocupan área
-  mínima (texto de sintaxis) y a Lc 71 sobre fondo L 0.22 su radiancia absoluta es
-  despreciable. La identidad Catppuccin no se sacrifica donde no hay beneficio.
+- Los **acentos de matiz frío** (blue, sky, sapphire, lavender) se mantienen fríos
+  por diseño: ocupan área mínima (texto de sintaxis) y a Lc 71 sobre fondo L 0.22
+  su radiancia absoluta es despreciable — no hay beneficio circadiano en calentarlos,
+  así que sus ventanas de matiz propias (§8) se quedan en la familia del azul.
 - El cielo del wallpaper dark lleva acentos cálidos a baja luminancia: a L ~0.2 la
   emisión total es mínima.
 
@@ -108,8 +110,8 @@ fatiga. Catppuccin ya es pastel; el theme lo formaliza: **cap de chroma OKLCH 0.
 Los 14 acentos se resuelven todos a la misma banda Lc (71 dark / 74 light): la vía
 magnocelular (que guía la lectura) ve un peso uniforme — ningún token "grita" — y el
 hue queda como canal puramente categórico (vía parvocelular). Es el mismo principio
-validado en el theme Crepúsculo de este workspace, ahora aplicado a los hues de
-Catppuccin extraídos de la paleta oficial (delta de hue ≤ 2°).
+validado en el theme Crepúsculo de este workspace, ahora aplicado a los matices
+propios de Ocular (§8).
 
 **Trade-off:** acentos a luminancia uniforme eliminan la señal de brillo que
 usuarios con deficiencia de visión de color usan cuando los matices colapsan
@@ -135,6 +137,44 @@ plano + olas en capas en dos esquinas opuestas), re-derivado con la paleta Ocula
 - **Grano sutil** anti-banding 8-bit y bordes anti-aliased.
 - Formato final: HEIC dinámico light/dark (conmuta con la apariencia del sistema),
   igual que el actual, vía `make_heic.swift` en el Mac.
+
+## 8. Derivación de matices propios: familias por nombre + max-min ΔE
+
+La primera versión de este theme heredaba tal cual los 14 hues de acento de
+Catppuccin. Fijar todos los acentos a la misma Lc (§6) deja el matiz como el
+*único* canal que distingue acentos entre sí — y los hues de Catppuccin no se
+eligieron para eso. Medido sobre los colores finales (tras gamut mapping y
+cuantización a hex): en Manzanilla el par red–maroon quedaba en ΔE OKLab =
+0.0025 (indistinguible a la vista), flamingo–maroon 0.0058, flamingo–red
+0.0066; en Rooibos red–maroon 0.0096, rosewater–flamingo 0.0192.
+
+**Mecanismo**: el matiz de cada acento es ahora propio de Ocular, acotado a
+una ventana derivada de su **familia por nombre** (red = algún rojo, green =
+algún verde…) más anclas semánticas para los cuatro roles con significado
+externo (red = error, green = éxito, yellow = advertencia, blue =
+información). Dentro de esas ventanas, `derive_hues.py` (dev-only, nunca
+corre en CI) ejecuta un optimizador coordinate ascent determinista — orden
+fijo de roles, schedule de pasos decreciente, clamp a cada ventana, acepta
+solo mejoras estrictas — que maximiza el **ΔE OKLab mínimo** sobre la unión
+de los 91 pares de acentos de ambas variantes, evaluado sobre los colores
+finales reales (tras `solve_L_for_lc`, gamut mapping y cuantización a hex de
+8 bits). El resultado queda congelado en `palette/hues.json` (`{rol: {hue,
+sat}}`, hue en grados enteros, sat a 3 decimales); `build.py` solo LEE esa
+tabla.
+
+**Gate**: `MIN_ACCENT_DE = 0.025` (≈2× el JND de OKLab) se verifica dos
+veces — una en `build.py` justo después de generar cada variante, otra en
+`audit.py` releyendo los JSON emitidos (defensa contra edición a mano de los
+archivos de paleta). Bajo ese piso, el build falla con el par ofensor y su
+ΔE.
+
+**Techos de gamut que moldearon las ventanas**: algunas combinaciones de
+matiz/luminancia no alcanzan el tope de chroma en sRGB. La banda
+teal→sapphire de Manzanilla topa en C_eff ≈ 0.079–0.107 a su luminancia
+(~0.46) — bien bajo el cap de 0.13 — y los rojos/azules de Rooibos están
+limitados por gamut de forma similar bajo su cap; en ambos casos el chroma
+solo no alcanza para separar acentos vecinos, así que sus ventanas quedan
+separadas ≥ ~25° de matiz en su lugar.
 
 ## Fuentes
 

@@ -6,26 +6,46 @@ Ciencia de color 100% reusada de herramientas externas del autor
 (vendorizada en este repo como `color_science.py`): OKLCH<->sRGB con gamut
 mapping + APCA-W3 0.1.9. Estructura de roles 100%
 Catppuccin (drop-in): crust/mantle/base/surface0-2/overlay0-2/subtext0-1/text
-+ 14 acentos + bloque ANSI16.
++ 14 acentos + bloque ANSI16. Catppuccin queda solo como esqueleto de
+nombres de rol.
 
-Fuente de hues oficiales: palette/catppuccin-oficial.json (mocha para dark,
-latte para light) — descargado de catppuccin/palette, NUNCA de memoria.
+Fuente de hues: palette/hues.json (tabla congelada de matices propios,
+{rol: {hue, sat}}), derivada por `derive_hues.py` (optimizador dev-only que
+maximiza el ΔE OKLab minimo entre los 14 acentos). Este script solo LEE esa
+tabla; nunca corre el optimizador.
 
-Falla con exit != 0 si la validacion APCA/WCAG/chroma/hue no pasa.
+Falla con exit != 0 si la validacion APCA/WCAG/chroma/hue/ΔE no pasa.
 """
+import itertools
 import json
 import os
 import sys
 
-from color_science import oklch_to_hex, hex_to_oklch, solve_L_for_lc, lc, wcag, clamp_chroma
+from color_science import (oklch_to_hex, hex_to_oklch, solve_L_for_lc, lc, wcag,
+                            clamp_chroma, delta_e_oklab)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 ACCENTS = ["rosewater", "flamingo", "pink", "mauve", "red", "maroon", "peach",
            "yellow", "green", "teal", "sky", "sapphire", "blue", "lavender"]
 
-with open(os.path.join(HERE, "palette", "catppuccin-oficial.json")) as f:
-    OFICIAL = json.load(f)
+# Lectura perezosa (no al importar el modulo): derive_hues.py importa constantes
+# de este archivo para construir palette/hues.json desde cero, y ese archivo
+# todavia no existe la primera vez que se corre — leerlo aqui arriba rompia ese
+# arranque en frio.
+_HUES_CACHE = None
+
+
+def _hues():
+    global _HUES_CACHE
+    if _HUES_CACHE is None:
+        with open(os.path.join(HERE, "palette", "hues.json")) as f:
+            _HUES_CACHE = json.load(f)
+    return _HUES_CACHE
+
+# Gate de separacion de acentos (duplicado con comentario cruzado en audit.py,
+# que re-verifica leyendo los JSON emitidos como defensa contra edicion a mano).
+MIN_ACCENT_DE = 0.025
 
 # --------------------------------------------------------------------------- #
 # Parametros de la spec — neutros (L, C, H) y targets de texto (Lc, C, H)
@@ -71,7 +91,7 @@ LIGHT_ACCENT_CAP = 0.130
 CHECKED_LC_ROLES = ["text", "subtext1", "subtext0", "overlay2"] + ACCENTS
 
 
-def build_mode(neutrals, text_targets, accent_lc, accent_cap, oficial_flavor, lighter):
+def build_mode(neutrals, text_targets, accent_lc, accent_cap, lighter):
     colors, lc_real, targets = {}, {}, {}
     for role, (L, C, H) in neutrals.items():
         colors[role] = oklch_to_hex(L, C, H)
@@ -84,10 +104,10 @@ def build_mode(neutrals, text_targets, accent_lc, accent_cap, oficial_flavor, li
         targets[role] = target
 
     for name in ACCENTS:
-        off_hex = OFICIAL[oficial_flavor][name]
-        _, offC, offH = hex_to_oklch(off_hex)
-        C = min(accent_cap, offC)
-        _, hx, real = solve_L_for_lc(accent_lc, offH, C, base_hex, lighter=lighter)
+        hue = _hues()["table"][name]["hue"]
+        sat = _hues()["table"][name]["sat"]
+        C = round(sat * accent_cap, 3)
+        _, hx, real = solve_L_for_lc(accent_lc, hue, C, base_hex, lighter=lighter)
         colors[name] = hx
         lc_real[name] = real
         targets[name] = accent_lc
@@ -112,12 +132,12 @@ def build_ansi(colors, base_hex, lighter):
     return {"normal": normal, "bright": bright}, bright_lc
 
 
-def build_with_wcag_check(neutrals, text_targets, accent_lc, accent_cap, oficial_flavor, lighter):
+def build_with_wcag_check(neutrals, text_targets, accent_lc, accent_cap, lighter):
     text_targets = dict(text_targets)
     w = None
     for attempt in range(2):
         colors, lc_real, targets, base_hex = build_mode(
-            neutrals, text_targets, accent_lc, accent_cap, oficial_flavor, lighter)
+            neutrals, text_targets, accent_lc, accent_cap, lighter)
         w = wcag(colors["text"], base_hex)
         if w >= 7.0:
             break
@@ -130,7 +150,17 @@ def build_with_wcag_check(neutrals, text_targets, accent_lc, accent_cap, oficial
     return colors, lc_real, targets, base_hex, w, ansi, bright_lc
 
 
-def validate(mode_name, colors, lc_real, targets, base_hex, wcag_val, accent_cap, oficial_flavor):
+def accent_de_pairs(colors):
+    """Pares (ΔE, rol1, rol2) entre los 14 acentos, ordenados de mas cercano a mas lejano."""
+    pairs = []
+    for r1, r2 in itertools.combinations(ACCENTS, 2):
+        de = delta_e_oklab(colors[r1], colors[r2])
+        pairs.append((de, r1, r2))
+    pairs.sort(key=lambda p: p[0])
+    return pairs
+
+
+def validate(mode_name, colors, lc_real, targets, base_hex, wcag_val, accent_cap):
     errors = []
 
     all_hex = list(colors.values())
@@ -156,23 +186,40 @@ def validate(mode_name, colors, lc_real, targets, base_hex, wcag_val, accent_cap
         if eff > accent_cap + CHROMA_QUANT_EPS:
             errors.append(f"{mode_name}.{name}: chroma efectivo {eff:.4f} > cap {accent_cap}")
 
-    # Hue: cerca del eje acromatico (chroma oficial muy baja) el angulo OKLCH es
-    # numericamente inestable bajo cuantizacion de 8 bits (a,b diminutos) — excepcion
-    # documentada explicitamente permitida por la spec ("salvo gamut mapping documentado").
-    LOW_CHROMA_HUE_EXEMPT = 0.03
+    # 5a — fidelidad a la tabla congelada (palette/hues.json): el hue del hex final
+    # debe quedar cerca del hue tabulado. Cerca del eje acromatico (C_eff baja) el
+    # angulo OKLCH es numericamente inestable bajo cuantizacion de 8 bits (a,b
+    # diminutos) — tolerancia ampliada documentada, igual que el patron anterior.
+    HUE_DELTA_TIGHT = 2.0
+    HUE_DELTA_LOOSE = 5.0
+    LOW_CHROMA_HUE_THRESHOLD = 0.05
     for name in ACCENTS:
-        off_hex = OFICIAL[oficial_flavor][name]
-        _, offC, offH = hex_to_oklch(off_hex)
-        _, _, H = hex_to_oklch(colors[name])
-        delta = min(abs(H - offH), 360 - abs(H - offH))
-        if delta > 2.0:
-            if offC < LOW_CHROMA_HUE_EXEMPT and delta <= 4.0:
-                print(f"  [excepcion documentada] {mode_name}.{name}: hue delta {delta:.2f} grados "
-                      f"(oficial {offH:.1f}, ocular {H:.1f}) — chroma oficial {offC:.4f} < "
-                      f"{LOW_CHROMA_HUE_EXEMPT} => angulo inestable por cuantizacion hex 8-bit, no error real")
-            else:
-                errors.append(f"{mode_name}.{name}: hue delta {delta:.2f} grados > 2 "
-                              f"(oficial {offH:.1f}, ocular {H:.1f})")
+        table_hue = _hues()["table"][name]["hue"]
+        L, C, H = hex_to_oklch(colors[name])
+        eff = clamp_chroma(L, C, H)
+        delta = min(abs(H - table_hue), 360 - abs(H - table_hue))
+        limit = HUE_DELTA_TIGHT if eff >= LOW_CHROMA_HUE_THRESHOLD else HUE_DELTA_LOOSE
+        if delta > limit:
+            errors.append(f"{mode_name}.{name}: hue delta {delta:.2f} grados > {limit} "
+                          f"(tabla {table_hue}, ocular {H:.1f}, C_eff {eff:.4f})")
+        elif eff < LOW_CHROMA_HUE_THRESHOLD and delta > HUE_DELTA_TIGHT:
+            print(f"  [excepcion documentada] {mode_name}.{name}: hue delta {delta:.2f} grados "
+                  f"(tabla {table_hue}, ocular {H:.1f}) — C_eff {eff:.4f} < {LOW_CHROMA_HUE_THRESHOLD} "
+                  f"=> angulo inestable por cuantizacion hex 8-bit, tolerancia ampliada a "
+                  f"{HUE_DELTA_LOOSE} grados, no error real")
+
+        win_lo, win_hi = _hues()["windows"][name]["hue"]
+        if not (win_lo <= table_hue <= win_hi):
+            errors.append(f"{mode_name}.{name}: hue de tabla {table_hue} fuera de su ventana "
+                          f"declarada [{win_lo}, {win_hi}]")
+
+    # 5b — gate de separacion perceptual: el minimo ΔE OKLab entre los 14 acentos
+    # de esta variante debe superar MIN_ACCENT_DE (evita pares indistinguibles).
+    pairs = accent_de_pairs(colors)
+    min_de, r1, r2 = pairs[0]
+    if min_de < MIN_ACCENT_DE:
+        errors.append(f"{mode_name}: min ΔE OKLab entre acentos {min_de:.4f} < {MIN_ACCENT_DE} "
+                      f"(par mas cercano: {r1}-{r2})")
 
     return errors
 
@@ -207,18 +254,29 @@ def render_table(mode_name, colors, lc_real, targets, base_hex, ansi, bright_lc)
     return "\n".join(lines)
 
 
+def render_accent_de_section(colors):
+    """Seccion de VALIDACION.md: min ΔE entre acentos + tabla de los 5 pares mas cercanos."""
+    pairs = accent_de_pairs(colors)
+    min_de = pairs[0][0]
+    lines = [f"min ΔE entre acentos = {min_de:.4f} (gate >= {MIN_ACCENT_DE})", "",
+             "| par | ΔE OKLab |", "|---|---|"]
+    for de, r1, r2 in pairs[:5]:
+        lines.append(f"| {r1} — {r2} | {de:.4f} |")
+    return "\n".join(lines)
+
+
 def main():
     dark = build_with_wcag_check(DARK_NEUTRALS, DARK_TEXT_TARGETS, DARK_ACCENT_LC,
-                                  DARK_ACCENT_CAP, "mocha", lighter=True)
+                                  DARK_ACCENT_CAP, lighter=True)
     light = build_with_wcag_check(LIGHT_NEUTRALS, LIGHT_TEXT_TARGETS, LIGHT_ACCENT_LC,
-                                   LIGHT_ACCENT_CAP, "latte", lighter=False)
+                                   LIGHT_ACCENT_CAP, lighter=False)
 
     d_colors, d_lc, d_targets, d_base, d_wcag, d_ansi, d_bright_lc = dark
     l_colors, l_lc, l_targets, l_base, l_wcag, l_ansi, l_bright_lc = light
 
     errors = []
-    errors += validate("dark", d_colors, d_lc, d_targets, d_base, d_wcag, DARK_ACCENT_CAP, "mocha")
-    errors += validate("light", l_colors, l_lc, l_targets, l_base, l_wcag, LIGHT_ACCENT_CAP, "latte")
+    errors += validate("dark", d_colors, d_lc, d_targets, d_base, d_wcag, DARK_ACCENT_CAP)
+    errors += validate("light", l_colors, l_lc, l_targets, l_base, l_wcag, LIGHT_ACCENT_CAP)
 
     def dump(name, mode, colors, ansi, lc_real, targets, wcag_val):
         path = os.path.join(HERE, "palette", f"{name}.json")
@@ -244,16 +302,24 @@ def main():
     md = ["# Validacion — Ocular (Rooibos / Manzanilla)", "",
           "## Rooibos (dark)", "",
           render_table("dark", d_colors, d_lc, d_targets, d_base, d_ansi, d_bright_lc), "",
+          "### Separacion de acentos (ΔE OKLab) — dark", "",
+          render_accent_de_section(d_colors), "",
           "## Manzanilla (light)", "",
-          render_table("light", l_colors, l_lc, l_targets, l_base, l_ansi, l_bright_lc), ""]
+          render_table("light", l_colors, l_lc, l_targets, l_base, l_ansi, l_bright_lc), "",
+          "### Separacion de acentos (ΔE OKLab) — light", "",
+          render_accent_de_section(l_colors), ""]
     with open(os.path.join(HERE, "palette", "VALIDACION.md"), "w") as f:
         f.write("\n".join(md))
 
     print("=== Rooibos (dark) ===")
     print(render_table("dark", d_colors, d_lc, d_targets, d_base, d_ansi, d_bright_lc))
     print()
+    print(render_accent_de_section(d_colors))
+    print()
     print("=== Manzanilla (light) ===")
     print(render_table("light", l_colors, l_lc, l_targets, l_base, l_ansi, l_bright_lc))
+    print()
+    print(render_accent_de_section(l_colors))
     print()
 
     if errors:

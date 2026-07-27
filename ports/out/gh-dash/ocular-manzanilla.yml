@@ -6,9 +6,9 @@ theme:
             secondary: "#675f57"
             inverted: "#f5efe7"
             faint: "#817a73"
-            warning: "#835000"
-            success: "#276819"
-            error: "#9b393f"
+            warning: "#725800"
+            success: "#326726"
+            error: "#9a3b38"
         background:
             selected: "#d9d3c9"
         border:

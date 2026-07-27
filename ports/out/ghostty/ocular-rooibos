@@ -1,24 +1,24 @@
 # Ocular Rooibos — port Ghostty (estructura de catppuccin-mocha oficial)
 
 palette = 0=38322b
-palette = 1=ffb1c4
-palette = 2=99d694
-palette = 3=dbc492
-palette = 4=a7c8ff
-palette = 5=eab8dc
-palette = 6=87d4c8
+palette = 1=ffb4ad
+palette = 2=a4d399
+palette = 3=e3c372
+palette = 4=aac8ff
+palette = 5=fab1d9
+palette = 6=70d8cb
 palette = 7=d1cbc0
 palette = 8=464038
-palette = 9=ffc0cf
-palette = 10=a3e19e
-palette = 11=e6ce9c
-palette = 12=b8d2ff
-palette = 13=f5c2e6
-palette = 14=91dfd2
+palette = 9=ffc2bd
+palette = 10=aedda3
+palette = 11=eecd7c
+palette = 12=bad3ff
+palette = 13=ffbee1
+palette = 14=7be3d5
 palette = 15=dbd5ca
 background = 1e1a15
 foreground = dfd9cc
-cursor-color = d7c2bf
+cursor-color = e2bfb9
 cursor-text = 15110d
 selection-background = 38322b
 selection-foreground = dfd9cc

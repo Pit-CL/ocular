@@ -2,8 +2,9 @@
 
 > 🇪🇸 [Versión en español](CIENCIA.md)
 
-> A theme based on Catppuccin (role structure + 14 official accent hues)
-> where **luminance and saturation are set by science**, not aesthetics.
+> A theme based on Catppuccin's role structure — the hues of its 14 accents
+> are Ocular's own, derived by optimization (§8) — where **luminance and
+> saturation are set by science**, not aesthetics.
 > Variants: **Rooibos** (dark) and **Manzanilla** (chamomile, light) —
 > caffeine-free drinks, consistent with Catppuccin's beverage naming and with
 > the theme's goal: rest.
@@ -96,10 +97,11 @@ warm paper L 0.955 (never #fff, which glares on screens ≥400 nits).
   minimal blue) and Manzanilla a warm paper: less energy in 460–490 nm at
   equal perceived luminance than the original Mocha/Latte's bluish neutrals
   (H ~285).
-- The **14 cool accents** (blue, sky, sapphire, lavender) are preserved: they
-  occupy minimal area (syntax text) and at Lc 71 over an L 0.22 background
-  their absolute radiance is negligible. Catppuccin's identity isn't
-  sacrificed where there's no benefit.
+- The **cool-hued accents** (blue, sky, sapphire, lavender) stay cool by
+  design: they occupy minimal area (syntax text) and at Lc 71 over an L 0.22
+  background their absolute radiance is negligible — there's no circadian
+  benefit to warming them, so their own hue windows (§8) stay in the blue
+  family.
 - The dark wallpaper's sky carries warm accents at low luminance: at L ~0.2
   the total emission is minimal.
 
@@ -117,8 +119,7 @@ All 14 accents resolve to the same Lc band (71 dark / 74 light): the
 magnocellular pathway (which guides reading) sees uniform weight — no token
 "shouts" — and hue remains a purely categorical channel (parvocellular
 pathway). This is the same principle validated in this workspace's
-Crepúsculo theme, now applied to Catppuccin's hues extracted from the
-official palette (hue delta ≤ 2°).
+Crepúsculo theme, now applied to Ocular's own accent hues (§8).
 
 **Trade-off:** equal-luminance accents drop the brightness cue that
 color-vision-deficient users rely on when hues collapse (e.g. red vs.
@@ -145,6 +146,42 @@ with the Ocular palette:
 - **Subtle grain** for 8-bit anti-banding and anti-aliased edges.
 - Final format: dynamic light/dark HEIC (switches with the system
   appearance), same as the current one, via `make_heic.swift` on the Mac.
+
+## 8. Own hue derivation: name families + max-min ΔE
+
+The first version of this theme inherited Catppuccin's 14 accent hues
+verbatim. Fixing every accent at the same Lc (§6) turns hue into the *only*
+channel left to tell accents apart — and Catppuccin's hues weren't chosen for
+that. Measured on the final, gamut-mapped, hex-quantized colors: Manzanilla's
+red–maroon pair sat at ΔE OKLab = 0.0025 (visually indistinguishable),
+flamingo–maroon 0.0058, flamingo–red 0.0066; Rooibos' red–maroon 0.0096,
+rosewater–flamingo 0.0192.
+
+**Mechanism**: each accent's hue is now Ocular's own, constrained to a window
+derived from its **name family** (red = some red, green = some green…) plus
+semantic anchors for the four roles with an external meaning (red = error,
+green = success, yellow = warning, blue = info). Inside those windows,
+`derive_hues.py` (dev-only, never run in CI) runs a deterministic
+coordinate-ascent optimizer — fixed role order, a shrinking step schedule,
+clamped to each window, accepting only strict improvements — that maximizes
+the **minimum OKLab ΔE** across the union of both variants' 91 accent pairs,
+evaluated on the actual final colors (post `solve_L_for_lc`, gamut mapping,
+and 8-bit hex quantization). The result is frozen into `palette/hues.json`
+(`{role: {hue, sat}}`, hue in whole degrees, sat to 3 decimals); `build.py`
+only ever *reads* that table.
+
+**Gate**: `MIN_ACCENT_DE = 0.025` (~2× the OKLab just-noticeable-difference)
+is enforced twice — once in `build.py` right after generating each variant,
+once more in `audit.py` reading the emitted JSONs back (defense against
+hand-editing the palette files). Below that floor, the build fails loudly
+with the offending pair and its ΔE.
+
+**Gamut ceilings that shaped the windows**: some hue/lightness combinations
+simply can't reach the chroma cap in sRGB. Manzanilla's teal→sapphire band
+tops out around C_eff ≈ 0.079–0.107 at its lightness (~0.46) — well under the
+0.13 cap — and Rooibos' reds/blues are similarly gamut-limited under its cap;
+in both cases chroma alone can't separate neighboring accents, so their
+windows are spread ≥ ~25° apart in hue instead.
 
 ## Sources
 
