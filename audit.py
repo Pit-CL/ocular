@@ -11,7 +11,7 @@ import json
 import os
 import sys
 
-from color_science import lc, delta_e_oklab
+from color_science import lc, delta_e_oklab, delta_e_cvd
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SURFACES = ["base", "mantle", "crust", "surface0", "surface1", "surface2"]
@@ -22,6 +22,11 @@ ACCENTS = ["rosewater", "flamingo", "pink", "mauve", "red", "maroon", "peach",
 # que es la fuente de verdad; aca se re-verifica leyendo los JSON emitidos como
 # defensa contra edicion a mano de palette/{rooibos,manzanilla}.json).
 MIN_ACCENT_DE = 0.025
+
+# Gate de separacion simulada (deuteranopia/protanopia), solo para las
+# variantes *-deutan. Duplicado con comentario cruzado en build.py, que es la
+# fuente de verdad.
+MIN_ACCENT_DE_CVD = 0.02
 
 
 def floor_for(role: str, surf: str):
@@ -85,9 +90,36 @@ def audit_accent_de(name: str) -> int:
     return 0
 
 
-total = sum(audit(n) for n in ("rooibos", "manzanilla"))
-total += sum(audit_accent_de(n) for n in ("rooibos", "manzanilla"))
-if total:
-    print(f"\nFALLA: {total} problema(s) encontrado(s) (ver detalle arriba)")
-    sys.exit(1)
-print("\nAUDITORIA CRUZADA OK: todos los pares exigidos sobre su piso y separacion de acentos dentro del gate")
+def audit_cvd_de(name: str) -> int:
+    """Re-verifica el gate CVD (deutan y protan) leyendo el JSON emitido —
+    mismo patron defensa-contra-edicion-a-mano que audit_accent_de, solo
+    aplica a las variantes *-deutan."""
+    pal = json.load(open(os.path.join(HERE, "palette", f"{name}.json")))["colors"]
+    fails = 0
+    print(f"\n== {name}: separacion simulada (ΔE OKLab, gate >= {MIN_ACCENT_DE_CVD}) ==")
+    for kind, label in (("deutan", "deuteranopia"), ("protan", "protanopia")):
+        pairs = []
+        for r1, r2 in itertools.combinations(ACCENTS, 2):
+            de = delta_e_cvd(pal[r1], pal[r2], kind)
+            pairs.append((de, r1, r2))
+        pairs.sort(key=lambda p: p[0])
+        min_de, r1, r2 = pairs[0]
+        mark = " !" if min_de < MIN_ACCENT_DE_CVD else ""
+        print(f"  {label:<14} min ΔE = {min_de:.4f} (par {r1}-{r2}){mark}")
+        if min_de < MIN_ACCENT_DE_CVD:
+            fails += 1
+    return fails
+
+
+if __name__ == "__main__":
+    PALETTES = ("rooibos", "manzanilla", "rooibos-deutan", "manzanilla-deutan")
+    CVD_PALETTES = ("rooibos-deutan", "manzanilla-deutan")
+
+    total = sum(audit(n) for n in PALETTES)
+    total += sum(audit_accent_de(n) for n in PALETTES)
+    total += sum(audit_cvd_de(n) for n in CVD_PALETTES)
+    if total:
+        print(f"\nFALLA: {total} problema(s) encontrado(s) (ver detalle arriba)")
+        sys.exit(1)
+    print("\nAUDITORIA CRUZADA OK: todos los pares exigidos sobre su piso, separacion de "
+          "acentos y separacion simulada dentro de sus gates")

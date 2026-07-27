@@ -108,6 +108,41 @@ def clamp_chroma(L: float, C: float, H: float) -> float:
     return hex_to_oklch(oklch_to_hex(L, C, H))[1]
 
 # --------------------------------------------------------------------------- #
+# Simulacion de dicromacia — Vienot, Brettel & Mollon (1999), "Digital video
+# colourmaps for checking the legibility of displays by dichromats". El metodo
+# reduce sRGB lineal -> LMS -> proyeccion sobre un plano unico -> sRGB lineal
+# a una sola matriz 3x3 (solo valido para protanopia/deuteranopia: la
+# proyeccion de un solo plano no sirve para tritanopia, fuera de alcance aqui
+# por prevalencia infima). Coeficientes verificados contra la implementacion
+# de referencia libDaltonLens (github.com/DaltonLens/libDaltonLens), que cita
+# el paper original de 1999.
+# --------------------------------------------------------------------------- #
+_CVD_MATRICES = {
+    "protan": (
+        (0.11238, 0.88762, 0.00000),
+        (0.11238, 0.88762, 0.00000),
+        (0.00401, -0.00401, 1.00000),
+    ),
+    "deutan": (
+        (0.29275, 0.70725, 0.00000),
+        (0.29275, 0.70725, 0.00000),
+        (-0.02234, 0.02234, 1.00000),
+    ),
+}
+
+def simulate_cvd(hex_str: str, kind: str) -> str:
+    """Hex tal como lo percibe una persona con dicromacia (kind: 'protan'|'deutan')."""
+    rgb_lin = [srgb_to_linear(c) for c in hex_to_srgb(hex_str)]
+    mat = _CVD_MATRICES[kind]
+    out = [sum(row[i] * rgb_lin[i] for i in range(3)) for row in mat]
+    return "#{:02x}{:02x}{:02x}".format(
+        *(round(min(1.0, max(0.0, linear_to_srgb(c))) * 255) for c in out))
+
+def delta_e_cvd(hex1: str, hex2: str, kind: str) -> float:
+    """ΔE OKLab entre dos colores hex, ambos vistos bajo la misma dicromacia."""
+    return delta_e_oklab(simulate_cvd(hex1, kind), simulate_cvd(hex2, kind))
+
+# --------------------------------------------------------------------------- #
 # APCA-W3 0.1.9  (Lc perceptual)
 # --------------------------------------------------------------------------- #
 _R, _G, _B = 0.2126729, 0.7151522, 0.0721750
@@ -212,3 +247,8 @@ if __name__ == "__main__":
     print("Delta E OKLab (distancia perceptual simple):")
     print("  #ff0000 vs #ff0000 ->", round(delta_e_oklab("#ff0000", "#ff0000"), 4), "(esperado 0.0)")
     print("  #ff0000 vs #00ff00 ->", round(delta_e_oklab("#ff0000", "#00ff00"), 4), "(esperado alto, colores muy distintos)")
+    print()
+    print("Simulacion CVD (Vienot 1999) — rojo vs verde puros:")
+    print("  vision normal ->", round(delta_e_oklab("#ff0000", "#00ff00"), 4))
+    print("  deuteranopia  ->", round(delta_e_cvd("#ff0000", "#00ff00", "deutan"), 4), "(esperado bajo: el eje L/M colapsa)")
+    print("  protanopia    ->", round(delta_e_cvd("#ff0000", "#00ff00", "protan"), 4), "(esperado bajo, misma razon)")

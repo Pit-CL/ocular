@@ -22,7 +22,7 @@ import os
 import sys
 
 from color_science import (oklch_to_hex, hex_to_oklch, solve_L_for_lc, lc, wcag,
-                            clamp_chroma, delta_e_oklab)
+                            clamp_chroma, delta_e_oklab, delta_e_cvd)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -30,22 +30,29 @@ ACCENTS = ["rosewater", "flamingo", "pink", "mauve", "red", "maroon", "peach",
            "yellow", "green", "teal", "sky", "sapphire", "blue", "lavender"]
 
 # Lectura perezosa (no al importar el modulo): derive_hues.py importa constantes
-# de este archivo para construir palette/hues.json desde cero, y ese archivo
-# todavia no existe la primera vez que se corre — leerlo aqui arriba rompia ese
-# arranque en frio.
-_HUES_CACHE = None
+# de este archivo para construir palette/hues.json (o hues-deutan.json) desde
+# cero, y ese archivo todavia no existe la primera vez que se corre — leerlo
+# aqui arriba rompia ese arranque en frio. Cache por nombre de tabla: build.py
+# lee ambas tablas (hues.json y hues-deutan.json) en la misma corrida.
+_HUES_CACHE: dict = {}
 
 
-def _hues():
-    global _HUES_CACHE
-    if _HUES_CACHE is None:
-        with open(os.path.join(HERE, "palette", "hues.json")) as f:
-            _HUES_CACHE = json.load(f)
-    return _HUES_CACHE
+def _hues(table_name="hues"):
+    if table_name not in _HUES_CACHE:
+        with open(os.path.join(HERE, "palette", f"{table_name}.json")) as f:
+            _HUES_CACHE[table_name] = json.load(f)
+    return _HUES_CACHE[table_name]
 
 # Gate de separacion de acentos (duplicado con comentario cruzado en audit.py,
 # que re-verifica leyendo los JSON emitidos como defensa contra edicion a mano).
 MIN_ACCENT_DE = 0.025
+
+# Gate de separacion simulada (deuteranopia/protanopia), solo para las
+# variantes *-deutan. Duplicado con comentario cruzado en audit.py. Congelado
+# con margen bajo el minimo simulado global alcanzado por derive_hues.py
+# --profile deutan (multi-start determinista + perturbacion dirigida): 0.0201
+# (dark, protan, par sapphire-blue).
+MIN_ACCENT_DE_CVD = 0.02
 
 # --------------------------------------------------------------------------- #
 # Parametros de la spec — neutros (L, C, H) y targets de texto (Lc, C, H)
@@ -91,7 +98,7 @@ LIGHT_ACCENT_CAP = 0.130
 CHECKED_LC_ROLES = ["text", "subtext1", "subtext0", "overlay2"] + ACCENTS
 
 
-def build_mode(neutrals, text_targets, accent_lc, accent_cap, lighter):
+def build_mode(neutrals, text_targets, accent_lc, accent_cap, lighter, hues_table="hues"):
     colors, lc_real, targets = {}, {}, {}
     for role, (L, C, H) in neutrals.items():
         colors[role] = oklch_to_hex(L, C, H)
@@ -104,13 +111,16 @@ def build_mode(neutrals, text_targets, accent_lc, accent_cap, lighter):
         targets[role] = target
 
     for name in ACCENTS:
-        hue = _hues()["table"][name]["hue"]
-        sat = _hues()["table"][name]["sat"]
+        hue = _hues(hues_table)["table"][name]["hue"]
+        sat = _hues(hues_table)["table"][name]["sat"]
         C = round(sat * accent_cap, 3)
-        _, hx, real = solve_L_for_lc(accent_lc, hue, C, base_hex, lighter=lighter)
+        # accent_lc: escalar (perfil default, mismo Lc para los 14) o dict por
+        # rol (perfil deutan, Lc desigual a proposito — ver derive_hues.py).
+        target = accent_lc[name] if isinstance(accent_lc, dict) else accent_lc
+        _, hx, real = solve_L_for_lc(target, hue, C, base_hex, lighter=lighter)
         colors[name] = hx
         lc_real[name] = real
-        targets[name] = accent_lc
+        targets[name] = target
 
     return colors, lc_real, targets, base_hex
 
@@ -132,12 +142,12 @@ def build_ansi(colors, base_hex, lighter):
     return {"normal": normal, "bright": bright}, bright_lc
 
 
-def build_with_wcag_check(neutrals, text_targets, accent_lc, accent_cap, lighter):
+def build_with_wcag_check(neutrals, text_targets, accent_lc, accent_cap, lighter, hues_table="hues"):
     text_targets = dict(text_targets)
     w = None
     for attempt in range(2):
         colors, lc_real, targets, base_hex = build_mode(
-            neutrals, text_targets, accent_lc, accent_cap, lighter)
+            neutrals, text_targets, accent_lc, accent_cap, lighter, hues_table)
         w = wcag(colors["text"], base_hex)
         if w >= 7.0:
             break
@@ -160,7 +170,18 @@ def accent_de_pairs(colors):
     return pairs
 
 
-def validate(mode_name, colors, lc_real, targets, base_hex, wcag_val, accent_cap):
+def accent_cvd_de_pairs(colors, kind):
+    """Como accent_de_pairs(), pero sobre los colores simulados (kind: 'deutan'|'protan')."""
+    pairs = []
+    for r1, r2 in itertools.combinations(ACCENTS, 2):
+        de = delta_e_cvd(colors[r1], colors[r2], kind)
+        pairs.append((de, r1, r2))
+    pairs.sort(key=lambda p: p[0])
+    return pairs
+
+
+def validate(mode_name, colors, lc_real, targets, base_hex, wcag_val, accent_cap,
+             hues_table="hues", check_cvd=False):
     errors = []
 
     all_hex = list(colors.values())
@@ -194,7 +215,7 @@ def validate(mode_name, colors, lc_real, targets, base_hex, wcag_val, accent_cap
     HUE_DELTA_LOOSE = 5.0
     LOW_CHROMA_HUE_THRESHOLD = 0.05
     for name in ACCENTS:
-        table_hue = _hues()["table"][name]["hue"]
+        table_hue = _hues(hues_table)["table"][name]["hue"]
         L, C, H = hex_to_oklch(colors[name])
         eff = clamp_chroma(L, C, H)
         delta = min(abs(H - table_hue), 360 - abs(H - table_hue))
@@ -208,7 +229,7 @@ def validate(mode_name, colors, lc_real, targets, base_hex, wcag_val, accent_cap
                   f"=> angulo inestable por cuantizacion hex 8-bit, tolerancia ampliada a "
                   f"{HUE_DELTA_LOOSE} grados, no error real")
 
-        win_lo, win_hi = _hues()["windows"][name]["hue"]
+        win_lo, win_hi = _hues(hues_table)["windows"][name]["hue"]
         if not (win_lo <= table_hue <= win_hi):
             errors.append(f"{mode_name}.{name}: hue de tabla {table_hue} fuera de su ventana "
                           f"declarada [{win_lo}, {win_hi}]")
@@ -220,6 +241,17 @@ def validate(mode_name, colors, lc_real, targets, base_hex, wcag_val, accent_cap
     if min_de < MIN_ACCENT_DE:
         errors.append(f"{mode_name}: min ΔE OKLab entre acentos {min_de:.4f} < {MIN_ACCENT_DE} "
                       f"(par mas cercano: {r1}-{r2})")
+
+    # 5c — gate CVD: solo para las variantes *-deutan. El minimo ΔE OKLab entre
+    # los 14 acentos, visto bajo deuteranopia y bajo protanopia, debe superar
+    # MIN_ACCENT_DE_CVD (evita pares indistinguibles para daltonismo rojo-verde).
+    if check_cvd:
+        for kind in ("deutan", "protan"):
+            cvd_pairs = accent_cvd_de_pairs(colors, kind)
+            min_de_cvd, r1c, r2c = cvd_pairs[0]
+            if min_de_cvd < MIN_ACCENT_DE_CVD:
+                errors.append(f"{mode_name}: min ΔE simulado {kind} entre acentos "
+                              f"{min_de_cvd:.4f} < {MIN_ACCENT_DE_CVD} (par mas cercano: {r1c}-{r2c})")
 
     return errors
 
@@ -262,6 +294,24 @@ def render_accent_de_section(colors):
              "| par | ΔE OKLab |", "|---|---|"]
     for de, r1, r2 in pairs[:5]:
         lines.append(f"| {r1} — {r2} | {de:.4f} |")
+    return "\n".join(lines)
+
+
+def render_cvd_de_section(colors):
+    """Seccion de VALIDACION.md (solo variantes *-deutan): min ΔE simulado
+    (deuteranopia y protanopia) entre acentos + tabla de los 5 pares mas cercanos."""
+    lines = []
+    for kind, label in (("deutan", "deuteranopia"), ("protan", "protanopia")):
+        pairs = accent_cvd_de_pairs(colors, kind)
+        min_de = pairs[0][0]
+        lines.append(f"min ΔE simulado ({label}) entre acentos = {min_de:.4f} "
+                      f"(gate >= {MIN_ACCENT_DE_CVD})")
+        lines.append("")
+        lines.append("| par | ΔE OKLab simulado |")
+        lines.append("|---|---|")
+        for de, r1, r2 in pairs[:5]:
+            lines.append(f"| {r1} — {r2} | {de:.4f} |")
+        lines.append("")
     return "\n".join(lines)
 
 
@@ -319,17 +369,34 @@ def main():
     light = build_with_wcag_check(LIGHT_NEUTRALS, LIGHT_TEXT_TARGETS, LIGHT_ACCENT_LC,
                                    LIGHT_ACCENT_CAP, lighter=False)
 
+    # Variantes deutan: mismos neutros/caps/text-targets (el trade-off vive
+    # 100% en el Lc de los acentos); accent_lc es un dict por rol = Lc base +
+    # dlc, leido de la tabla congelada hues-deutan.json (derive_hues.py).
+    hues_deutan = _hues("hues-deutan")
+    dark_accent_lc_deutan = {r: DARK_ACCENT_LC + hues_deutan["table"][r]["dlc"] for r in ACCENTS}
+    light_accent_lc_deutan = {r: LIGHT_ACCENT_LC + hues_deutan["table"][r]["dlc"] for r in ACCENTS}
+    dark_deutan = build_with_wcag_check(DARK_NEUTRALS, DARK_TEXT_TARGETS, dark_accent_lc_deutan,
+                                         DARK_ACCENT_CAP, lighter=True, hues_table="hues-deutan")
+    light_deutan = build_with_wcag_check(LIGHT_NEUTRALS, LIGHT_TEXT_TARGETS, light_accent_lc_deutan,
+                                          LIGHT_ACCENT_CAP, lighter=False, hues_table="hues-deutan")
+
     d_colors, d_lc, d_targets, d_base, d_wcag, d_ansi, d_bright_lc = dark
     l_colors, l_lc, l_targets, l_base, l_wcag, l_ansi, l_bright_lc = light
+    dd_colors, dd_lc, dd_targets, dd_base, dd_wcag, dd_ansi, dd_bright_lc = dark_deutan
+    ld_colors, ld_lc, ld_targets, ld_base, ld_wcag, ld_ansi, ld_bright_lc = light_deutan
 
     errors = []
     errors += validate("dark", d_colors, d_lc, d_targets, d_base, d_wcag, DARK_ACCENT_CAP)
     errors += validate("light", l_colors, l_lc, l_targets, l_base, l_wcag, LIGHT_ACCENT_CAP)
+    errors += validate("dark-deutan", dd_colors, dd_lc, dd_targets, dd_base, dd_wcag,
+                        DARK_ACCENT_CAP, hues_table="hues-deutan", check_cvd=True)
+    errors += validate("light-deutan", ld_colors, ld_lc, ld_targets, ld_base, ld_wcag,
+                        LIGHT_ACCENT_CAP, hues_table="hues-deutan", check_cvd=True)
 
-    def dump(name, mode, colors, ansi, lc_real, targets, wcag_val):
+    def dump(name, mode, colors, ansi, lc_real, targets, wcag_val, display_name=None):
         path = os.path.join(HERE, "palette", f"{name}.json")
         data = {
-            "name": name.capitalize(),
+            "name": display_name if display_name else name.capitalize(),
             "mode": mode,
             "colors": colors,
             "ansi": ansi,
@@ -346,11 +413,17 @@ def main():
 
     dump("rooibos", "dark", d_colors, d_ansi, d_lc, d_targets, d_wcag)
     dump("manzanilla", "light", l_colors, l_ansi, l_lc, l_targets, l_wcag)
+    dump("rooibos-deutan", "dark", dd_colors, dd_ansi, dd_lc, dd_targets, dd_wcag,
+         display_name="Rooibos Deutan")
+    dump("manzanilla-deutan", "light", ld_colors, ld_ansi, ld_lc, ld_targets, ld_wcag,
+         display_name="Manzanilla Deutan")
 
     dump_svg("rooibos", "Ocular Rooibos (dark)", d_colors)
     dump_svg("manzanilla", "Ocular Manzanilla (light)", l_colors)
+    dump_svg("rooibos-deutan", "Ocular Rooibos Deutan (dark)", dd_colors)
+    dump_svg("manzanilla-deutan", "Ocular Manzanilla Deutan (light)", ld_colors)
 
-    md = ["# Validacion — Ocular (Rooibos / Manzanilla)", "",
+    md = ["# Validacion — Ocular (Rooibos / Manzanilla / *-Deutan)", "",
           "## Rooibos (dark)", "",
           render_table("dark", d_colors, d_lc, d_targets, d_base, d_ansi, d_bright_lc), "",
           "### Separacion de acentos (ΔE OKLab) — dark", "",
@@ -358,7 +431,19 @@ def main():
           "## Manzanilla (light)", "",
           render_table("light", l_colors, l_lc, l_targets, l_base, l_ansi, l_bright_lc), "",
           "### Separacion de acentos (ΔE OKLab) — light", "",
-          render_accent_de_section(l_colors), ""]
+          render_accent_de_section(l_colors), "",
+          "## Rooibos Deutan (dark)", "",
+          render_table("dark-deutan", dd_colors, dd_lc, dd_targets, dd_base, dd_ansi, dd_bright_lc), "",
+          "### Separacion de acentos (ΔE OKLab) — dark deutan", "",
+          render_accent_de_section(dd_colors), "",
+          "### Separacion simulada CVD — dark deutan", "",
+          render_cvd_de_section(dd_colors), "",
+          "## Manzanilla Deutan (light)", "",
+          render_table("light-deutan", ld_colors, ld_lc, ld_targets, ld_base, ld_ansi, ld_bright_lc), "",
+          "### Separacion de acentos (ΔE OKLab) — light deutan", "",
+          render_accent_de_section(ld_colors), "",
+          "### Separacion simulada CVD — light deutan", "",
+          render_cvd_de_section(ld_colors), ""]
     with open(os.path.join(HERE, "palette", "VALIDACION.md"), "w") as f:
         f.write("\n".join(md))
 
@@ -371,6 +456,20 @@ def main():
     print(render_table("light", l_colors, l_lc, l_targets, l_base, l_ansi, l_bright_lc))
     print()
     print(render_accent_de_section(l_colors))
+    print()
+    print("=== Rooibos Deutan (dark) ===")
+    print(render_table("dark-deutan", dd_colors, dd_lc, dd_targets, dd_base, dd_ansi, dd_bright_lc))
+    print()
+    print(render_accent_de_section(dd_colors))
+    print()
+    print(render_cvd_de_section(dd_colors))
+    print()
+    print("=== Manzanilla Deutan (light) ===")
+    print(render_table("light-deutan", ld_colors, ld_lc, ld_targets, ld_base, ld_ansi, ld_bright_lc))
+    print()
+    print(render_accent_de_section(ld_colors))
+    print()
+    print(render_cvd_de_section(ld_colors))
     print()
 
     if errors:

@@ -124,8 +124,9 @@ Crepúsculo theme, now applied to Ocular's own accent hues (§8).
 **Trade-off:** equal-luminance accents drop the brightness cue that
 color-vision-deficient users rely on when hues collapse (e.g. red vs.
 green under deuteranopia). Ocular optimizes for typical trichromatic
-vision; a colorblind-safe variant would require deliberately unequal
-luminances (cf. Modus themes' -deuteranopia/-tritanopia variants).
+vision by default; Ocular ships exactly the colorblind-safe alternative this
+trade-off calls for — Rooibos Deutan / Manzanilla Deutan, with deliberately
+unequal luminances (§9; cf. Modus themes' -deuteranopia/-tritanopia variants).
 
 ## 7. Wallpaper: low-emission flat background + low-frequency waves
 
@@ -183,9 +184,62 @@ tops out around C_eff ≈ 0.079–0.107 at its lightness (~0.46) — well under 
 in both cases chroma alone can't separate neighboring accents, so their
 windows are spread ≥ ~25° apart in hue instead.
 
+## 9. CVD-safe variant: breaking equal-weight on purpose
+
+§6 fixes every accent to the same Lc so hue is the only channel that
+categorizes — but that is exactly what fails under dichromacy: when hues
+collapse (red vs. green under deuteranopia), the one channel left standing
+is luminance, and §6 deliberately flattens it. Rooibos Deutan / Manzanilla
+Deutan (`palette/{rooibos,manzanilla}-deutan.json`) break that rule on
+purpose: same neutrals, same chroma caps, same name-family hue windows as
+the default palette, but each accent's Lc is now `71+dlc` (dark) /
+`74+dlc` (light) — a **per-role offset**, not a shared constant.
+
+**Simulation**: `color_science.simulate_cvd(hex, kind)` implements Viénot,
+Brettel & Mollon (1999) — sRGB linear → LMS → single-plane projection → sRGB
+linear collapsed to one 3×3 matrix per dichromacy kind (`protan`/`deutan`;
+tritanopia is out of scope, negligible prevalence). Coefficients cross-checked
+against the reference implementation
+[libDaltonLens](https://github.com/DaltonLens/libDaltonLens), which cites the
+1999 paper. `delta_e_cvd(hex1, hex2, kind)` is `delta_e_oklab` of the two
+simulated colors.
+
+**Objective**: `derive_hues.py --profile deutan` optimizes `(hue, sat, dlc)`
+per role to maximize the **minimum ΔE** over {normal, deutan, protan} ×
+{dark, light} × 91 pairs — three visual systems, not one. `dlc` is bounded
+above by keeping the accent's Lc under `text`'s Lc − 4 in both modes (so
+accents never approach body-text luminance), and below by a hard constraint:
+every candidate must still clear `audit.floor_for`'s APCA floors (≥60 over
+base/mantle/crust, ≥50 over surface0/1) in *both* variants before it's even
+scored.
+
+**Why the optimizer needed more than one attempt**: a plain coordinate ascent
+starting from the equal-Lc baseline (`dlc=0` everywhere) got stuck at
+0.0147 protan ΔE — below the 0.015 floor — because the two colliding pairs
+(`mauve`–`sapphire` under protan, `flamingo`–`red` in normal vision) are
+adjacent name-families by design, and nothing pushed their luminances apart
+first. Widening their hue windows made it *worse* (0.0093–0.0101): greedy,
+order-fixed ascent is path-dependent, not monotonic in search-space size. The
+fix that worked was breaking the dlc=0 symmetry at the start: a **deterministic
+multi-start** (three fixed initializations — the equal-Lc baseline, and two
+role-cyclic `dlc` staggers of `(+6, 0, −2)` ordered by `hues.json`'s hue,
+forward and reversed) followed by a **directed post-convergence
+perturbation** (nudge the two roles of the current worst pair by ±2/±4 `dlc`,
+re-refine, keep only strict improvements, repeat to a fixed point). All of it
+stays deterministic — fixed candidates, fixed order, no randomness — the
+multi-start just tries more *fixed* starting points instead of one.
+
+**Gate**: `MIN_ACCENT_DE_CVD = 0.02`, enforced the same way as `MIN_ACCENT_DE`
+(once in `build.py`, once in `audit.py` re-reading the emitted JSON). Achieved
+minimums: dark protan 0.0201 (`sapphire`–`blue`, the binding constraint),
+dark deutan 0.0214, light deutan 0.0216, light protan 0.0223 — comfortably
+above the floor, with normal-vision separation still ≥ 0.025 in both variants
+(0.0328 dark, 0.0420 light).
+
 ## Sources
 
 - Dark/light and polarity: [ETRA 2025](https://dl.acm.org/doi/10.1145/3715669.3725879) · [MDPI IJERPH 2025](https://www.mdpi.com/1660-4601/22/4/609) · [ACHI 2024](https://personales.upv.es/thinkmind/dl/conferences/achi/achi_2024/achi_2024_3_150_20069.pdf) · [arXiv 2409.10841](https://arxiv.org/html/2409.10841v2) · [NN/g](https://www.nngroup.com/articles/dark-mode/)
 - APCA: [APCA in a Nutshell](https://git.apcacontrast.com/documentation/APCA_in_a_Nutshell.html) · [Why APCA](https://git.apcacontrast.com/documentation/WhyAPCA) · [WCAG3 Contrast as of April 2026 — Adrian Roselli](https://adrianroselli.com/2026/04/wcag3-contrast-as-of-april-2026.html)
 - Halation/astigmatism: [Level Access](https://www.levelaccess.com/blog/accessibility-for-people-with-astigmatism/) · [BOIA](https://www.boia.org/blog/dark-mode-can-improve-text-readability-but-not-for-everyone)
 - Circadian: [Nature Human Behaviour 2024](https://www.nature.com/articles/s41562-023-01791-7) · [MDPI Life 2025](https://www.mdpi.com/2075-1729/15/5/715) · [Chronobiology in Medicine 2024](https://www.chronobiologyinmedicine.org/journal/view.php?number=167)
+- CVD simulation: [Viénot, Brettel & Mollon (1999), Color Research & Application](https://onlinelibrary.wiley.com/doi/10.1002/(SICI)1520-6378(199908)24:4%3C243::AID-COL5%3E3.0.CO;2-3) · [libDaltonLens](https://github.com/DaltonLens/libDaltonLens) · [DaltonLens — Understanding LMS-based CVD simulations](https://daltonlens.org/understanding-cvd-simulation/)
