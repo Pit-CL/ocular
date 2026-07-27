@@ -741,6 +741,36 @@ def herdr_theme(label, P):
 
 
 # --------------------------------------------------------------------------
+# 6d) CLAUDE CODE — theme custom para ~/.claude/themes/<slug>.json (formato
+#     verificado 2026-07-27 contra code.claude.com/docs/en/terminal-config:
+#     {"name", "base": "dark"|"light", "overrides": {token: color}}, Claude
+#     Code >=2.1.118, vigila la carpeta y repinta sesiones abiertas al
+#     reescribir el archivo). SOLO overrides de los 8 tokens de subagentes
+#     (<color>_FOR_SUBAGENTS_ONLY — nombres fijos de Claude Code, no roles de
+#     Ocular): no hay overrides documentados para fondo/texto/chrome, eso lo
+#     resuelve Claude Code nativo vía "base". Mapeo rol Ocular -> token
+#     (pedido 2026-07-27): red->red, blue->blue, green->green, yellow->yellow,
+#     purple->mauve, orange->peach, pink->pink, cyan->teal.
+# --------------------------------------------------------------------------
+SUBAGENT_TOKEN_ROLES = {
+    "red_FOR_SUBAGENTS_ONLY": "red",
+    "blue_FOR_SUBAGENTS_ONLY": "blue",
+    "green_FOR_SUBAGENTS_ONLY": "green",
+    "yellow_FOR_SUBAGENTS_ONLY": "yellow",
+    "purple_FOR_SUBAGENTS_ONLY": "mauve",
+    "orange_FOR_SUBAGENTS_ONLY": "peach",
+    "pink_FOR_SUBAGENTS_ONLY": "pink",
+    "cyan_FOR_SUBAGENTS_ONLY": "teal",
+}
+
+
+def claude_theme(base, P):
+    c = P["colors"]
+    overrides = {token: c[role] for token, role in SUBAGENT_TOKEN_ROLES.items()}
+    return {"name": "Ocular", "base": base, "overrides": overrides}
+
+
+# --------------------------------------------------------------------------
 # 6) NVIM — spec lazy.nvim para catppuccin/nvim (API verificada por WebFetch
 #    al README oficial: color_overrides + flavour="auto" + background map)
 # --------------------------------------------------------------------------
@@ -1209,6 +1239,12 @@ def main():
     write(OUT / "herdr/ocular-rooibos.toml", herdr_theme("Rooibos", ROOIBOS))
     write(OUT / "herdr/ocular-manzanilla.toml", herdr_theme("Manzanilla", MANZANILLA))
 
+    # ---------------- claude code (theme custom, solo tokens de subagentes) --
+    write(OUT / "claude/ocular-rooibos.json",
+          json.dumps(claude_theme("dark", ROOIBOS), indent=2, ensure_ascii=False) + "\n")
+    write(OUT / "claude/ocular-manzanilla.json",
+          json.dumps(claude_theme("light", MANZANILLA), indent=2, ensure_ascii=False) + "\n")
+
     # ---------------- nvim ----------------
     write(OUT / "nvim/ocular.lua", nvim_lua())
 
@@ -1260,6 +1296,7 @@ def main():
         ("statusline", OUT / "statusline/ocular-rooibos.sh", OUT / "statusline/ocular-manzanilla.sh", "bare", "bash"),
         ("herdr", OUT / "herdr/ocular-rooibos.toml", OUT / "herdr/ocular-manzanilla.toml", "quoted", "toml"),
         ("vscode", OUT / "vscode/ocular-rooibos-color-theme.json", OUT / "vscode/ocular-manzanilla-color-theme.json", "quoted", "json"),
+        ("claude", OUT / "claude/ocular-rooibos.json", OUT / "claude/ocular-manzanilla.json", "quoted", "json"),
     ]
 
     for name, rpath, mpath, mode, kind in pairs:
