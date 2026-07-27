@@ -76,6 +76,8 @@ from color_science import hex_to_oklab, oklch_to_hex  # noqa: E402 (mezcla OKLab
 # --------------------------------------------------------------------------
 ROOIBOS = json.loads((ROOT / "palette" / "rooibos.json").read_text())
 MANZANILLA = json.loads((ROOT / "palette" / "manzanilla.json").read_text())
+ROOIBOS_DEUTAN = json.loads((ROOT / "palette" / "rooibos-deutan.json").read_text())
+MANZANILLA_DEUTAN = json.loads((ROOT / "palette" / "manzanilla-deutan.json").read_text())
 OFICIAL = json.loads((ROOT / "palette" / "catppuccin-oficial.json").read_text())
 
 MODES = {"rooibos": ROOIBOS, "manzanilla": MANZANILLA}
@@ -1049,8 +1051,34 @@ def slack_theme_string(P):
     return ",".join(f"#{r.lstrip('#').upper()}" for r in roles)
 
 
-def slack_readme(dark_pal, light_pal):
-    return "\n".join([
+# slack/README.md es UN solo archivo compartido por todos los perfiles (Slack
+# no tiene concepto de perfil: el usuario simplemente pega el string del que
+# use). emit_profile() ya no lo escribe directo — acumula la sección de su
+# perfil aquí y main() arma+escribe el archivo completo UNA vez, después de
+# emitir todos los perfiles (si no, cada llamada pisaría la anterior y el
+# README quedaría solo con las 2 cadenas del último perfil).
+SLACK_SECTIONS: list[list[str]] = []
+
+
+def slack_readme_section(dark_pal, light_pal, dark_label, light_label):
+    return [
+        f"## Ocular {dark_label} (dark)",
+        "",
+        "```",
+        slack_theme_string(dark_pal),
+        "```",
+        "",
+        f"## Ocular {light_label} (light)",
+        "",
+        "```",
+        slack_theme_string(light_pal),
+        "```",
+        "",
+    ]
+
+
+def slack_readme(sections):
+    lines = [
         "# Slack — Ocular custom theme",
         "",
         "Slack accepts an 8-hex string (Preferences → Themes → Custom theme, or paste",
@@ -1058,18 +1086,10 @@ def slack_readme(dark_pal, light_pal):
         "BG, Menu Hover BG, Active Item, Active Item Text, Hover Item, Text Color,",
         "Active Presence, Mention Badge.",
         "",
-        "## Ocular Rooibos (dark)",
-        "",
-        "```",
-        slack_theme_string(dark_pal),
-        "```",
-        "",
-        "## Ocular Manzanilla (light)",
-        "",
-        "```",
-        slack_theme_string(light_pal),
-        "```",
-        "",
+    ]
+    for section in sections:
+        lines.extend(section)
+    lines.extend([
         "Mapping by role: Column BG = mantle · Menu Hover BG = surface0 · Active Item",
         "= mauve · Active Item Text = crust (dark) / base (light) · Hover Item =",
         "surface1 · Text = text · Active Presence = green · Mention Badge = red.",
@@ -1077,6 +1097,7 @@ def slack_readme(dark_pal, light_pal):
         "string for whichever mode you're using.",
         "",
     ])
+    return "\n".join(lines)
 
 
 DELTA_README = """# delta — Ocular
@@ -1487,7 +1508,9 @@ def emit_profile(slug, label, dark_pal, light_pal):
     write(OUT / "chrome/README.md", CHROME_README)
 
     # ---------------- slack (README con custom theme, generación directa) --
-    write(OUT / "slack/README.md", slack_readme(dark_pal, light_pal))
+    # No se escribe aquí: es un archivo compartido entre perfiles, ver
+    # SLACK_SECTIONS/slack_readme() arriba y el ensamblado final en main().
+    SLACK_SECTIONS.append(slack_readme_section(dark_pal, light_pal, dark_label, light_label))
 
     # ---------------- delta (feature file propio, generación directa por rol
     # + mezcla OKLab — ver delta_theme()/mix_oklab arriba) ----------------
@@ -1536,10 +1559,8 @@ def emit_profile(slug, label, dark_pal, light_pal):
     record("exists", nvim_path, nvim_path.exists())
     audit_hex_file("nvim", nvim_path, allowed_both, quoted=True)
 
-    # slack/README.md mezcla ambas paletas en un solo archivo -> allowed = unión
-    slack_path = OUT / "slack/README.md"
-    record("exists", slack_path, slack_path.exists())
-    audit_hex_file("slack", slack_path, allowed_both, quoted=False)
+    # slack/README.md: validación diferida a main() (archivo compartido entre
+    # perfiles, se escribe una sola vez después de emitir todos).
 
     # chrome: JSON parse + membresía RGB->hex propia (no usa el motor de #hex)
     for p, allowed in (
@@ -1584,18 +1605,36 @@ def emit_profile(slug, label, dark_pal, light_pal):
 
 
 # --------------------------------------------------------------------------
-# MAIN — orquesta la emisión de cada perfil + el reporte final. Este PR NO
-# emite variantes nuevas: llama a emit_profile() UNA vez con el perfil
-# default. La firma queda lista para que un PR posterior agregue el perfil
-# ("-deutan", " Deutan", rooibos_deutan, manzanilla_deutan).
+# MAIN — orquesta la emisión de cada perfil + el reporte final. Perfil
+# default (Rooibos/Manzanilla) + perfil deutan (Rooibos Deutan/Manzanilla
+# Deutan, CVD-safe con luminancias desiguales — ver SCIENCE.md).
 # --------------------------------------------------------------------------
+PROFILES = [
+    ("", "", ROOIBOS, MANZANILLA),
+    ("-deutan", " Deutan", ROOIBOS_DEUTAN, MANZANILLA_DEUTAN),
+]
+
+
 def main():
     missing = [str(p) for p in REF.values() if not p.exists()]
     if missing:
         print("FALTAN referencias locales:", missing, file=sys.stderr)
         sys.exit(1)
 
-    emit_profile("", "", ROOIBOS, MANZANILLA)
+    allowed_slack = set()
+    for slug, label, dark_pal, light_pal in PROFILES:
+        emit_profile(slug, label, dark_pal, light_pal)
+        allowed_slack |= (
+            {h(v) for v in dark_pal["colors"].values()}
+            | {h(v) for v in light_pal["colors"].values()}
+        )
+
+    # slack/README.md: archivo compartido entre perfiles, se escribe UNA vez
+    # con las secciones de TODOS los perfiles emitidos (ver SLACK_SECTIONS).
+    slack_path = OUT / "slack/README.md"
+    write(slack_path, slack_readme(SLACK_SECTIONS))
+    record("exists", slack_path, slack_path.exists())
+    audit_hex_file("slack", slack_path, allowed_slack, quoted=False)
 
     # ------------------------------------------------------------------
     # Imprimir reporte

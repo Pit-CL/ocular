@@ -1,0 +1,25 @@
+# Ocular Manzanilla Deutan — port Ghostty (estructura de catppuccin-mocha oficial)
+
+palette = 0=d9d3c9
+palette = 1=983c41
+palette = 2=3f6b26
+palette = 3=614a00
+palette = 4=2c5aa3
+palette = 5=8c406e
+palette = 6=006561
+palette = 7=544c43
+palette = 8=cec9bf
+palette = 9=862b32
+palette = 10=305c15
+palette = 11=4e3b00
+palette = 12=1d4b92
+palette = 13=7b305e
+palette = 14=005551
+palette = 15=443d34
+background = f5efe7
+foreground = 3f372d
+cursor-color = 69433c
+cursor-text = e6e0d7
+selection-background = d9d3c9
+selection-foreground = 3f372d
+split-divider-color = e3ddd4

@@ -1,0 +1,29 @@
+# Ocular Manzanilla Deutan — fragmento gui.theme para ~/.config/lazygit/config.yml
+gui:
+  theme:
+    activeBorderColor:
+      - '#824992'
+      - bold
+    inactiveBorderColor:
+      - '#675f57'
+    searchingActiveBorderColor:
+      - '#614a00'
+    optionsTextColor:
+      - '#2c5aa3'
+    selectedLineBgColor:
+      - '#e3ddd4'
+    inactiveViewSelectedLineBgColor:
+      - '#d9d3c9'
+    cherryPickedCommitFgColor:
+      - '#824992'
+    cherryPickedCommitBgColor:
+      - '#d9d3c9'
+    markedBaseCommitFgColor:
+      - '#2c5aa3'
+    markedBaseCommitBgColor:
+      - '#d9d3c9'
+    unstagedChangesColor:
+      - '#983c41'
+    defaultFgColor:
+      - '#3f372d'
+

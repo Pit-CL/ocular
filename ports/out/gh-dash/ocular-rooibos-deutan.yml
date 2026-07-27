@@ -1,0 +1,22 @@
+# Ocular Rooibos Deutan — fragmento theme: para ~/.config/gh-dash/config.yml
+theme:
+    colors:
+        text:
+            primary: "#dfd9cc"
+            secondary: "#c6c1b7"
+            inverted: "#1e1a15"
+            faint: "#b4afa8"
+            warning: "#eecd7c"
+            success: "#a5ce92"
+            error: "#ffb2b1"
+        background:
+            selected: "#38322b"
+        border:
+            primary: "#453f38"
+            secondary: "#38322b"
+            faint: "#2b2520"
+    ui:
+        sectionsShowCount: true
+        table:
+            showSeparator: true
+            compact: false

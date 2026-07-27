@@ -1,0 +1,22 @@
+# Ocular Manzanilla Deutan — fragmento theme: para ~/.config/gh-dash/config.yml
+theme:
+    colors:
+        text:
+            primary: "#3f372d"
+            secondary: "#675f57"
+            inverted: "#f5efe7"
+            faint: "#817a73"
+            warning: "#614a00"
+            success: "#3f6b26"
+            error: "#983c41"
+        background:
+            selected: "#d9d3c9"
+        border:
+            primary: "#cdc6bd"
+            secondary: "#d9d3c9"
+            faint: "#e3ddd4"
+    ui:
+        sectionsShowCount: true
+        table:
+            showSeparator: true
+            compact: false

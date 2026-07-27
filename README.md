@@ -12,6 +12,8 @@ within name-based families (`derive_hues.py`, see [SCIENCE.md](SCIENCE.md)).
 |---|---|---|
 | **Rooibos** | dark | warm dark background, warm off-white text, accents at Lc 71 |
 | **Manzanilla** (chamomile) | light | warm paper, warm ink, accents at Lc 74 |
+| **Rooibos Deutan** | dark | same base as Rooibos; the 14 accents get **unequal Lc by design** (~66-77) so deuteranopia/protanopia keep a brightness cue when hue collapses — gate: simulated ΔE ≥ 0.02 (deutan/protan) |
+| **Manzanilla Deutan** | light | same base as Manzanilla; accents at unequal Lc (~69-80), same CVD gate |
 
 About the names: Catppuccin names its flavors after coffee drinks (Latte,
 Mocha…). Ocular's variants are named after **caffeine-free infusions** instead —
@@ -27,6 +29,9 @@ iPad 2420×1668.
 | Manzanilla (light) | Rooibos (dark) |
 |---|---|
 | ![Manzanilla](preview/manzanilla-pv.png) | ![Rooibos](preview/rooibos-pv.png) |
+
+Shared across profiles: the neutrals are identical between default and
+Deutan, so these wallpapers work for both.
 
 ## The science, in short
 
@@ -62,9 +67,18 @@ Full detail with sources: [SCIENCE.md](SCIENCE.md).
 |---|---|
 | ![Manzanilla palette](preview/palette-manzanilla.svg) | ![Rooibos palette](preview/palette-rooibos.svg) |
 
+| Manzanilla Deutan (light) | Rooibos Deutan (dark) |
+|---|---|
+| ![Manzanilla Deutan palette](preview/palette-manzanilla-deutan.svg) | ![Rooibos Deutan palette](preview/palette-rooibos-deutan.svg) |
+
 - [`palette/rooibos.json`](palette/rooibos.json) ·
   [`palette/manzanilla.json`](palette/manzanilla.json) — full Catppuccin roles
   + ANSI16, with the actual Lc of each role in its metadata.
+- [`palette/rooibos-deutan.json`](palette/rooibos-deutan.json) ·
+  [`palette/manzanilla-deutan.json`](palette/manzanilla-deutan.json) — CVD-safe
+  variant (deuteranopia/protanopia simulated with the Viénot, Brettel & Mollon
+  matrices), same roles/ANSI16, accents at unequal Lc by design — see
+  [SCIENCE.md](SCIENCE.md) for the method and the gate.
 - [`palette/VALIDACION.md`](palette/VALIDACION.md) — full validation table.
 - Structure is 100% compatible with Catppuccin's roles: any port can be
   adapted by swapping only the hex values.
@@ -99,6 +113,19 @@ modes and validated (syntax + palette membership of every hex).
 the machine. kitty, ghostty, and nvim get **native switching** (installed
 once, then they follow the system appearance on their own); the rest are
 re-pointed per mode on every run.
+
+### CVD-safe profile (Deutan)
+
+`ocular-switch` also reads a **profile** dimension — default or Deutan —
+from `~/.config/ocular/profile`. Activate it once:
+
+```bash
+echo deutan > ~/.config/ocular/profile    # echo default > ... to go back
+```
+
+The next `ocular-switch light|dark` picks it up automatically — no new
+flags. An absent, empty, or unreadable file means default; an unrecognized
+value falls back to default with a warning.
 
 ## Status and known limitations
 

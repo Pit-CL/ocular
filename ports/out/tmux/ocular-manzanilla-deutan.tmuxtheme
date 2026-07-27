@@ -1,0 +1,33 @@
+# tmux Ocular Manzanilla Deutan — opciones standalone (SIN plugin catppuccin/tmux)
+# Recrea la estética actual de ~/.tmux.conf líneas 50-76 (status arriba,
+# ventana activa resaltada, borde de panel activo) sin depender del plugin.
+# `tmux source-file` este archivo para aplicarlo en caliente.
+# status-left/status-right son COMPLETOS y AUTOSUFICIENTES (sesión +
+# fecha/hora): tmux.conf no debe definir los suyos, o los pisa al cargar
+# después de este archivo.
+
+set -g status-position top
+set -g status-style "bg=#eee8df,fg=#3f372d"
+
+set -g window-status-style "fg=#918b84,bg=#eee8df"
+set -g window-status-current-style "fg=#e6e0d7,bg=#824992,bold"
+set -g window-status-format " #I:#W "
+set -g window-status-current-format " #I:#W "
+set -g window-status-separator ""
+
+set -g pane-border-style "fg=#d9d3c9"
+set -g pane-active-border-style "fg=#4f4480"
+
+set -g message-style "bg=#e3ddd4,fg=#3f372d"
+set -g message-command-style "bg=#e3ddd4,fg=#3f372d"
+
+set -g mode-style "bg=#824992,fg=#e6e0d7"
+
+set -g status-left-style "fg=#544c43,bg=#eee8df"
+set -g status-right-style "fg=#544c43,bg=#eee8df"
+
+set -g status-left "#[fg=#e6e0d7,bg=#824992,bold] #S #[fg=#544c43,bg=#eee8df,nobold]"
+set -g status-right "#[fg=#675f57] #h #[default]· %d-%m %H:%M "
+
+set -g clock-mode-colour "#2c5aa3"
+set -g clock-mode-style 24

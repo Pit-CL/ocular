@@ -1,0 +1,27 @@
+# Ocular Rooibos Deutan — fragmento [theme.custom] para ~/.config/herdr/config.toml
+# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15).
+[theme.custom]
+panel_bg = "#1e1a15"      # base
+surface_dim = "#38322b"   # bg de la fila SELECCIONADA del sidebar (fix APCA 2026-07-26:
+                          # overlay0 media Lc 38-42 con el texto por encima — WCAG 2.x aprueba
+                          # pares que APCA rechaza, y los pares de Ocular se validan con APCA
+                          # (color_science.lc), no con el ratio WCAG. surface1 da texto legible
+                          # (Lc ≥ 71 en ambos modos) y sigue siendo más oscuro que panel_bg, así
+                          # que la selección se ve. Descartados: morados de Mocha (mauve/
+                          # lavender, muy claros para bg), #8839ef mauve de Latte (muy
+                          # eléctrico), #574b7d custom.
+surface0 = "#2b2520"
+surface1 = "#38322b"
+overlay0 = "#98938d"
+overlay1 = "#a6a099"
+text = "#dfd9cc"
+subtext0 = "#c6c1b7"
+accent = "#feb782"        # peach — marco activo cálido + selección del sidebar (fix bordes azules, 2026-07-26)
+blue = "#a5c9ff"
+mauve = "#e4b1f4"
+green = "#a5ce92"
+red = "#ffb2b1"
+yellow = "#eecd7c"
+peach = "#feb782"
+teal = "#6ed8d0"
+
