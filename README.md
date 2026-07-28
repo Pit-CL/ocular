@@ -58,6 +58,8 @@ Deutan, so these wallpapers work for both.
    just-noticeable-difference), verified in both `build.py` and `audit.py`.
 8. **Low-spatial-frequency wallpaper**: wide bands with low local contrast,
    that don't compete for attention with windows.
+9. **Complementary typography**: line spacing ≈1.3-1.4× for code, ≈1.5-1.6×
+   for prose, familiarity-first font choice — see [SCIENCE.md](SCIENCE.md) §10.
 
 Full detail with sources: [SCIENCE.md](SCIENCE.md).
 

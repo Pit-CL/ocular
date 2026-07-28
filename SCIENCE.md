@@ -236,6 +236,52 @@ dark deutan 0.0214, light deutan 0.0216, light protan 0.0223 — comfortably
 above the floor, with normal-vision separation still ≥ 0.025 in both variants
 (0.0328 dark, 0.0420 light).
 
+## 10. Typography and line spacing (complementary)
+
+The theme governs color only — reading comfort is completed by typography.
+These are the evidence-backed companion settings the author's fleet applies
+alongside Ocular; they're not part of the palette or the ports, just a
+practical note.
+
+- **Line spacing for code ≈1.3-1.4×**: two separate mechanisms push toward
+  that range. Vertical crowding — lines packed too tight let adjacent lines
+  interfere with letter recognition, especially in parafoveal vision (the
+  periphery of the reading fixation) — pushes spacing up. Return-sweep
+  accuracy — the saccade that jumps from the end of one line back to the
+  start of the next — degrades with tight spacing, increasing landing
+  errors on the wrong line. The benefit curve plateaus past ~1.4×: extra
+  spacing beyond that buys little more accuracy while costing vertical
+  density and diluting code-block structure, where proximity (how close
+  adjacent lines sit) is itself a grouping cue — a function body, a
+  callback, an object literal read as one visual unit only if its lines
+  stay close enough together. Code also reads in shorter lines than prose
+  and gets scanned vertically far more (skimming a signature, hunting a
+  closing brace) — so the optimum for code sits at the conservative end of
+  the general-purpose range, not stretched toward prose values.
+- **Prose ≈1.5-1.6× with a 65-75 character measure**: long-form text
+  benefits from looser spacing than code — cf. WCAG Success Criterion
+  1.4.12 (Text Spacing), whose adaptability requirement asks that content
+  stay usable with line height set to at least 1.5× the font size, treating
+  that ratio as a baseline for comfortable reading, not an extreme.
+- **Font: familiarity dominates.** The largest, most reproducible effect in
+  legibility research is familiarity with one's own habitual font:
+  switching to a "more legible" font imposes a real adaptation cost — the
+  eye and the reading system are tuned to letterforms seen daily — that
+  usually outweighs whatever marginal shape gains the new font offers, for
+  normal (corrected) vision. Fonts designed specifically for accessibility
+  show their strongest evidence in low-vision contexts, not for typical
+  readers swapping a font they already know well. What does matter in a
+  font's shape, when it matters: high x-height (lowercase looks bigger at
+  the same point size), open forms (counters — the enclosed or
+  partially-enclosed spaces in letters like 'a', 'e', 'o' — stay open
+  instead of clogging at small sizes), and unambiguous 0/O and 1/l/I (the
+  classic monospace confusables). The fleet keeps JetBrains Mono, whose own
+  recommended settings ship a fairly tight native line spacing (~1.2×) —
+  pushed to ≈1.32× effective with a +10% cell-height adjustment, landing
+  inside the ~1.3-1.4× code target above.
+- Concrete one-liners: kitty `modify_font cell_height 110%`, ghostty
+  `adjust-cell-height = 10%`, VSCode `"editor.lineHeight": 1.4`.
+
 ## Sources
 
 - Dark/light and polarity: [ETRA 2025](https://dl.acm.org/doi/10.1145/3715669.3725879) · [MDPI IJERPH 2025](https://www.mdpi.com/1660-4601/22/4/609) · [ACHI 2024](https://personales.upv.es/thinkmind/dl/conferences/achi/achi_2024/achi_2024_3_150_20069.pdf) · [arXiv 2409.10841](https://arxiv.org/html/2409.10841v2) · [NN/g](https://www.nngroup.com/articles/dark-mode/)
@@ -243,3 +289,4 @@ above the floor, with normal-vision separation still ≥ 0.025 in both variants
 - Halation/astigmatism: [Level Access](https://www.levelaccess.com/blog/accessibility-for-people-with-astigmatism/) · [BOIA](https://www.boia.org/blog/dark-mode-can-improve-text-readability-but-not-for-everyone)
 - Circadian: [Nature Human Behaviour 2024](https://www.nature.com/articles/s41562-023-01791-7) · [MDPI Life 2025](https://www.mdpi.com/2075-1729/15/5/715) · [Chronobiology in Medicine 2024](https://www.chronobiologyinmedicine.org/journal/view.php?number=167)
 - CVD simulation: [Viénot, Brettel & Mollon (1999), Color Research & Application](https://onlinelibrary.wiley.com/doi/10.1002/(SICI)1520-6378(199908)24:4%3C243::AID-COL5%3E3.0.CO;2-3) · [libDaltonLens](https://github.com/DaltonLens/libDaltonLens) · [DaltonLens — Understanding LMS-based CVD simulations](https://daltonlens.org/understanding-cvd-simulation/)
+- Typography: [WCAG 2.1 SC 1.4.12 Text Spacing — Understanding](https://www.w3.org/WAI/WCAG21/Understanding/text-spacing.html) · [JetBrains Mono — recommended settings discussion](https://github.com/JetBrains/JetBrainsMono/issues/670)
