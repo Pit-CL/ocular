@@ -120,8 +120,8 @@ cp ports/out/delta/ocular-rooibos.gitconfig ~/.config/delta/ocular.gitconfig
 (Rooibos, Manzanilla, Rooibos Deutan, Manzanilla Deutan) vienen incluidas:
 
 ```bash
-curl -LO https://raw.githubusercontent.com/Pit-CL/ocular/main/ports/out/vscode/ocular-1.1.0.vsix
-code --install-extension ocular-1.1.0.vsix
+curl -LO https://raw.githubusercontent.com/Pit-CL/ocular/main/ports/out/vscode/ocular-1.2.0.vsix
+code --install-extension ocular-1.2.0.vsix
 ```
 
 ## Perfil CVD-safe (Deutan)

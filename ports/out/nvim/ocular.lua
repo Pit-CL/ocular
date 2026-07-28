@@ -3,6 +3,8 @@
 -- API verificada 2026-07-26 contra github.com/catppuccin/nvim README:
 --   color_overrides = { all = {...}, mocha = {...}, latte = {...} }
 --   flavour = "auto" + background = { light = "latte", dark = "mocha" }
+-- custom_highlights (sintaxis SYNTAX_MAP, ver NVIM_HIGHLIGHT_GROUPS arriba)
+-- verificado 2026-07-28 contra catppuccin/nvim lua/catppuccin/types.lua.
 return {
   "catppuccin/nvim",
   name = "catppuccin",
@@ -71,6 +73,32 @@ return {
         lavender = "#5d5391",
       },
     },
+    custom_highlights = function(colors)
+      return {
+        ["@operator"] = { fg = colors.subtext0 },
+        ["@variable.parameter"] = { fg = colors.maroon, style = { "italic" } },
+        ["@variable.member"] = { fg = colors.lavender },
+        ["@attribute"] = { fg = colors.pink },
+        ["@type.builtin"] = { fg = colors.teal },
+        ["@function.builtin"] = { fg = colors.sapphire },
+        ["@constant.builtin"] = { fg = colors.peach },
+        ["@tag.attribute"] = { fg = colors.teal },
+        ["@string.escape"] = { fg = colors.sky },
+        ["@string.regexp"] = { fg = colors.sky },
+        ["@comment"] = { fg = colors.subtext0, style = { "italic" } },
+        ["@property.json"] = { fg = colors.sapphire },
+        ["@property.yaml"] = { fg = colors.sapphire },
+        ["@property.toml"] = { fg = colors.sapphire },
+        ["@label.yaml"] = { fg = colors.teal },
+        ["@type.yaml"] = { fg = colors.mauve },
+        ["@punctuation.special.yaml"] = { fg = colors.overlay1 },
+        ["@lsp.type.typeParameter"] = { fg = colors.teal },
+        ["@lsp.mod.defaultLibrary"] = { fg = colors.sapphire },
+        ["@lsp.type.decorator"] = { fg = colors.pink },
+        ["@lsp.type.parameter"] = { fg = colors.maroon, style = { "italic" } },
+        ["@lsp.type.property"] = { fg = colors.lavender },
+      }
+    end,
   },
   config = function(_, opts)
     require("catppuccin").setup(opts)

@@ -5,18 +5,31 @@
   "semanticTokenColors": {
     "function": "#2c5aa3",
     "method": "#2c5aa3",
+    "macro": "#2c5aa3",
     "class": "#614a00",
     "type": "#614a00",
     "interface": "#614a00",
     "enum": "#614a00",
-    "parameter": "#005460",
+    "namespace": "#614a00",
+    "struct": "#614a00",
+    "typeParameter": "#006561",
+    "parameter": {
+      "foreground": "#914e36",
+      "italic": true
+    },
     "variable": "#3f372d",
     "variable.readonly": "#8c4900",
-    "property": "#005460",
+    "property": "#4f4480",
     "enumMember": "#8c4900",
-    "decorator": "#2c5aa3",
-    "namespace": "#614a00",
+    "decorator": "#8c406e",
+    "operator": "#675f57",
+    "regexp": "#005460",
     "selfParameter": "#983c41",
+    "*.defaultLibrary": "#006d9d",
+    "comment": {
+      "foreground": "#675f57",
+      "italic": true
+    },
     "*.declaration": {
       "bold": true
     }
@@ -79,12 +92,13 @@
     "editorCodeLens.foreground": "#817a73",
     "editorBracketMatch.background": "#4f448020",
     "editorBracketMatch.border": "#4f4480",
-    "editorBracketHighlight.foreground1": "#614a00",
-    "editorBracketHighlight.foreground2": "#2c5aa3",
-    "editorBracketHighlight.foreground3": "#824992",
-    "editorBracketHighlight.foreground4": "#3f6b26",
-    "editorBracketHighlight.foreground5": "#005460",
-    "editorBracketHighlight.foreground6": "#983c41",
+    "editorBracketHighlight.foreground1": "#8c4900",
+    "editorBracketHighlight.foreground2": "#3f6b26",
+    "editorBracketHighlight.foreground3": "#006d9d",
+    "editorBracketHighlight.foreground4": "#614a00",
+    "editorBracketHighlight.foreground5": "#006561",
+    "editorBracketHighlight.foreground6": "#824992",
+    "editorBracketHighlight.unexpectedBracket.foreground": "#983c41",
     "editorError.foreground": "#983c41",
     "editorWarning.foreground": "#8c4900",
     "editorInfo.foreground": "#4f4480",
@@ -199,37 +213,42 @@
       }
     },
     {
-      "name": "String escape",
+      "name": "String escape / regexp",
       "scope": [
-        "constant.character.escape"
+        "constant.character.escape",
+        "string.regexp"
       ],
       "settings": {
         "foreground": "#005460"
       }
     },
     {
-      "name": "Number",
+      "name": "Interpolation (f-string / template literal / .env ${})",
       "scope": [
-        "constant.numeric"
+        "punctuation.definition.template-expression.begin",
+        "punctuation.definition.template-expression.end",
+        "constant.character.format.placeholder.other.python",
+        "keyword.other.template.begin.env",
+        "keyword.other.template.end.env"
+      ],
+      "settings": {
+        "foreground": "#005460"
+      }
+    },
+    {
+      "name": "Number / boolean / constant.language",
+      "scope": [
+        "constant.numeric",
+        "constant.language",
+        "constant.language.boolean",
+        "support.constant"
       ],
       "settings": {
         "foreground": "#8c4900"
       }
     },
     {
-      "name": "Constant",
-      "scope": [
-        "constant.language",
-        "constant.language.boolean",
-        "support.constant"
-      ],
-      "settings": {
-        "foreground": "#8c4900",
-        "fontStyle": "bold"
-      }
-    },
-    {
-      "name": "Keyword",
+      "name": "Keyword / storage",
       "scope": [
         "keyword",
         "storage.type",
@@ -247,11 +266,11 @@
         "punctuation.separator.operator"
       ],
       "settings": {
-        "foreground": "#005460"
+        "foreground": "#675f57"
       }
     },
     {
-      "name": "Function",
+      "name": "Function / method",
       "scope": [
         "entity.name.function",
         "support.function",
@@ -265,12 +284,25 @@
       "name": "Decorator",
       "scope": [
         "meta.decorator",
+        "punctuation.decorator",
         "entity.name.function.decorator",
-        "punctuation.definition.decorator"
+        "punctuation.definition.decorator",
+        "entity.name.function.decorator.python",
+        "punctuation.definition.decorator.python"
       ],
       "settings": {
-        "foreground": "#2c5aa3",
-        "fontStyle": "italic"
+        "foreground": "#8c406e"
+      }
+    },
+    {
+      "name": "Type parameter / generics",
+      "scope": [
+        "meta.type.parameters",
+        "entity.name.type.parameter",
+        "punctuation.definition.typeparameters"
+      ],
+      "settings": {
+        "foreground": "#006561"
       }
     },
     {
@@ -303,7 +335,8 @@
         "variable.parameter"
       ],
       "settings": {
-        "foreground": "#005460"
+        "foreground": "#914e36",
+        "fontStyle": "italic"
       }
     },
     {
@@ -311,11 +344,26 @@
       "scope": [
         "variable.language",
         "variable.language.this",
-        "variable.parameter.function.language.special.self.python"
+        "variable.parameter.function.language.special.self.python",
+        "variable.language.special.self.python"
       ],
       "settings": {
-        "foreground": "#983c41",
-        "fontStyle": "italic"
+        "foreground": "#983c41"
+      }
+    },
+    {
+      "name": "Builtin",
+      "scope": [
+        "support.function.builtin",
+        "support.function.builtin.python",
+        "support.function.builtin.shell",
+        "support.function.library.lua",
+        "support.function.lua",
+        "support.class.builtin",
+        "support.type.builtin"
+      ],
+      "settings": {
+        "foreground": "#006d9d"
       }
     },
     {
@@ -327,18 +375,20 @@
         "support.type.property-name"
       ],
       "settings": {
-        "foreground": "#005460"
+        "foreground": "#4f4480"
       }
     },
     {
-      "name": "JSON / YAML key",
+      "name": "Data key (JSON/JSONC/JSONL/YAML/TOML/INI/.env)",
       "scope": [
         "support.type.property-name.json",
+        "support.type.property-name.toml",
         "entity.name.tag.yaml",
-        "entity.name.tag"
+        "keyword.other.definition.ini",
+        "variable.other.env"
       ],
       "settings": {
-        "foreground": "#983c41"
+        "foreground": "#006d9d"
       }
     },
     {
@@ -361,15 +411,6 @@
       ],
       "settings": {
         "foreground": "#918b84"
-      }
-    },
-    {
-      "name": "Regexp",
-      "scope": [
-        "string.regexp"
-      ],
-      "settings": {
-        "foreground": "#005460"
       }
     },
     {
@@ -437,7 +478,8 @@
       "name": "Tag",
       "scope": [
         "entity.name.tag.html",
-        "entity.name.tag.tsx"
+        "entity.name.tag.tsx",
+        "entity.name.tag"
       ],
       "settings": {
         "foreground": "#983c41"
@@ -446,10 +488,11 @@
     {
       "name": "Attribute",
       "scope": [
-        "entity.other.attribute-name"
+        "entity.other.attribute-name",
+        "entity.other.attribute-name.tsx"
       ],
       "settings": {
-        "foreground": "#8c4900"
+        "foreground": "#006561"
       }
     },
     {
@@ -468,6 +511,60 @@
       "name": "JSX component",
       "scope": [
         "support.class.component"
+      ],
+      "settings": {
+        "foreground": "#614a00"
+      }
+    },
+    {
+      "name": "YAML anchor / alias",
+      "scope": [
+        "variable.other.anchor.yaml",
+        "variable.other.alias.yaml",
+        "entity.name.type.anchor.yaml",
+        "punctuation.definition.anchor.yaml",
+        "punctuation.definition.alias.yaml"
+      ],
+      "settings": {
+        "foreground": "#006561"
+      }
+    },
+    {
+      "name": "YAML tag (!!str)",
+      "scope": [
+        "storage.type.tag-handle.yaml",
+        "storage.type.tag.shorthand.yaml",
+        "storage.type.tag.verbatim.yaml",
+        "storage.type.tag.non-specific.yaml"
+      ],
+      "settings": {
+        "foreground": "#824992"
+      }
+    },
+    {
+      "name": "YAML block scalar indicator (| >)",
+      "scope": [
+        "keyword.control.flow.block-scalar.folded.yaml",
+        "keyword.control.flow.block-scalar.literal.yaml"
+      ],
+      "settings": {
+        "foreground": "#005460"
+      }
+    },
+    {
+      "name": "YAML document separator (---)",
+      "scope": [
+        "entity.other.document.begin.yaml"
+      ],
+      "settings": {
+        "foreground": "#918b84"
+      }
+    },
+    {
+      "name": "TOML table header ([section] / [[array]])",
+      "scope": [
+        "support.type.property-name.table",
+        "entity.name.section.group-title.ini"
       ],
       "settings": {
         "foreground": "#614a00"
