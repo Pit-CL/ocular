@@ -1,0 +1,51 @@
+{
+  "name": "ocular",
+  "displayName": "Ocular",
+  "description": "Ocular — theme OKLCH+APCA con variantes Rooibos (dark) y Manzanilla (light), mas perfil CVD-safe (Deutan).",
+  "version": "1.1.0",
+  "publisher": "rafaelfarias",
+  "author": {
+    "name": "Rafael Farias"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "keywords": [
+    "dark",
+    "light",
+    "accessibility"
+  ],
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pit-CL/ocular.git"
+  },
+  "license": "MIT",
+  "contributes": {
+    "themes": [
+      {
+        "label": "Ocular Rooibos",
+        "uiTheme": "vs-dark",
+        "path": "./themes/ocular-rooibos-color-theme.json"
+      },
+      {
+        "label": "Ocular Manzanilla",
+        "uiTheme": "vs",
+        "path": "./themes/ocular-manzanilla-color-theme.json"
+      },
+      {
+        "label": "Ocular Rooibos Deutan",
+        "uiTheme": "vs-dark",
+        "path": "./themes/ocular-rooibos-deutan-color-theme.json"
+      },
+      {
+        "label": "Ocular Manzanilla Deutan",
+        "uiTheme": "vs",
+        "path": "./themes/ocular-manzanilla-deutan-color-theme.json"
+      }
+    ]
+  }
+}
