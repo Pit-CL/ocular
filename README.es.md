@@ -57,6 +57,9 @@ Deutan, así que estos wallpapers sirven para ambos.
    verificado en `build.py` y `audit.py`.
 8. **Wallpaper de baja frecuencia espacial**: bandas anchas con contraste local
    bajo, que no compiten por atención con las ventanas.
+9. **Tipografía complementaria**: interlineado ≈1.3-1.4× para código,
+   ≈1.5-1.6× para prosa, elección de fuente basada en familiaridad — ver
+   [CIENCIA.md](CIENCIA.md) §10.
 
 Detalle completo con fuentes: [CIENCIA.md](CIENCIA.md).
 

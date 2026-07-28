@@ -232,6 +232,58 @@ vinculante), dark deutan 0.0214, light deutan 0.0216, light protan 0.0223 —
 comodamente sobre el piso, con la separación en visión normal todavía ≥ 0.025
 en ambas variantes (0.0328 dark, 0.0420 light).
 
+## 10. Tipografía e interlineado (complementario)
+
+El theme gobierna solo el color — la comodidad de lectura la completa la
+tipografía. Estos son los ajustes complementarios con respaldo empírico que
+el autor aplica en su fleet junto a Ocular; no son parte de la paleta ni de
+los ports, es solo una nota práctica.
+
+- **Interlineado de código ≈1.3-1.4×**: dos mecanismos distintos empujan a
+  ese rango. El amontonamiento vertical — líneas demasiado juntas dejan que
+  las adyacentes interfieran con el reconocimiento de letras, sobre todo en
+  visión parafoveal (la periferia del punto de fijación de lectura) —
+  empuja el interlineado hacia arriba. La precisión del barrido de retorno
+  — la sacada que salta del final de una línea al inicio de la siguiente —
+  empeora con interlineado apretado, aumentando los errores de aterrizaje
+  en la línea equivocada. La curva de beneficio se aplana pasado ~1.4×: más
+  espacio no suma mucha precisión adicional y sí cuesta densidad vertical y
+  diluye la estructura de un bloque de código, donde la proximidad (qué tan
+  cerca quedan las líneas adyacentes) es en sí misma una señal de
+  agrupación — el cuerpo de una función, un callback, un objeto literal se
+  leen como una unidad visual solo si sus líneas se mantienen
+  suficientemente juntas. El código además se lee en líneas más cortas que
+  la prosa y se escanea verticalmente mucho más (repasar una firma de
+  función, buscar una llave de cierre) — así que el óptimo para código
+  queda en el extremo conservador del rango general, no estirado hacia los
+  valores de prosa.
+- **Prosa ≈1.5-1.6× con una medida de 65-75 caracteres**: el texto largo se
+  beneficia de un interlineado más suelto que el código — cf. el Criterio
+  de Éxito 1.4.12 de WCAG (Text Spacing), cuyo requisito de adaptabilidad de
+  espaciado pide que el contenido siga siendo usable con una altura de
+  línea de al menos 1.5× el tamaño de fuente, tratando esa proporción como
+  un piso de lectura cómoda, no como un extremo.
+- **Fuente: la familiaridad domina.** El efecto más grande y reproducible
+  en la investigación de legibilidad es la familiaridad con la propia
+  fuente habitual: cambiar a una fuente "más legible" impone un costo real
+  de adaptación — el ojo y el sistema de lectura están afinados a las
+  formas de letra que se ven a diario — que suele pesar más que cualquier
+  ganancia marginal de forma que ofrezca la fuente nueva, para visión
+  normal (corregida). Las fuentes diseñadas específicamente para
+  accesibilidad muestran su evidencia más fuerte en contextos de baja
+  visión, no en lectores típicos que cambian una fuente que ya conocen
+  bien. Lo que sí importa en la forma de una fuente, cuando importa:
+  x-height alto (las minúsculas se ven más grandes al mismo tamaño de
+  punto), formas abiertas (los counters — los espacios encerrados o
+  parcialmente encerrados de letras como 'a', 'e', 'o' — se mantienen
+  abiertos en vez de taparse a tamaños chicos), y 0/O y 1/l/I sin ambigüedad
+  (los clásicos confundibles del monospace). El fleet usa JetBrains Mono,
+  cuyos propios settings recomendados traen un interlineado nativo bastante
+  apretado (~1.2×) — llevado a ≈1.32× efectivo con un ajuste de +10% en
+  cell-height, dentro del target de código de ~1.3-1.4× de arriba.
+- One-liners concretos: kitty `modify_font cell_height 110%`, ghostty
+  `adjust-cell-height = 10%`, VSCode `"editor.lineHeight": 1.4`.
+
 ## Fuentes
 
 - Dark/light y polaridad: [ETRA 2025](https://dl.acm.org/doi/10.1145/3715669.3725879) · [MDPI IJERPH 2025](https://www.mdpi.com/1660-4601/22/4/609) · [ACHI 2024](https://personales.upv.es/thinkmind/dl/conferences/achi/achi_2024/achi_2024_3_150_20069.pdf) · [arXiv 2409.10841](https://arxiv.org/html/2409.10841v2) · [NN/g](https://www.nngroup.com/articles/dark-mode/)
@@ -239,3 +291,4 @@ en ambas variantes (0.0328 dark, 0.0420 light).
 - Halación/astigmatismo: [Level Access](https://www.levelaccess.com/blog/accessibility-for-people-with-astigmatism/) · [BOIA](https://www.boia.org/blog/dark-mode-can-improve-text-readability-but-not-for-everyone)
 - Simulación CVD: [Viénot, Brettel & Mollon (1999), Color Research & Application](https://onlinelibrary.wiley.com/doi/10.1002/(SICI)1520-6378(199908)24:4%3C243::AID-COL5%3E3.0.CO;2-3) · [libDaltonLens](https://github.com/DaltonLens/libDaltonLens) · [DaltonLens — Understanding LMS-based CVD simulations](https://daltonlens.org/understanding-cvd-simulation/)
 - Circadiano: [Nature Human Behaviour 2024](https://www.nature.com/articles/s41562-023-01791-7) · [MDPI Life 2025](https://www.mdpi.com/2075-1729/15/5/715) · [Chronobiology in Medicine 2024](https://www.chronobiologyinmedicine.org/journal/view.php?number=167)
+- Tipografía: [WCAG 2.1 SC 1.4.12 Text Spacing — Understanding](https://www.w3.org/WAI/WCAG21/Understanding/text-spacing.html) · [JetBrains Mono — discusión de settings recomendados](https://github.com/JetBrains/JetBrainsMono/issues/670)
