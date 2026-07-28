@@ -32,15 +32,15 @@ Dos estrategias según el artefacto:
 
 Mapeo sintáctico común (para los artefactos de generación directa; los de
 sustitución simplemente heredan el mapeo que ya trae el port oficial):
-    keyword/control      -> mauve
-    string                -> green
-    function              -> blue
-    number/constant/bool  -> peach
-    type/class             -> yellow
-    comment                -> subtext0 (texto leído de forma sostenida, no
-                                chrome; Lc 68/72 vs 58/60 de overlay2)
-    variable                -> text
-    operator/punctuation    -> sky / subtext0
+    keyword/string/function/number/type/comment/variable/operator/
+    punctuation/parameter/property/decorator/builtin/typeParameter/
+    interpolación/data-key (JSON·YAML·TOML·INI·.env), etc. -> ver la tabla
+    ÚNICA `SYNTAX_MAP` (más abajo, justo antes de nvim_lua()/vscode_theme()):
+    de ahí derivan tokenColors + semanticTokenColors de vscode_theme() y el
+    bloque custom_highlights de nvim_lua() — un solo lugar para recalibrar
+    un color de sintaxis en todo el fleet. Lo que sigue es el mapeo de
+    campos NO sintácticos (estado de git, chrome de selección) que cada
+    generador resuelve por su cuenta, fuera de SYNTAX_MAP:
     error                    -> red
     warning                  -> yellow
     added                    -> green
@@ -767,8 +767,153 @@ def claude_theme(base, P):
 
 
 # --------------------------------------------------------------------------
+# SYNTAX_MAP — tabla semántica ÚNICA {categoría: (rol, estilo)} de la que
+# derivan tokenColors/semanticTokenColors de vscode_theme() Y el bloque
+# custom_highlights de nvim_lua(). Un solo lugar para recalibrar un color de
+# sintaxis en TODO el fleet (VSCode + nvim, ambos modos, ambos perfiles).
+# estilo ∈ {None, "italic", "bold", "underline"} — SOLO comment y parameter
+# llevan itálica (decisión del usuario, 2026-07-27); markup_heading/
+# markup_bold llevan "bold" y markup_link lleva "underline" (heredado del
+# mapeo previo, sin cambios de fondo, solo de mecanismo).
+#
+# Categorías NUEVAS respecto del mapeo legado (antes hardcodeado inline en
+# vscode_theme(), sin tabla ni nvim): interpolation, decorator (antes
+# colisionaba con function=blue), type_parameter, builtin, key (antes
+# hardcodeada a red solo para YAML/JSON; ahora unifica JSON/JSONC/JSONL/
+# YAML/TOML/INI/.env — "en datos, la key es la protagonista"), yaml_anchor,
+# yaml_tag, yaml_block_scalar (solo VSCode, ver nota en vscode_theme()),
+# toml_table. `operator` pasa de sky a subtext0 (sky queda SOLO para
+# escape/regexp/interpolación — antes sobrecargado con 5 categorías
+# distintas). `attribute` (atributo JSX/HTML) pasa de peach a teal
+# (colisionaba con number/constant=peach).
+# --------------------------------------------------------------------------
+SYNTAX_MAP = {
+    # -- código: núcleo léxico --
+    "keyword":        ("mauve", None),
+    "string":         ("green", None),
+    "escape":         ("sky", None),        # string escape + regexp
+    "interpolation":  ("sky", None),        # f-string {}, template ${}, .env ${}
+    "number":         ("peach", None),      # number/boolean/constant.language
+    "function":       ("blue", None),
+    "decorator":      ("pink", None),
+    "type":           ("yellow", None),     # type/class/interface/enum/namespace
+    "type_parameter": ("teal", None),       # <T>, genéricos
+    "variable":       ("text", None),
+    "parameter":      ("maroon", "italic"),
+    "property":       ("lavender", None),   # campo/propiedad de CÓDIGO
+    "self":           ("red", None),
+    "builtin":        ("sapphire", None),   # len/print/console/process
+    "operator":       ("subtext0", None),
+    "punctuation":    ("overlay1", None),
+    "comment":        ("subtext0", "italic"),
+    "invalid":        ("red", None),
+    # -- JSX/HTML --
+    "tag":            ("red", None),
+    "attribute":      ("teal", None),       # atributo de tag JSX/HTML
+    "component":      ("yellow", None),     # componente JSX
+    # -- markup (Markdown/AsciiDoc) — sin cambios de fondo --
+    "markup_heading": ("red", "bold"),
+    "markup_bold":    ("yellow", "bold"),
+    "markup_italic":  ("blue", "italic"),
+    "markup_link":    ("mauve", "underline"),
+    "markup_code":    ("green", None),
+    # -- formatos de datos (JSON/JSONC/JSONL/YAML/TOML/INI/.env) — la key es
+    # la protagonista, el tipo del valor se lee por color (string/number ya
+    # cubiertos arriba: mismo rol que en código, es el MISMO dato) --
+    "key":               ("sapphire", None),  # JSON/YAML/TOML/INI/.env
+    "yaml_anchor":       ("teal", None),      # &ancla / *alias
+    "yaml_tag":          ("mauve", None),     # !!str
+    "yaml_block_scalar": ("sky", None),       # indicadores | > (solo VSCode)
+    "toml_table":        ("yellow", None),    # [section] / [[array]] (solo VSCode)
+}
+
+
+# --------------------------------------------------------------------------
+# NVIM_HIGHLIGHT_GROUPS — grupos nvim (treesitter @... + LSP semantic
+# @lsp.type./@lsp.mod.) que reciben un override vía custom_highlights, SOLO
+# donde SYNTAX_MAP difiere de lo que catppuccin/nvim ya resuelve por
+# defecto (plan original, "sección 3"). Nombres de captura treesitter
+# verificados 2026-07-28 contra runtime/doc/treesitter.txt de
+# neovim/neovim (lista "standard captures", líneas ~368-460) + las queries
+# reales de nvim-treesitter (runtime/queries/{ecma,typescript,json,yaml,
+# toml}/highlights.scm) — no de memoria. Hallazgos de esa verificación:
+#   - `@property` en treesitter es "la key en un par key/value" (así lo
+#     documenta el propio doc de neovim). En JS/TS los campos de objeto o
+#     clase usan `@variable.member`, NO `@property`
+#     (nvim-treesitter/runtime/queries/ecma/highlights.scm líneas 9-13). Por
+#     eso `property` (código) mapea a `@variable.member`; `@property` queda
+#     SIN override genérico y se especializa por lenguaje
+#     (`@property.json/.yaml/.toml`, regla "las capturas se pueden
+#     especializar por lenguaje agregando el nombre del lenguaje después de
+#     un punto", treesitter.txt líneas ~360-367) para las keys de datos
+#     (sapphire) — así no pisa el lavender de código.
+#   - `typeParameter` NO tiene captura treesitter estándar (ninguna query
+#     define un capture para el identificador de un generic `<T>`; solo
+#     existe `@punctuation.bracket` para los `<`/`>`) — se resuelve vía LSP
+#     semantic highlighting (`@lsp.type.typeParameter`, documentado en
+#     runtime/doc/lsp.txt de neovim/neovim líneas ~645-715), igual que
+#     `defaultLibrary` (`@lsp.mod.defaultLibrary`) para builtins — mismo
+#     mecanismo que usa VSCode (semanticTokenColors) cuando el LSP está
+#     activo.
+#   - TOML table headers (`[section]`) NO son distinguibles de una key
+#     normal en la query estándar de nvim-treesitter (ambos son
+#     `(bare_key) @property`, runtime/queries/toml/highlights.scm) — no hay
+#     override posible sin reescribir la query; queda solo en VSCode.
+#   - Los indicadores de block scalar YAML (`|`/`>`) comparten
+#     `@punctuation.delimiter` con `,`/`-`/`:`/`?` (runtime/queries/yaml/
+#     highlights.scm) sin captura propia — solo VSCode los distingue.
+# --------------------------------------------------------------------------
+NVIM_HIGHLIGHT_GROUPS = [
+    ("@operator", "operator"),
+    ("@variable.parameter", "parameter"),
+    ("@variable.member", "property"),
+    ("@attribute", "decorator"),
+    ("@type.builtin", "type_parameter"),
+    ("@function.builtin", "builtin"),
+    ("@constant.builtin", "number"),
+    ("@tag.attribute", "attribute"),
+    ("@string.escape", "escape"),
+    ("@string.regexp", "escape"),
+    ("@comment", "comment"),
+    ("@property.json", "key"),
+    ("@property.yaml", "key"),
+    ("@property.toml", "key"),
+    ("@label.yaml", "yaml_anchor"),
+    ("@type.yaml", "yaml_tag"),
+    ("@punctuation.special.yaml", "punctuation"),
+    ("@lsp.type.typeParameter", "type_parameter"),
+    ("@lsp.mod.defaultLibrary", "builtin"),
+    ("@lsp.type.decorator", "decorator"),
+    ("@lsp.type.parameter", "parameter"),
+    ("@lsp.type.property", "property"),
+]
+
+
+def nvim_custom_highlights_block():
+    """Lua fuente del bloque `custom_highlights = function(colors) ...
+    end,` — MISMO bloque para Rooibos y Manzanilla: custom_highlights
+    recibe la paleta `colors` ya resuelta por catppuccin según el flavour
+    activo (mocha/latte), así que basta referenciar `colors.<rol>` (nunca
+    un hex fijo) para que ambos modos queden correctos. Sintaxis CtpHighlight
+    (campos fg/bg/style/link; style = lista de CtpHighlightArgs, "italic"
+    incluido) verificada 2026-07-28 contra
+    catppuccin/nvim lua/catppuccin/types.lua (líneas ~327-331)."""
+    lines = ["    custom_highlights = function(colors)", "      return {"]
+    for group, cat in NVIM_HIGHLIGHT_GROUPS:
+        role, style = SYNTAX_MAP[cat]
+        parts = [f"fg = colors.{role}"]
+        if style:
+            parts.append(f'style = {{ "{style}" }}')
+        lines.append(f'        ["{group}"] = {{ {", ".join(parts)} }},')
+    lines.append("      }")
+    lines.append("    end,")
+    return "\n".join(lines)
+
+
+# --------------------------------------------------------------------------
 # 6) NVIM — spec lazy.nvim para catppuccin/nvim (API verificada por WebFetch
-#    al README oficial: color_overrides + flavour="auto" + background map)
+#    al README oficial: color_overrides + flavour="auto" + background map;
+#    custom_highlights verificado 2026-07-28, ver NVIM_HIGHLIGHT_GROUPS)
 # --------------------------------------------------------------------------
 def nvim_lua(dark_pal, light_pal):
     def block(P):
@@ -782,6 +927,8 @@ def nvim_lua(dark_pal, light_pal):
         "-- API verificada 2026-07-26 contra github.com/catppuccin/nvim README:",
         "--   color_overrides = { all = {...}, mocha = {...}, latte = {...} }",
         "--   flavour = \"auto\" + background = { light = \"latte\", dark = \"mocha\" }",
+        "-- custom_highlights (sintaxis SYNTAX_MAP, ver NVIM_HIGHLIGHT_GROUPS arriba)",
+        "-- verificado 2026-07-28 contra catppuccin/nvim lua/catppuccin/types.lua.",
         "return {",
         '  "catppuccin/nvim",',
         '  name = "catppuccin",',
@@ -800,6 +947,7 @@ def nvim_lua(dark_pal, light_pal):
         block(light_pal),
         "      },",
         "    },",
+        nvim_custom_highlights_block(),
         "  },",
         "  config = function(_, opts)",
         '    require("catppuccin").setup(opts)',
@@ -832,6 +980,7 @@ def ocular_ui_palette(P):
 
 def vscode_theme(mode, label, P):
     N, S, accent = ocular_ui_palette(P)
+    c = P["colors"]
     ansi = P["ansi"]
     ui = "vs" if mode == "light" else "vs-dark"
     onAccent = "#ffffff"
@@ -871,9 +1020,20 @@ def vscode_theme(mode, label, P):
         "editorIndentGuide.background1": N["surf2"], "editorIndentGuide.activeBackground1": N["subtle"],
         "editorRuler.foreground": N["surf2"], "editorCodeLens.foreground": N["muted"],
         "editorBracketMatch.background": a20, "editorBracketMatch.border": accent,
-        "editorBracketHighlight.foreground1": S["yellow"], "editorBracketHighlight.foreground2": S["purple"],
-        "editorBracketHighlight.foreground3": S["blue"], "editorBracketHighlight.foreground4": S["green"],
-        "editorBracketHighlight.foreground5": S["cyan"], "editorBracketHighlight.foreground6": S["red"],
+        # Secuencia bracket-pair verificada por HUE OKLCH real de la paleta
+        # Ocular (color_science.hex_to_oklch), no por el orden convencional
+        # de Catppuccin (Ocular re-optimizó sus hues, PR #20) — recorrido en
+        # "estrella" (salta uno) sobre el círculo de hue para maximizar la
+        # distancia angular entre niveles de anidamiento CONSECUTIVOS,
+        # incluido el wraparound nivel6->nivel1: peach(57°) -> green(140°,
+        # +82°) -> sapphire(241°, +102°) -> yellow(89°, +153°) ->
+        # teal(185°, +96°) -> mauve(310°, +125°) -> peach (+107° al volver a
+        # nivel1). Gap mínimo 82° (~3.2x el espaciado promedio entre los 14
+        # roles), ninguno "vecino de hue" (verificado 2026-07-28).
+        "editorBracketHighlight.foreground1": c["peach"], "editorBracketHighlight.foreground2": c["green"],
+        "editorBracketHighlight.foreground3": c["sapphire"], "editorBracketHighlight.foreground4": c["yellow"],
+        "editorBracketHighlight.foreground5": c["teal"], "editorBracketHighlight.foreground6": c["mauve"],
+        "editorBracketHighlight.unexpectedBracket.foreground": c["red"],
         "editorError.foreground": S["red"], "editorWarning.foreground": S["orange"], "editorInfo.foreground": accent,
         "editorGutter.modifiedBackground": accent, "editorGutter.addedBackground": S["green"],
         "editorGutter.deletedBackground": S["red"],
@@ -927,42 +1087,121 @@ def vscode_theme(mode, label, P):
             s["fontStyle"] = style
         return {"name": name, "scope": scopes, "settings": s}
 
+    def role(cat):
+        """(hex, style) de una categoría SYNTAX_MAP resuelta contra la
+        paleta P de este perfil — única fuente de tokenColors/
+        semanticTokenColors (ver tabla + docstring más arriba)."""
+        r, style = SYNTAX_MAP[cat]
+        return c[r], style
+
+    # tokenColors (TextMate) — scopes verificados 2026-07-28 contra las
+    # gramáticas reales: microsoft/vscode extensions/{typescript-basics,
+    # python,json,ini,shellscript,sql,lua}/syntaxes/*.tmLanguage.json,
+    # microsoft/vscode extensions/yaml/syntaxes/yaml-1.2.tmLanguage.json
+    # (fork de RedCMD/YAML-Syntax-Highlighter), mikestead/vscode-dotenv
+    # syntaxes/env.tmLanguage (.env, sin soporte nativo en VSCode) y el
+    # tmTheme oficial de Catppuccin ya vendorizado en
+    # ports/reference/bat-catppuccin-mocha.tmTheme (scopes TOML/INI/YAML
+    # que ese theme ya usa en producción: support.type.property-name.toml,
+    # entity.name.section.group-title.ini, entity.other.document.begin.yaml,
+    # etc.) — no de memoria. Nota sobre cascada: un selector como "keyword"
+    # o "string" ya matchea cualquier scope más específico del mismo prefijo
+    # (p.ej. "keyword.other.DML.sql", "string.unquoted.plain.out.yaml"), así
+    # que SQL/Lua/bash/YAML-plain-scalar heredan Keyword/String/Function sin
+    # necesidad de una regla explícita — solo se agregan reglas nuevas donde
+    # la categoría es distinta de lo genérico (builtins, decorator, keys de
+    # datos, etc.). El frontmatter de Markdown inyecta "source.yaml" de
+    # verdad (markdown.tmLanguage.json, contentName
+    # "meta.embedded.block.frontmatter") -> las reglas YAML de abajo aplican
+    # ahí también, sin trabajo extra.
     tokens = [
-        tk("Comment", ["comment", "punctuation.definition.comment"], P["colors"]["subtext0"], "italic"),
-        tk("String", ["string", "string.quoted", "string.template"], S["green"]),
-        tk("String escape", ["constant.character.escape"], S["cyan"]),
-        tk("Number", ["constant.numeric"], S["orange"]),
-        tk("Constant", ["constant.language", "constant.language.boolean", "support.constant"], S["orange"], "bold"),
-        tk("Keyword", ["keyword", "storage.type", "storage.modifier", "keyword.control"], S["blue"]),
-        tk("Operator", ["keyword.operator", "punctuation.separator.operator"], S["cyan"]),
-        tk("Function", ["entity.name.function", "support.function", "meta.function-call.generic"], S["purple"]),
-        tk("Decorator", ["meta.decorator", "entity.name.function.decorator", "punctuation.definition.decorator"], S["purple"], "italic"),
-        tk("Class / Type", ["entity.name.type", "entity.name.class", "support.class", "support.type", "entity.other.inherited-class"], S["yellow"]),
-        tk("Variable", ["variable", "variable.other.readwrite", "meta.definition.variable"], N["text"]),
-        tk("Parameter", ["variable.parameter"], S["cyan"]),
-        tk("Language variable (this/self)", ["variable.language", "variable.language.this", "variable.parameter.function.language.special.self.python"], S["red"], "italic"),
-        tk("Property", ["variable.other.property", "support.variable.property", "meta.object-literal.key", "support.type.property-name"], S["cyan"]),
-        tk("JSON / YAML key", ["support.type.property-name.json", "entity.name.tag.yaml", "entity.name.tag"], S["red"]),
-        tk("Constant other (enum)", ["variable.other.constant", "variable.other.enummember"], S["orange"]),
-        tk("Punctuation", ["punctuation", "meta.brace", "punctuation.separator", "punctuation.terminator"], N["subtle"]),
-        tk("Regexp", ["string.regexp"], S["cyan"]),
-        tk("Invalid", ["invalid", "invalid.illegal"], S["red"]),
-        tk("Markup heading", ["markup.heading", "entity.name.section"], S["red"], "bold"),
-        tk("Markup bold", ["markup.bold"], S["yellow"], "bold"),
-        tk("Markup italic", ["markup.italic"], S["purple"], "italic"),
-        tk("Markup code", ["markup.inline.raw", "markup.fenced_code.block"], S["green"]),
-        tk("Markup link", ["markup.underline.link"], S["blue"], "underline"),
-        tk("Tag", ["entity.name.tag.html", "entity.name.tag.tsx"], S["red"]),
-        tk("Attribute", ["entity.other.attribute-name"], S["orange"]),
-        tk("CSS value/unit", ["support.constant.property-value", "support.constant.font-name", "keyword.other.unit", "constant.numeric.css"], S["orange"]),
-        tk("JSX component", ["support.class.component"], S["yellow"]),
+        tk("Comment", ["comment", "punctuation.definition.comment"], *role("comment")),
+        tk("String", ["string", "string.quoted", "string.template"], *role("string")),
+        tk("String escape / regexp", ["constant.character.escape", "string.regexp"], *role("escape")),
+        tk("Interpolation (f-string / template literal / .env ${})", [
+            "punctuation.definition.template-expression.begin", "punctuation.definition.template-expression.end",
+            "constant.character.format.placeholder.other.python",
+            "keyword.other.template.begin.env", "keyword.other.template.end.env",
+        ], *role("interpolation")),
+        tk("Number / boolean / constant.language", [
+            "constant.numeric", "constant.language", "constant.language.boolean", "support.constant",
+        ], *role("number")),
+        tk("Keyword / storage", ["keyword", "storage.type", "storage.modifier", "keyword.control"], *role("keyword")),
+        tk("Operator", ["keyword.operator", "punctuation.separator.operator"], *role("operator")),
+        tk("Function / method", ["entity.name.function", "support.function", "meta.function-call.generic"], *role("function")),
+        tk("Decorator", [
+            "meta.decorator", "punctuation.decorator", "entity.name.function.decorator",
+            "punctuation.definition.decorator", "entity.name.function.decorator.python",
+            "punctuation.definition.decorator.python",
+        ], *role("decorator")),
+        tk("Type parameter / generics", [
+            "meta.type.parameters", "entity.name.type.parameter", "punctuation.definition.typeparameters",
+        ], *role("type_parameter")),
+        tk("Class / Type", ["entity.name.type", "entity.name.class", "support.class", "support.type", "entity.other.inherited-class"], *role("type")),
+        tk("Variable", ["variable", "variable.other.readwrite", "meta.definition.variable"], *role("variable")),
+        tk("Parameter", ["variable.parameter"], *role("parameter")),
+        tk("Language variable (this/self)", [
+            "variable.language", "variable.language.this",
+            "variable.parameter.function.language.special.self.python", "variable.language.special.self.python",
+        ], *role("self")),
+        tk("Builtin", [
+            "support.function.builtin", "support.function.builtin.python", "support.function.builtin.shell",
+            "support.function.library.lua", "support.function.lua", "support.class.builtin", "support.type.builtin",
+        ], *role("builtin")),
+        tk("Property", ["variable.other.property", "support.variable.property", "meta.object-literal.key", "support.type.property-name"], *role("property")),
+        tk("Data key (JSON/JSONC/JSONL/YAML/TOML/INI/.env)", [
+            "support.type.property-name.json", "support.type.property-name.toml", "entity.name.tag.yaml",
+            "keyword.other.definition.ini", "variable.other.env",
+        ], *role("key")),
+        tk("Constant other (enum)", ["variable.other.constant", "variable.other.enummember"], *role("number")),
+        tk("Punctuation", ["punctuation", "meta.brace", "punctuation.separator", "punctuation.terminator"], *role("punctuation")),
+        tk("Invalid", ["invalid", "invalid.illegal"], *role("invalid")),
+        tk("Markup heading", ["markup.heading", "entity.name.section"], *role("markup_heading")),
+        tk("Markup bold", ["markup.bold"], *role("markup_bold")),
+        tk("Markup italic", ["markup.italic"], *role("markup_italic")),
+        tk("Markup code", ["markup.inline.raw", "markup.fenced_code.block"], *role("markup_code")),
+        tk("Markup link", ["markup.underline.link"], *role("markup_link")),
+        tk("Tag", ["entity.name.tag.html", "entity.name.tag.tsx", "entity.name.tag"], *role("tag")),
+        tk("Attribute", ["entity.other.attribute-name", "entity.other.attribute-name.tsx"], *role("attribute")),
+        tk("CSS value/unit", ["support.constant.property-value", "support.constant.font-name", "keyword.other.unit", "constant.numeric.css"], *role("number")),
+        tk("JSX component", ["support.class.component"], *role("component")),
+        tk("YAML anchor / alias", [
+            "variable.other.anchor.yaml", "variable.other.alias.yaml", "entity.name.type.anchor.yaml",
+            "punctuation.definition.anchor.yaml", "punctuation.definition.alias.yaml",
+        ], *role("yaml_anchor")),
+        tk("YAML tag (!!str)", [
+            "storage.type.tag-handle.yaml", "storage.type.tag.shorthand.yaml",
+            "storage.type.tag.verbatim.yaml", "storage.type.tag.non-specific.yaml",
+        ], *role("yaml_tag")),
+        tk("YAML block scalar indicator (| >)", [
+            "keyword.control.flow.block-scalar.folded.yaml", "keyword.control.flow.block-scalar.literal.yaml",
+        ], *role("yaml_block_scalar")),
+        tk("YAML document separator (---)", ["entity.other.document.begin.yaml"], *role("punctuation")),
+        tk("TOML table header ([section] / [[array]])", [
+            "support.type.property-name.table", "entity.name.section.group-title.ini",
+        ], *role("toml_table")),
     ]
+    # semanticTokenColors — los semantic tokens (Pylance/tsserver/etc.) PISAN
+    # a TextMate cuando el LSP está activo: deben decir lo mismo que tokens
+    # arriba. Tipos/modificadores estándar LSP (code.visualstudio.com/api/
+    # language-extensions/semantic-highlight-guide) + "selfParameter", tipo
+    # custom que agrega Pylance a su semanticTokensLegend (no está en el set
+    # estándar; se mantiene igual que en el mapeo legado).
     semantic = {
-        "function": S["purple"], "method": S["purple"], "class": S["yellow"], "type": S["yellow"],
-        "interface": S["yellow"], "enum": S["yellow"], "parameter": S["cyan"],
-        "variable": N["text"], "variable.readonly": S["orange"], "property": S["cyan"],
-        "enumMember": S["orange"], "decorator": S["purple"], "namespace": S["yellow"],
-        "selfParameter": S["red"], "*.declaration": {"bold": True},
+        "function": c["blue"], "method": c["blue"], "macro": c["blue"],
+        "class": c["yellow"], "type": c["yellow"], "interface": c["yellow"],
+        "enum": c["yellow"], "namespace": c["yellow"], "struct": c["yellow"],
+        "typeParameter": c["teal"],
+        "parameter": {"foreground": c["maroon"], "italic": True},
+        "variable": c["text"], "variable.readonly": c["peach"],
+        "property": c["lavender"],
+        "enumMember": c["peach"],
+        "decorator": c["pink"],
+        "operator": c["subtext0"], "regexp": c["sky"],
+        "selfParameter": c["red"],
+        "*.defaultLibrary": c["sapphire"],
+        "comment": {"foreground": c["subtext0"], "italic": True},
+        "*.declaration": {"bold": True},
     }
     return {
         "name": f"Ocular {label}", "type": mode,
