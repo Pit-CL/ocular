@@ -117,11 +117,14 @@ cp ports/out/delta/ocular-rooibos.gitconfig ~/.config/delta/ocular.gitconfig
     path = ~/.config/delta/ocular.gitconfig
 ```
 
-**VSCode**: a loose `color-theme.json` isn't enough — VSCode requires
-packaging a theme as an extension (`package.json` +
-`contributes.themes`). Use
-[`ports/out/vscode/ocular-rooibos-color-theme.json`](ports/out/vscode/ocular-rooibos-color-theme.json)
-as the theme file of a minimal local extension.
+**VSCode**: download the packaged extension and install it — the 4
+variants (Rooibos, Manzanilla, Rooibos Deutan, Manzanilla Deutan) are all
+included:
+
+```bash
+curl -LO https://raw.githubusercontent.com/Pit-CL/ocular/main/ports/out/vscode/ocular-1.1.0.vsix
+code --install-extension ocular-1.1.0.vsix
+```
 
 ## CVD-safe profile (Deutan)
 

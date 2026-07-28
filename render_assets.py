@@ -397,6 +397,41 @@ def render_social_png(colors):
     return path, wordmark_font_path, tagline_font_path
 
 
+# --------------------------------------------------------------------------- #
+# 5 — Icono de extensión VSCode (256x256), solo con --png. Mismo diseño que
+#     render_social_png (elipse parpados + gajos iris + circulo pupila),
+#     reescalado a un canvas cuadrado con fondo solido (sin transparencia:
+#     el Marketplace de VSCode compone el icono sobre fondos claros y
+#     oscuros indistintamente).
+# --------------------------------------------------------------------------- #
+ICON_SIZE = 256
+
+
+def render_icon_png(colors):
+    from PIL import Image, ImageDraw
+
+    img = Image.new("RGB", (ICON_SIZE, ICON_SIZE), colors["base"])
+    draw = ImageDraw.Draw(img)
+
+    cx, cy = ICON_SIZE // 2, ICON_SIZE // 2
+    eye_w, eye_h = 200, 120
+    draw.ellipse((cx - eye_w // 2, cy - eye_h // 2, cx + eye_w // 2, cy + eye_h // 2),
+                  outline=colors["text"], width=6)
+    outer_r, inner_r = 50, 32
+    n = len(ACCENTS)
+    step = 360 / n
+    for i, name in enumerate(ACCENTS):
+        a0 = -90 + i * step
+        a1 = -90 + (i + 1) * step
+        draw.pieslice((cx - outer_r, cy - outer_r, cx + outer_r, cy + outer_r), a0, a1,
+                      fill=colors[name])
+    draw.ellipse((cx - inner_r, cy - inner_r, cx + inner_r, cy + inner_r), fill=colors["crust"])
+
+    path = os.path.join(PREVIEW_DIR, "icon.png")
+    img.save(path)
+    return path
+
+
 def main():
     do_png = "--png" in sys.argv[1:]
     os.makedirs(PREVIEW_DIR, exist_ok=True)
@@ -433,6 +468,9 @@ def main():
         path, wm_font, tag_font = render_social_png(rooibos)
         print(f"OK {path} ({SOCIAL_W}x{SOCIAL_H}) -- wordmark font: {wm_font}; "
               f"tagline font: {tag_font}")
+
+        icon_path = render_icon_png(rooibos)
+        print(f"OK {icon_path} ({ICON_SIZE}x{ICON_SIZE})")
 
     print()
     print("render_assets.py OK -- todos los gates pasaron.")
