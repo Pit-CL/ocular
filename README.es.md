@@ -1,12 +1,40 @@
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="preview/logo-rooibos.svg">
+  <source media="(prefers-color-scheme: light)" srcset="preview/logo-manzanilla.svg">
+  <img src="preview/logo-rooibos.svg" width="112" height="112" alt="Logo de Ocular — un ojo minimalista, iris formado por los 14 acentos">
+</picture>
+
 # Ocular
 
-> 🇬🇧 [English version](README.md)
+**Un theme que relaja la vista — cada color lo fija la ciencia, no la estética.**
 
-Theme **light + dark** para descanso ocular: la luminancia y la saturación de cada
-color las fija la **ciencia** (OKLCH + APCA), no la estética. Construido sobre la
-estructura de roles de [Catppuccin](https://github.com/catppuccin/catppuccin) — el
-matiz de cada uno de los 14 acentos es propio de Ocular, derivado por optimización
-max-min ΔE dentro de familias por nombre (`derive_hues.py`, ver [CIENCIA.md](CIENCIA.md)).
+[![License: MIT](https://img.shields.io/badge/license-MIT-453f38?style=flat-square)](LICENSE)
+[![verify](https://github.com/Pit-CL/ocular/actions/workflows/verify.yml/badge.svg)](https://github.com/Pit-CL/ocular/actions/workflows/verify.yml)
+[![APCA validated](https://img.shields.io/badge/contrast-APCA%20validated-453f38?style=flat-square)](CIENCIA.md)
+[![CVD-safe variant](https://img.shields.io/badge/CVD-safe%20variant-453f38?style=flat-square)](#perfil-cvd-safe-deutan)
+
+[Paleta](#paleta) · [Ciencia](#la-ciencia-en-corto) · [Ports](#ports-y-switcher) · [CVD](#perfil-cvd-safe-deutan) · [English](README.md)
+
+</div>
+
+<br>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="preview/terminal-rooibos.svg">
+    <source media="(prefers-color-scheme: light)" srcset="preview/terminal-manzanilla.svg">
+    <img src="preview/terminal-rooibos.svg" alt="Mockup de terminal: prompt, un snippet corto de Python con colores de sintaxis por rol, y un diff de dos líneas" width="700">
+  </picture>
+</p>
+
+Ocular deriva cada color de objetivos de luminancia OKLCH validados con
+contraste APCA-W3 — no hexadecimales a ojo. Está construido sobre la
+estructura de roles de [Catppuccin](https://github.com/catppuccin/catppuccin),
+pero el matiz de cada uno de los 14 acentos es propio de Ocular, optimizado
+por ΔE max-min para la máxima separación perceptual (`derive_hues.py`, ver
+[CIENCIA.md](CIENCIA.md)).
 
 | Variante | Modo | Carácter |
 |---|---|---|
@@ -20,17 +48,100 @@ Mocha…). Las variantes de Ocular llevan nombres de **infusiones sin cafeína**
 rooibos y manzanilla — porque este theme está hecho para relajar la vista, no
 para estimularla.
 
-## Wallpapers
-
-Fondo casi plano (mínima emisión) + olas simétricas de baja frecuencia espacial,
-derivados de la misma paleta. Desktop 3840×2160 · iPhone 1284×2778 · iPad 2420×1668.
+## Paleta
 
 | Manzanilla (light) | Rooibos (dark) |
 |---|---|
-| ![Manzanilla](preview/manzanilla-pv.png) | ![Rooibos](preview/rooibos-pv.png) |
+| ![Paleta Manzanilla](preview/palette-manzanilla.svg) | ![Paleta Rooibos](preview/palette-rooibos.svg) |
 
-Compartidos entre perfiles: los neutros son idénticos entre default y
-Deutan, así que estos wallpapers sirven para ambos.
+| Manzanilla Deutan (light) | Rooibos Deutan (dark) |
+|---|---|
+| ![Paleta Manzanilla Deutan](preview/palette-manzanilla-deutan.svg) | ![Paleta Rooibos Deutan](preview/palette-rooibos-deutan.svg) |
+
+- [`palette/rooibos.json`](palette/rooibos.json) · [`palette/manzanilla.json`](palette/manzanilla.json) —
+  roles Catppuccin completos + ANSI16, con la Lc real de cada rol en su metadata.
+- [`palette/rooibos-deutan.json`](palette/rooibos-deutan.json) ·
+  [`palette/manzanilla-deutan.json`](palette/manzanilla-deutan.json) — variante
+  CVD-safe (deuteranopía/protanopía simuladas con las matrices de Viénot,
+  Brettel & Mollon), mismos roles/ANSI16, acentos a Lc desigual por diseño —
+  ver [CIENCIA.md](CIENCIA.md) para el método y el gate.
+- [`palette/VALIDACION.md`](palette/VALIDACION.md) — tabla de validación completa.
+- Estructura 100 % compatible con los roles de Catppuccin: cualquier port se adapta
+  cambiando solo los hex.
+
+## Instalación en 30 segundos
+
+Fragmentos reales y mínimos contra lo que `ports/build_ports.py` genera de
+verdad en `ports/out/` — copia, pega, listo. Para todas las apps a la vez,
+usa el [switcher](#ports-y-switcher).
+
+**kitty** (auto light/dark nativo):
+
+```bash
+cp ports/out/kitty/ocular-rooibos.conf ~/.config/kitty/dark-theme.auto.conf
+cp ports/out/kitty/ocular-manzanilla.conf ~/.config/kitty/light-theme.auto.conf
+```
+
+**ghostty** (auto light/dark nativo):
+
+```bash
+mkdir -p ~/.config/ghostty/themes
+cp ports/out/ghostty/ocular-rooibos ports/out/ghostty/ocular-manzanilla ~/.config/ghostty/themes/
+echo 'theme = light:ocular-manzanilla,dark:ocular-rooibos' >> ~/.config/ghostty/config
+```
+
+**nvim** (`catppuccin/nvim` + `lazy.nvim`; el flavour sigue `background` solo):
+
+```bash
+cp ports/out/nvim/ocular.lua ~/.config/nvim/lua/plugins/ocular.lua
+```
+
+**bat**:
+
+```bash
+cp "ports/out/bat/Ocular Rooibos.tmTheme" "$(bat --config-dir)/themes/" && bat cache --build
+bat --theme="Ocular Rooibos" algun_archivo.py
+```
+
+**delta** (pager de diff de git):
+
+```bash
+mkdir -p ~/.config/delta
+cp ports/out/delta/ocular-rooibos.gitconfig ~/.config/delta/ocular.gitconfig
+```
+
+```ini
+# ~/.gitconfig — agregar una sola vez:
+[include]
+    path = ~/.config/delta/ocular.gitconfig
+```
+
+**VSCode**: un `color-theme.json` suelto no alcanza — VSCode exige empaquetar
+el theme como extensión (`package.json` + `contributes.themes`). Usa
+[`ports/out/vscode/ocular-rooibos-color-theme.json`](ports/out/vscode/ocular-rooibos-color-theme.json)
+como archivo de theme de una extensión local mínima.
+
+## Perfil CVD-safe (Deutan)
+
+<p align="center">
+  <img src="preview/cvd-compare.svg" alt="Simulación de deuteranopía: los 14 acentos default colapsan en un puñado de tonos casi idénticos, la variante Deutan los mantiene separados por luminancia (Lc bajo cada muestra)" width="700">
+</p>
+
+Bajo deuteranopía simulada, los 14 acentos default colapsan hacia un puñado
+de tonos indistinguibles (fila superior). La variante **Deutan** los mantiene
+separados dándole a cada acento una Lc desigual y deliberada — los números
+bajo la fila inferior son la Lc real de cada acento contra `base`.
+
+`ocular-switch` también lee una dimensión de **perfil** — default o Deutan —
+desde `~/.config/ocular/profile`. Se activa una sola vez:
+
+```bash
+echo deutan > ~/.config/ocular/profile    # echo default > ... para volver
+```
+
+El siguiente `ocular-switch light|dark` ya lo aplica solo — sin flags
+nuevos. Archivo ausente, vacío o ilegible = default; un valor desconocido
+cae a default con una advertencia.
 
 ## La ciencia, en corto
 
@@ -63,26 +174,17 @@ Deutan, así que estos wallpapers sirven para ambos.
 
 Detalle completo con fuentes: [CIENCIA.md](CIENCIA.md).
 
-## Paleta
+## Wallpapers
+
+Fondo casi plano (mínima emisión) + olas simétricas de baja frecuencia espacial,
+derivados de la misma paleta. Desktop 3840×2160 · iPhone 1284×2778 · iPad 2420×1668.
 
 | Manzanilla (light) | Rooibos (dark) |
 |---|---|
-| ![Paleta Manzanilla](preview/palette-manzanilla.svg) | ![Paleta Rooibos](preview/palette-rooibos.svg) |
+| ![Manzanilla](preview/manzanilla-pv.png) | ![Rooibos](preview/rooibos-pv.png) |
 
-| Manzanilla Deutan (light) | Rooibos Deutan (dark) |
-|---|---|
-| ![Paleta Manzanilla Deutan](preview/palette-manzanilla-deutan.svg) | ![Paleta Rooibos Deutan](preview/palette-rooibos-deutan.svg) |
-
-- [`palette/rooibos.json`](palette/rooibos.json) · [`palette/manzanilla.json`](palette/manzanilla.json) —
-  roles Catppuccin completos + ANSI16, con la Lc real de cada rol en su metadata.
-- [`palette/rooibos-deutan.json`](palette/rooibos-deutan.json) ·
-  [`palette/manzanilla-deutan.json`](palette/manzanilla-deutan.json) — variante
-  CVD-safe (deuteranopía/protanopía simuladas con las matrices de Viénot,
-  Brettel & Mollon), mismos roles/ANSI16, acentos a Lc desigual por diseño —
-  ver [CIENCIA.md](CIENCIA.md) para el método y el gate.
-- [`palette/VALIDACION.md`](palette/VALIDACION.md) — tabla de validación completa.
-- Estructura 100 % compatible con los roles de Catppuccin: cualquier port se adapta
-  cambiando solo los hex.
+Compartidos entre perfiles: los neutros son idénticos entre default y
+Deutan, así que estos wallpapers sirven para ambos.
 
 ## Uso
 
@@ -114,19 +216,6 @@ de tema custom) y fragmentos shell genéricos — todo ×2 modos y validado
 máquina. kitty, ghostty y nvim quedan con **conmutación nativa** (se instalan
 una vez y siguen la apariencia del sistema solos); el resto se re-apunta por
 modo en cada corrida.
-
-### Perfil CVD-safe (Deutan)
-
-`ocular-switch` también lee una dimensión de **perfil** — default o Deutan —
-desde `~/.config/ocular/profile`. Se activa una sola vez:
-
-```bash
-echo deutan > ~/.config/ocular/profile    # echo default > ... para volver
-```
-
-El siguiente `ocular-switch light|dark` ya lo aplica solo — sin flags
-nuevos. Archivo ausente, vacío o ilegible = default; un valor desconocido
-cae a default con una advertencia.
 
 ## Estado y limitaciones conocidas
 

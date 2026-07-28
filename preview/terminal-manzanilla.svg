@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" xml:space="preserve">
+  <defs><clipPath id="term-clip-manzanilla"><rect x="0" y="0" width="760" height="420" rx="12"/></clipPath></defs>
+  <rect x="0" y="0" width="760" height="420" rx="12" fill="#f5efe7"/>
+  <g clip-path="url(#term-clip-manzanilla)">
+    <rect x="0" y="0" width="760" height="36" fill="#eee8df"/>
+    <circle cx="24" cy="18" r="6" fill="#9a3b38"/>
+    <circle cx="46" cy="18" r="6" fill="#725800"/>
+    <circle cx="68" cy="18" r="6" fill="#326726"/>
+    <text x="380" y="23" font-family="-apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#675f57" text-anchor="middle">ocular @ manzanilla</text>
+  </g>
+  <rect x="0.75" y="0.75" width="758.5" height="418.5" rx="12" fill="none" stroke="#d9d3c9" stroke-width="1.5"/>
+  <text x="24" y="66" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14"><tspan fill="#8c4900">~/proyectos/ocular</tspan><tspan fill="#744991"> main</tspan><tspan fill="#3f372d"> </tspan><tspan fill="#326726">❯</tspan><tspan fill="#3f372d"> python3 build.py</tspan></text>
+  <text x="24" y="96" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14"><tspan fill="#675f57"># gate: separacion perceptual minima entre acentos</tspan></text>
+  <text x="24" y="120" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14"><tspan fill="#3f372d">pairs</tspan><tspan fill="#3f372d"> = </tspan><tspan fill="#3458a3">accent_de_pairs</tspan><tspan fill="#3f372d">(colors)</tspan></text>
+  <text x="24" y="144" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14"><tspan fill="#3f372d">min_de, r1, r2 = pairs[</tspan><tspan fill="#8c4900">0</tspan><tspan fill="#3f372d">]</tspan></text>
+  <text x="24" y="168" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14"><tspan fill="#744991">if</tspan><tspan fill="#3f372d"> min_de &lt; MIN_ACCENT_DE:</tspan></text>
+  <text x="24" y="192" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14"><tspan fill="#3f372d">    errors.</tspan><tspan fill="#3458a3">append</tspan><tspan fill="#326726">(f"ΔE {min_de:.4f} &lt; {MIN_ACCENT_DE}")</tspan></text>
+  <text x="24" y="216" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14"><tspan fill="#744991">if</tspan><tspan fill="#3f372d"> errors:</tspan></text>
+  <text x="24" y="240" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14"><tspan fill="#3f372d">    sys.</tspan><tspan fill="#3458a3">exit</tspan><tspan fill="#3f372d">(</tspan><tspan fill="#8c4900">1</tspan><tspan fill="#3f372d">)</tspan></text>
+  <rect x="12" y="259" width="736" height="24" fill="#dddecf"/>
+  <text x="24" y="276" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14" fill="#3f372d">+     DARK_ACCENT_LC = 71</text>
+  <rect x="12" y="283" width="736" height="24" fill="#ecd9d1"/>
+  <text x="24" y="300" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="14" fill="#3f372d">-     DARK_ACCENT_LC = 68</text>
+</svg>
