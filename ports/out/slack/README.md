@@ -8,29 +8,29 @@ Active Presence, Mention Badge.
 ## Ocular Rooibos (dark)
 
 ```
-#191511,#2B2520,#DEB7FC,#15110D,#38322B,#DFD9CC,#A4D399,#FFB4AD
+#1E1A15,#2B2520,#FEB782,#15110D,#38322B,#DFD9CC,#A4D399,#FFB4AD
 ```
 
 ## Ocular Manzanilla (light)
 
 ```
-#EEE8DF,#E3DDD4,#744991,#F5EFE7,#D9D3C9,#3F372D,#326726,#9A3B38
+#F5EFE7,#E3DDD4,#8C4900,#E6E0D7,#D9D3C9,#3F372D,#326726,#9A3B38
 ```
 
 ## Ocular Rooibos Deutan (dark)
 
 ```
-#191511,#2B2520,#E4B1F4,#15110D,#38322B,#DFD9CC,#A5CE92,#FFB2B1
+#1E1A15,#2B2520,#FEB782,#15110D,#38322B,#DFD9CC,#A5CE92,#FFB2B1
 ```
 
 ## Ocular Manzanilla Deutan (light)
 
 ```
-#EEE8DF,#E3DDD4,#824992,#F5EFE7,#D9D3C9,#3F372D,#3F6B26,#983C41
+#F5EFE7,#E3DDD4,#8C4900,#E6E0D7,#D9D3C9,#3F372D,#3F6B26,#983C41
 ```
 
-Mapping by role: Column BG = mantle · Menu Hover BG = surface0 · Active Item
-= mauve · Active Item Text = crust (dark) / base (light) · Hover Item =
-surface1 · Text = text · Active Presence = green · Mention Badge = red.
+Mapping by role: Column BG = base · Menu Hover BG = surface0 · Active Item
+= peach · Active Item Text = crust · Hover Item = surface1 · Text = text ·
+Active Presence = green · Mention Badge = red.
 Slack doesn't support automatic switching of custom themes: paste the
 string for whichever mode you're using.

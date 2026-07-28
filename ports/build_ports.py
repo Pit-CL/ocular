@@ -1275,17 +1275,23 @@ manage Chrome for this reason.
 
 # --------------------------------------------------------------------------
 # 9) SLACK — README con el custom theme (string de 8 hex), generación
-#    directa por rol. Mapeo (mismo para ambos modos, diseñado y validado
-#    visualmente): Column BG=mantle, Menu Hover BG=surface0, Active Item=
-#    mauve, Active Item Text=crust (dark) / base (light), Hover Item=
-#    surface1, Text=text, Active Presence=green, Mention Badge=red. Slack no
+#    directa por rol. Mapeo (mismo para ambos modos, rediseñado 2026-07-28 —
+#    feedback: el café del theme no se notaba con mantle de fondo y la UI
+#    persistente debía llevar la firma cálida, mismo criterio que el accent
+#    de herdr y el path de oh-my-posh, ver omp_colors()): Column BG=base
+#    (antes mantle, demasiado oscuro), Menu Hover BG=surface0, Hover Item=
+#    surface1, Active Item=peach (antes mauve — familia FIRMA, no un acento
+#    frío de contenido), Active Item Text=crust en AMBOS modos (regla del
+#    runbook: fg sobre bg de acento es SIEMPRE base/crust, nunca otro
+#    acento), Text=text, Active Presence=green, Mention Badge=red. Gate APCA
+#    dedicado en check_slack_pairs() (text/columnBG>=75, activeItemText/
+#    activeItem>=60, text/hoverItem>=60, en las 4 variantes). Slack no
 #    expone API para custom themes ni para recargarlos: la conmutación sigue
 #    siendo manual (paste del string).
 # --------------------------------------------------------------------------
 def slack_theme_string(P):
     c = P["colors"]
-    active_item_text = c["crust"] if P["mode"] == "dark" else c["base"]
-    roles = [c["mantle"], c["surface0"], c["mauve"], active_item_text,
+    roles = [c["base"], c["surface0"], c["peach"], c["crust"],
              c["surface1"], c["text"], c["green"], c["red"]]
     return ",".join(f"#{r.lstrip('#').upper()}" for r in roles)
 
@@ -1329,14 +1335,44 @@ def slack_readme(sections):
     for section in sections:
         lines.extend(section)
     lines.extend([
-        "Mapping by role: Column BG = mantle · Menu Hover BG = surface0 · Active Item",
-        "= mauve · Active Item Text = crust (dark) / base (light) · Hover Item =",
-        "surface1 · Text = text · Active Presence = green · Mention Badge = red.",
+        "Mapping by role: Column BG = base · Menu Hover BG = surface0 · Active Item",
+        "= peach · Active Item Text = crust · Hover Item = surface1 · Text = text ·",
+        "Active Presence = green · Mention Badge = red.",
         "Slack doesn't support automatic switching of custom themes: paste the",
         "string for whichever mode you're using.",
         "",
     ])
     return "\n".join(lines)
+
+
+def check_slack_pairs():
+    """Gate APCA obligatorio del custom theme de Slack (exit != 0 si falla):
+    los 3 pares fg/bg de lectura continua que el usuario ve al pegar la
+    cadena Ocular — Column BG es la superficie de lectura principal (texto
+    largo de canales/DMs, piso más estricto que el resto de los ports), Active
+    Item es chrome persistente con Active Item Text encima, Hover Item es
+    chrome puntual. Corre sobre las 4 variantes (default + deutan, dark +
+    light): el perfil deutan reusa los mismos roles de superficie/firma para
+    Slack, pero se vigila por si el mapeo de acentos CVD alguna vez diverge."""
+    checks = [
+        ("text/columnBG", "text", "base", 75),
+        ("activeItemText/activeItem", "crust", "peach", 60),
+        ("text/hoverItem", "text", "surface1", 60),
+    ]
+    variants = [
+        ("rooibos", ROOIBOS), ("manzanilla", MANZANILLA),
+        ("rooibos-deutan", ROOIBOS_DEUTAN), ("manzanilla-deutan", MANZANILLA_DEUTAN),
+    ]
+    for mode_name, P in variants:
+        c = P["colors"]
+        for field, fg_role, bg_role, floor in checks:
+            val = apca_lc(c[fg_role], c[bg_role])
+            ok = val >= floor
+            label = ROOT / "ports" / f"slack-apca:{mode_name}:{field}"
+            record(
+                "apca-pares", label, ok,
+                f"Lc={val:.2f} (piso={floor}) fg={fg_role} bg={bg_role}",
+            )
 
 
 DELTA_README = """# delta — Ocular
@@ -1874,6 +1910,8 @@ def main():
     write(slack_path, slack_readme(SLACK_SECTIONS))
     record("exists", slack_path, slack_path.exists())
     audit_hex_file("slack", slack_path, allowed_slack, quoted=False)
+    # gate APCA obligatorio del custom theme de Slack (ver check_slack_pairs)
+    check_slack_pairs()
 
     # ------------------------------------------------------------------
     # Imprimir reporte
