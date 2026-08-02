@@ -152,8 +152,8 @@ EMITTED_PAIRS = [
     ("kitty", "mark3_foreground/background", "decorativo", "base", "sapphire"),
     ("tmux", "status-style", "cuerpo", "text", "mantle"),
     ("tmux", "window-status-current-style/mode-style", "chrome", "crust", "mauve"),
-    ("ghostty", "cursor-color/cursor-text", "chrome", "crust", "rosewater"),
-    ("ghostty", "selection-background/foreground", "cuerpo", "text", "surface1"),
+    ("ghostty", "cursor-color/cursor-text", "chrome", "base", "rosewater"),
+    ("ghostty", "selection-background/foreground", "chrome", "base", "rosewater"),
 ]
 
 
@@ -432,11 +432,14 @@ def ghostty_theme(label, P):
         f"palette = 15={hh(ansi['bright']['white'])}",
         f"background = {hh(c['base'])}",
         f"foreground = {hh(c['text'])}",
+        # Paridad con el port kitty: mismo par de selección (acento como fondo,
+        # base como texto), mismo cursor-text y el divisor de splits al mismo
+        # neutro que inactive_border_color de kitty.
         f"cursor-color = {hh(c['rosewater'])}",
-        f"cursor-text = {hh(c['crust'])}",
-        f"selection-background = {hh(c['surface1'])}",
-        f"selection-foreground = {hh(c['text'])}",
-        f"split-divider-color = {hh(c['surface0'])}",
+        f"cursor-text = {hh(c['base'])}",
+        f"selection-background = {hh(c['rosewater'])}",
+        f"selection-foreground = {hh(c['base'])}",
+        f"split-divider-color = {hh(c['overlay0'])}",
         "",
     ])
 

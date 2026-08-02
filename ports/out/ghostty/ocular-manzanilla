@@ -19,7 +19,7 @@ palette = 15=443d34
 background = f5efe7
 foreground = 3f372d
 cursor-color = 77534e
-cursor-text = e6e0d7
-selection-background = d9d3c9
-selection-foreground = 3f372d
-split-divider-color = e3ddd4
+cursor-text = f5efe7
+selection-background = 77534e
+selection-foreground = f5efe7
+split-divider-color = a19c94
