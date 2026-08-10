@@ -30,12 +30,16 @@
 # switcher se queda con los colores viejos hasta que se cierra y se abre de
 # nuevo; instancias NUEVAS sí toman el modo correcto de inmediato. No es un
 # bug de este script, es una limitación de esas apps.
-# gh-dash tiene la misma limitación, PERO cuando corre dentro de un pane de
-# herdr con servidor local (hoy: nube) el switcher lo recarga solo: mata el
-# proceso `gh dash` en foreground con SIGTERM (determinístico, no depende
-# del estado de la UI) y lo relanza en el mismo pane — fix 2026-07-27, ver
-# bloque más abajo. Fuera de un pane de herdr (o en mac/omen, sin server),
-# sigue aplicando la limitación general: cerrar y abrir a mano.
+# gh-dash tiene la misma limitación y se trata igual: el switcher reescribe
+# su bloque `theme:` y nada más — una instancia abierta sigue pintando el
+# theme anterior hasta que el usuario la cierre y la reabra. Entre el
+# 2026-07-27 y el 2026-08-10 hubo aquí un reinicio automático (SIGTERM al
+# proceso `gh dash` en foreground de cada pane de herdr + relanzamiento con
+# `pane send-text`): se retiró porque mataba sesiones EN USO — el TUI moría
+# con `program was killed: read /dev/stdin: input/output error`, un
+# `gh pr merge` a medio responder quedaba huérfano y el tty se quedaba sin
+# OPOST (todo el output posterior escalonado, sin eco). No reintroducirlo:
+# la recarga en caliente del theme necesita soporte de gh-dash upstream.
 # Gotcha específico de btop: reescribe btop.conf completo AL SALIR. Si una
 # instancia vieja de btop sigue abierta cuando corre el switcher y luego se
 # cierra, su propio btop.conf (con el color_theme viejo en memoria) pisa el
@@ -230,84 +234,6 @@ if [ -f "$HOME/.config/gh-dash/config.yml" ]; then  # gh-dash es extensión de g
     fi
 else
     skip "gh-dash"
-fi
-
-# --- gh-dash: reinicio automático de las instancias corriendo dentro de
-#     panes de herdr — gh-dash no tiene recarga en caliente (ver nota de
-#     TUIs de larga vida arriba); sin esto quedan pintando el theme viejo
-#     hasta que alguien las cierre y reabra a mano. Solo aplica donde hay un
-#     servidor herdr LOCAL corriendo (hoy: nube); en mac/omen no existe
-#     server — note, nunca error. Mecanismo verificado en vivo 2026-07-27:
-#     matar el proceso "gh dash" en foreground con SIGTERM (determinístico,
-#     no depende del estado de la UI) y relanzarlo en el MISMO pane con
-#     'pane send-text' — nunca tocar panes/sesiones/agentes ajenos. ---
-HERDR_BIN="$(command -v herdr)" || HERDR_BIN="$HOME/.local/bin/herdr"
-if [ -x "$HERDR_BIN" ]; then
-    pane_list_json="$("$HERDR_BIN" pane list 2>/dev/null)" && has_herdr_server=1 || has_herdr_server=0
-else
-    has_herdr_server=0
-fi
-if [ "$has_herdr_server" -eq 1 ]; then
-    pane_ids="$(printf '%s' "$pane_list_json" | python3 -c '
-import json, sys
-try:
-    data = json.load(sys.stdin)
-except Exception:
-    sys.exit(0)
-for p in data.get("result", {}).get("panes", []):
-    print(p["pane_id"])
-')"
-    restarted=0
-    while IFS= read -r pane_id; do
-        [ -n "$pane_id" ] || continue
-        info="$("$HERDR_BIN" pane process-info --pane "$pane_id" 2>/dev/null)" || continue
-        parsed="$(printf '%s' "$info" | python3 -c '
-import json, sys
-try:
-    data = json.load(sys.stdin)
-except Exception:
-    print("")
-    sys.exit(0)
-pi = data.get("result", {}).get("process_info", {})
-gh_pid = ""
-for p in pi.get("foreground_processes", []):
-    if p.get("argv") == ["gh", "dash"]:
-        gh_pid = p["pid"]
-        break
-print(gh_pid, pi.get("shell_pid", ""))
-')"
-        gh_pid="${parsed%% *}"
-        shell_pid="${parsed##* }"
-        [ -n "$gh_pid" ] || continue
-        kill -TERM "$gh_pid" 2>/dev/null || continue
-        # esperar a que el pane vuelva al prompt del shell (foreground == shell_pid)
-        tries=0
-        while [ "$tries" -lt 10 ]; do
-            fg="$("$HERDR_BIN" pane process-info --pane "$pane_id" 2>/dev/null | python3 -c '
-import json, sys
-try:
-    data = json.load(sys.stdin)
-    procs = data["result"]["process_info"]["foreground_processes"]
-    print(procs[0]["pid"] if procs else "")
-except Exception:
-    print("")
-')"
-            [ "$fg" = "$shell_pid" ] && break
-            tries=$((tries + 1))
-            sleep 0.2
-        done
-        "$HERDR_BIN" pane send-text "$pane_id" "gh dash"$'\n' >/dev/null 2>&1 || continue
-        restarted=$((restarted + 1))
-    done <<EOF
-$pane_ids
-EOF
-    if [ "$restarted" -gt 0 ]; then
-        ok "gh-dash: $restarted instancia(s) reiniciada(s) con el theme nuevo"
-    else
-        note "gh-dash: servidor herdr local sin instancias gh-dash corriendo"
-    fi
-else
-    note "gh-dash: sin servidor herdr local — reinicio automático omitido (normal en mac/omen)"
 fi
 
 # --- herdr: bloque [theme.custom] (config.toml completo se preserva) ---
