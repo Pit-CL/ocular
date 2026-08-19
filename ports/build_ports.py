@@ -144,6 +144,7 @@ EMITTED_PAIRS = [
     ("lazygit", "inactiveViewSelectedLineBgColor (fg=defaultFgColor)", "cuerpo", "text", "surface1"),
     ("herdr", "surface_dim (fg=text)", "cuerpo", "text", "surface1"),
     ("herdr", "selection_bg (fg=text)", "cuerpo", "text", "surface2"),
+    ("herdr", "active_row_bg (fg=text)", "cuerpo", "text", "surface1"),
     ("kitty", "selection_foreground/background", "chrome", "base", "rosewater"),
     ("kitty", "cursor/cursor_text_color", "chrome", "base", "rosewater"),
     ("kitty", "active_tab_foreground/background", "chrome", "crust", "mauve"),
@@ -691,15 +692,30 @@ def ccmax_sh(label, P):
 #     palette/{rooibos,manzanilla}.json — todos los campos son 1:1 con su
 #     propio nombre de rol (blue->blue, mauve->mauve, ...), salvo:
 #       panel_bg     -> base
-#       surface_dim  -> surface1 (bg de la fila seleccionada del sidebar; fix
-#                       APCA 2026-07-26, overlay0 daba Lc 38-42 — ver comentario)
+#       surface_dim  -> surface1 (fix APCA 2026-07-26, overlay0 daba Lc 38-42
+#                       — ver comentario. Verificado 2026-08-19 contra herdr
+#                       0.8.2: YA NO es el token que pinta el highlight
+#                       persistente de la fila Space/Agent activa del sidebar
+#                       — eso lo tomó active_row_bg, ver abajo. Se deja
+#                       definido igual porque sigue siendo un token válido de
+#                       CustomThemeColors y puede cubrir otros widgets).
 #       selection_bg -> surface2 (token nuevo en herdr 0.8.2: cursor de
-#                       navigate-mode, separado del highlight de Space/Agent
-#                       activo que sigue pintando surface_dim/accent. surface2
-#                       no se usaba en ningún port de herdr; da Lc(text,bg) =
-#                       74.1 dark / 64.5 light — por encima del piso "cuerpo"
-#                       de 60 — y es distinguible a ojo de surface1, que es
-#                       justo el propósito del token: 2026-08-19).
+#                       navigate-mode — la fila que se mueve con las flechas
+#                       mientras se navega, NO el highlight persistente del
+#                       ítem activo. surface2 no se usaba en ningún port de
+#                       herdr; da Lc(text,bg) = 74.1 dark / 64.5 light — por
+#                       encima del piso "cuerpo" de 60 — y es distinguible a
+#                       ojo de surface1/surface0: 2026-08-19).
+#       active_row_bg -> surface1 (token nuevo en herdr 0.8.2, changelog
+#                       "Fixed": "Active Space and Agent rows now use
+#                       dedicated theme colors..." — antes de este token el
+#                       highlight persistente de la fila Space/Agent activa
+#                       del sidebar caía al azul default del tema base en vez
+#                       de la paleta Ocular; confirmado con captura del
+#                       usuario 2026-08-19, RGB medido (230,233,238)/
+#                       (206,207,209), ninguno de la paleta cálida. Mismo
+#                       valor que surface_dim por continuidad visual con el
+#                       comportamiento pre-0.8.2).
 #       accent       -> override deliberado a peach (NO al rol heredado
 #                       lavender): el usuario reportó el marco del panel
 #                       SELECCIONADO/con foco en azul saturado pese a estar
@@ -717,17 +733,19 @@ def herdr_theme(label, P):
     c = P["colors"]
     return "\n".join([
         f"# Ocular {label} — fragmento [theme.custom] para ~/.config/herdr/config.toml",
-        "# 17 tokens soportados (CustomThemeColors, verificado 2026-08-19 contra herdr 0.8.2).",
+        "# 18 tokens soportados (CustomThemeColors, verificado 2026-08-19 contra herdr 0.8.2).",
         "[theme.custom]",
         f'panel_bg = "{c["base"]}"      # base',
-        f'surface_dim = "{c["surface1"]}"   # bg de la fila SELECCIONADA del sidebar (fix APCA 2026-07-26:',
-        "                          # overlay0 media Lc 38-42 con el texto por encima — WCAG 2.x aprueba",
-        "                          # pares que APCA rechaza, y los pares de Ocular se validan con APCA",
-        "                          # (color_science.lc), no con el ratio WCAG. surface1 da texto legible",
-        "                          # (Lc ≥ 71 en ambos modos) y sigue siendo más oscuro que panel_bg, así",
-        "                          # que la selección se ve. Descartados: morados de Mocha (mauve/",
+        f'surface_dim = "{c["surface1"]}"   # ya NO pinta la fila activa del sidebar en 0.8.2 (ver active_row_bg);',
+        "                          # se deja definido — token válido, fix APCA 2026-07-26: overlay0 media Lc",
+        "                          # 38-42 con el texto por encima — WCAG 2.x aprueba pares que APCA rechaza,",
+        "                          # y los pares de Ocular se validan con APCA (color_science.lc), no con el",
+        "                          # ratio WCAG. surface1 da texto legible (Lc ≥ 71 en ambos modos) y sigue",
+        "                          # siendo más oscuro que panel_bg. Descartados: morados de Mocha (mauve/",
         "                          # lavender, muy claros para bg), #8839ef mauve de Latte (muy",
         "                          # eléctrico), #574b7d custom.",
+        f'active_row_bg = "{c["surface1"]}"  # bg de la fila Space/Agent ACTIVA del sidebar (token nuevo herdr',
+        '                          # 0.8.2, 2026-08-19 — antes caía al azul default del tema base)',
         f'selection_bg = "{c["surface2"]}"  # cursor de navigate-mode (token nuevo herdr 0.8.2, 2026-08-19)',
         f'surface0 = "{c["surface0"]}"',
         f'surface1 = "{c["surface1"]}"',
