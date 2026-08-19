@@ -1,5 +1,5 @@
 # Ocular Manzanilla — fragmento [theme.custom] para ~/.config/herdr/config.toml
-# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15).
+# 17 tokens soportados (CustomThemeColors, verificado 2026-08-19 contra herdr 0.8.2).
 [theme.custom]
 panel_bg = "#f5efe7"      # base
 surface_dim = "#d9d3c9"   # bg de la fila SELECCIONADA del sidebar (fix APCA 2026-07-26:
@@ -10,6 +10,7 @@ surface_dim = "#d9d3c9"   # bg de la fila SELECCIONADA del sidebar (fix APCA 202
                           # que la selección se ve. Descartados: morados de Mocha (mauve/
                           # lavender, muy claros para bg), #8839ef mauve de Latte (muy
                           # eléctrico), #574b7d custom.
+selection_bg = "#cdc6bd"  # cursor de navigate-mode (token nuevo herdr 0.8.2, 2026-08-19)
 surface0 = "#e3ddd4"
 surface1 = "#d9d3c9"
 overlay0 = "#a19c94"
