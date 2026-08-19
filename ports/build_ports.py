@@ -143,6 +143,7 @@ EMITTED_PAIRS = [
     ("lazygit", "selectedLineBgColor (fg=defaultFgColor)", "cuerpo", "text", "surface0"),
     ("lazygit", "inactiveViewSelectedLineBgColor (fg=defaultFgColor)", "cuerpo", "text", "surface1"),
     ("herdr", "surface_dim (fg=text)", "cuerpo", "text", "surface1"),
+    ("herdr", "selection_bg (fg=text)", "cuerpo", "text", "surface2"),
     ("kitty", "selection_foreground/background", "chrome", "base", "rosewater"),
     ("kitty", "cursor/cursor_text_color", "chrome", "base", "rosewater"),
     ("kitty", "active_tab_foreground/background", "chrome", "crust", "mauve"),
@@ -692,6 +693,13 @@ def ccmax_sh(label, P):
 #       panel_bg     -> base
 #       surface_dim  -> surface1 (bg de la fila seleccionada del sidebar; fix
 #                       APCA 2026-07-26, overlay0 daba Lc 38-42 — ver comentario)
+#       selection_bg -> surface2 (token nuevo en herdr 0.8.2: cursor de
+#                       navigate-mode, separado del highlight de Space/Agent
+#                       activo que sigue pintando surface_dim/accent. surface2
+#                       no se usaba en ningún port de herdr; da Lc(text,bg) =
+#                       74.1 dark / 64.5 light — por encima del piso "cuerpo"
+#                       de 60 — y es distinguible a ojo de surface1, que es
+#                       justo el propósito del token: 2026-08-19).
 #       accent       -> override deliberado a peach (NO al rol heredado
 #                       lavender): el usuario reportó el marco del panel
 #                       SELECCIONADO/con foco en azul saturado pese a estar
@@ -709,7 +717,7 @@ def herdr_theme(label, P):
     c = P["colors"]
     return "\n".join([
         f"# Ocular {label} — fragmento [theme.custom] para ~/.config/herdr/config.toml",
-        "# 16 tokens soportados (CustomThemeColors, verificado 2026-07-15).",
+        "# 17 tokens soportados (CustomThemeColors, verificado 2026-08-19 contra herdr 0.8.2).",
         "[theme.custom]",
         f'panel_bg = "{c["base"]}"      # base',
         f'surface_dim = "{c["surface1"]}"   # bg de la fila SELECCIONADA del sidebar (fix APCA 2026-07-26:',
@@ -720,6 +728,7 @@ def herdr_theme(label, P):
         "                          # que la selección se ve. Descartados: morados de Mocha (mauve/",
         "                          # lavender, muy claros para bg), #8839ef mauve de Latte (muy",
         "                          # eléctrico), #574b7d custom.",
+        f'selection_bg = "{c["surface2"]}"  # cursor de navigate-mode (token nuevo herdr 0.8.2, 2026-08-19)',
         f'surface0 = "{c["surface0"]}"',
         f'surface1 = "{c["surface1"]}"',
         f'overlay0 = "{c["overlay0"]}"',
