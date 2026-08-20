@@ -145,6 +145,7 @@ EMITTED_PAIRS = [
     ("herdr", "surface_dim (fg=text)", "cuerpo", "text", "surface1"),
     ("herdr", "selection_bg (fg=text)", "cuerpo", "text", "surface2"),
     ("herdr", "active_row_bg (fg=text)", "cuerpo", "text", "surface1"),
+    ("herdr", "sidebar_bg (fg=text)", "cuerpo", "text", "mantle"),
     ("kitty", "selection_foreground/background", "chrome", "base", "rosewater"),
     ("kitty", "cursor/cursor_text_color", "chrome", "base", "rosewater"),
     ("kitty", "active_tab_foreground/background", "chrome", "crust", "mauve"),
@@ -716,6 +717,17 @@ def ccmax_sh(label, P):
 #                       (206,207,209), ninguno de la paleta cálida. Mismo
 #                       valor que surface_dim por continuidad visual con el
 #                       comportamiento pre-0.8.2).
+#       sidebar_bg   -> mantle (token nuevo herdr 0.8.2: fondo propio del
+#                       cuerpo del sidebar — hasta 0.8.1 era transparente y
+#                       heredaba el `background` del terminal, verificado
+#                       empíricamente 2026-08-11 con panel_bg=#ff0000 sin
+#                       teñir el sidebar; ese límite queda OBSOLETO desde
+#                       0.8.2). mantle da un paso más oscuro que base con
+#                       Lc(text,mantle) = 82.9 dark / 83.7 light — pérdida
+#                       despreciable vs Lc(text,base) actual (82.4/87.8).
+#                       crust se descartó: en Manzanilla su Lc(overlay0,crust)
+#                       cae a 35.0 (vs 43.7 hoy), por debajo de cualquier piso
+#                       razonable — mantle solo baja a 39.6: 2026-08-20.
 #       accent       -> override deliberado a peach (NO al rol heredado
 #                       lavender): el usuario reportó el marco del panel
 #                       SELECCIONADO/con foco en azul saturado pese a estar
@@ -733,9 +745,11 @@ def herdr_theme(label, P):
     c = P["colors"]
     return "\n".join([
         f"# Ocular {label} — fragmento [theme.custom] para ~/.config/herdr/config.toml",
-        "# 18 tokens soportados (CustomThemeColors, verificado 2026-08-19 contra herdr 0.8.2).",
+        "# 19 tokens soportados (CustomThemeColors, verificado 2026-08-20 contra herdr 0.8.2).",
         "[theme.custom]",
         f'panel_bg = "{c["base"]}"      # base',
+        f'sidebar_bg = "{c["mantle"]}"   # fondo propio del cuerpo del sidebar (token nuevo herdr 0.8.2, 2026-08-20 —',
+        '                          # hasta 0.8.1 era transparente y heredaba el background del terminal)',
         f'surface_dim = "{c["surface1"]}"   # ya NO pinta la fila activa del sidebar en 0.8.2 (ver active_row_bg);',
         "                          # se deja definido — token válido, fix APCA 2026-07-26: overlay0 media Lc",
         "                          # 38-42 con el texto por encima — WCAG 2.x aprueba pares que APCA rechaza,",

@@ -1,7 +1,9 @@
 # Ocular Rooibos Deutan — fragmento [theme.custom] para ~/.config/herdr/config.toml
-# 18 tokens soportados (CustomThemeColors, verificado 2026-08-19 contra herdr 0.8.2).
+# 19 tokens soportados (CustomThemeColors, verificado 2026-08-20 contra herdr 0.8.2).
 [theme.custom]
 panel_bg = "#1e1a15"      # base
+sidebar_bg = "#191511"   # fondo propio del cuerpo del sidebar (token nuevo herdr 0.8.2, 2026-08-20 —
+                          # hasta 0.8.1 era transparente y heredaba el background del terminal)
 surface_dim = "#38322b"   # ya NO pinta la fila activa del sidebar en 0.8.2 (ver active_row_bg);
                           # se deja definido — token válido, fix APCA 2026-07-26: overlay0 media Lc
                           # 38-42 con el texto por encima — WCAG 2.x aprueba pares que APCA rechaza,
