@@ -38,8 +38,15 @@
 # `pane send-text`): se retiró porque mataba sesiones EN USO — el TUI moría
 # con `program was killed: read /dev/stdin: input/output error`, un
 # `gh pr merge` a medio responder quedaba huérfano y el tty se quedaba sin
-# OPOST (todo el output posterior escalonado, sin eco). No reintroducirlo:
-# la recarga en caliente del theme necesita soporte de gh-dash upstream.
+# OPOST (todo el output posterior escalonado, sin eco). La causa era matar
+# el proceso DENTRO del pane: el pty sobrevivía en el estado que el TUI
+# había dejado. El reinicio volvió por otra vía —cerrar el tab entero en
+# vez de matar el proceso adentro— que no reproduce ese fallo: al cerrar el
+# tab el pty se destruye completo y se crea uno nuevo, así que no queda tty
+# corrupto que heredar (verificado 2026-08-25 en herdr 0.8.2: el proceso
+# muere con el tab sin quedar huérfano y btop.conf no se altera, md5
+# idéntico antes/después). La lógica de ese reinicio vive fuera de este
+# repo (público), en el hook opcional invocado al final de este script.
 # Gotcha específico de btop: reescribe btop.conf completo AL SALIR. Si una
 # instancia vieja de btop sigue abierta cuando corre el switcher y luego se
 # cierra, su propio btop.conf (con el color_theme viejo en memoria) pisa el
@@ -426,3 +433,8 @@ fi
 echo
 echo "Chrome (modo desarrollador) es manual — ver ports/out/chrome/README.md (no hay API de recarga por script)."
 echo "Listo: Ocular $mode aplicado en las apps detectadas."
+
+# --- hook opcional post-switch: reinicia TUIs de larga vida (btop, gh-dash)
+#     que ya estaban abiertas. Sin lógica de fleet acá — si no existe o
+#     falla, no debe tumbar el switcher (set -euo pipefail arriba). ---
+[ -x "$HOME/.local/bin/ocular-post-switch" ] && "$HOME/.local/bin/ocular-post-switch" "$mode" || true
