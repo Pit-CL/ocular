@@ -1304,16 +1304,28 @@ manifest from the author's external tooling.
 ## Install (unpacked)
 
 1. `chrome://extensions` -> enable "Developer mode".
-2. "Load unpacked" -> point to `ocular-rooibos/` or `ocular-manzanilla/`.
+2. "Load unpacked" -> `ocular-rooibos/` **and** `ocular-manzanilla/`. Load
+   both: the companion extension below toggles between them.
+3. "Load unpacked" -> `../../chrome-auto/` ("Ocular Auto", an extension, not
+   a theme).
 
-## Limitation (documented, not a bug)
+## Auto dark/light (verified 2026-08-28)
 
-Chrome themes loaded as *unpacked* are **static**: they don't follow the
-system appearance (no auto dark/light) and can't be reloaded by script —
-Chrome doesn't expose an API for that to an unpacked extension. Switching
-between Rooibos and Manzanilla is **manual**: `chrome://extensions` ->
-disable the active theme -> enable the other one. `ocular-switch` does NOT
-manage Chrome for this reason.
+A Chrome theme is static by itself: the manifest has no dark variant and
+Chrome exposes no API for a theme to reload itself. `ports/chrome-auto/`
+works around that from the outside — an offscreen document watches
+`prefers-color-scheme` (reason `MATCH_MEDIA`, since a MV3 service worker has
+no `matchMedia`) and the worker enables the matching theme through
+`chrome.management.setEnabled`. Themes are matched by name prefix, so the
+`-deutan` profile works too.
+
+Verified on Chrome 145 / macOS: `setEnabled` on a theme needs **no user
+gesture** and shows no native confirmation dialog, so the switch is fully
+automatic and follows the system appearance — the same source of truth
+`ocular-switch` uses. Clicking the extension icon re-applies the current mode
+by hand, in case the service worker was asleep and missed a change.
+
+`ocular-switch` still does not manage Chrome: it no longer needs to.
 """
 
 
