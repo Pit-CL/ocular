@@ -1,9 +1,0 @@
-{
-  "manifest_version": 3,
-  "name": "Ocular Auto",
-  "description": "Alterna los themes Ocular (Rooibos dark / Manzanilla light) siguiendo la apariencia del sistema.",
-  "version": "1.0.0",
-  "permissions": ["management", "offscreen", "storage"],
-  "background": { "service_worker": "background.js" },
-  "action": { "default_title": "Ocular Auto — aplicar el theme del modo actual" }
-}

@@ -233,7 +233,9 @@ switch:
   rewrites its config on exit (an old instance can overwrite the theme; this
   self-corrects on the next switch).
 - **Chrome**: themes (`out/chrome/`) load as an unpacked extension and are
-  static — switching modes is manual (a platform limitation).
+  static — switching modes is manual. Chrome keeps exactly one theme
+  installed and exposes no API to install one, so no extension can automate
+  it; measured in [`ports/out/chrome/README.md`](ports/out/chrome/README.md).
 - **Slack**: two custom theme strings (`out/slack/`), manual switch.
 - Regeneration is self-contained: the substitution source templates are
   vendored in `ports/reference/` (see [`ports/ATTRIBUTION.md`](ports/ATTRIBUTION.md)),
