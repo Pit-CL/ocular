@@ -6,25 +6,42 @@ manifest from the author's external tooling.
 ## Install (unpacked)
 
 1. `chrome://extensions` -> enable "Developer mode".
-2. "Load unpacked" -> `ocular-rooibos/` **and** `ocular-manzanilla/`. Load
-   both: the companion extension below toggles between them.
-3. "Load unpacked" -> `../../chrome-auto/` ("Ocular Auto", an extension, not
-   a theme).
+2. "Load unpacked" -> the variant you want: `ocular-rooibos/` (dark) **or**
+   `ocular-manzanilla/` (light). Load only one — see below.
 
-## Auto dark/light (verified 2026-08-28)
+## Auto dark/light is not possible (measured 2026-08-28)
 
-A Chrome theme is static by itself: the manifest has no dark variant and
-Chrome exposes no API for a theme to reload itself. `ports/chrome-auto/`
-works around that from the outside — an offscreen document watches
-`prefers-color-scheme` (reason `MATCH_MEDIA`, since a MV3 service worker has
-no `matchMedia`) and the worker enables the matching theme through
-`chrome.management.setEnabled`. Themes are matched by name prefix, so the
-`-deutan` profile works too.
+Switching modes is manual, and no extension can fix it. Two independent
+platform limits:
 
-Verified on Chrome 145 / macOS: `setEnabled` on a theme needs **no user
-gesture** and shows no native confirmation dialog, so the switch is fully
-automatic and follows the system appearance — the same source of truth
-`ocular-switch` uses. Clicking the extension icon re-applies the current mode
-by hand, in case the service worker was asleep and missed a change.
+1. **Chrome keeps exactly one theme installed.** Applying a second theme
+   uninstalls the first one — it does not stay behind as a disabled entry.
+   Measured on Chrome 145 / macOS: after the companion extension enabled
+   "Ocular Manzanilla", "Ocular Rooibos" was gone from `extensions.settings`
+   in the profile's `Secure Preferences`, and the next `chrome.management
+   .getAll()` reported it as `not-installed`. The reverse happened when the
+   dark theme was loaded back by hand.
+2. **No API installs a theme.** `chrome.management` only enables/disables
+   already-installed extensions, and Chrome has no dynamic theme API
+   (unlike Firefox's `browser.theme.update()`). So there is no way to bring
+   the uninstalled variant back from an extension.
 
-`ocular-switch` still does not manage Chrome: it no longer needs to.
+A companion extension that flipped the two themes with
+`chrome.management.setEnabled` shipped in #38 and was removed here: it works
+for exactly one transition and then destroys its own target. Verifying only
+one transition, in one direction, is what let it through — check switches
+both ways, twice, before calling them done.
+
+Secondary finding, worth knowing if this is ever revisited: an MV3 service
+worker plus its `MATCH_MEDIA` offscreen document go to sleep, and a real
+appearance change with Chrome open produced no log entry at all. Any future
+attempt needs a `chrome.alarms` heartbeat just to notice the change.
+
+**What does switch automatically:** Chrome's own color setting. In
+`chrome://settings/appearance`, reset the theme, set Mode to "Device" and
+pick a custom color (`#8C4900`, the Manzanilla peach, or `#FEB782`, the
+Rooibos one — same hue family as this palette). Chrome derives the light and
+dark variants itself and follows the system. The trade-off is control: it is
+a seed color, not the per-token palette these manifests define.
+
+`ocular-switch` does not manage Chrome.
