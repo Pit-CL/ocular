@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# ocular-chrome — cambia a mano la variante del theme Ocular en Chrome
+# (macOS). Uso: ocular-chrome rooibos|manzanilla|toggle [--dry-run]
+#
+# POR QUÉ ES UN SCRIPT APARTE Y NO PARTE DE ocular-switch: cambiar el theme
+# de Chrome exige REINICIAR Chrome (ver abajo). El switcher corre solo, vía
+# watcher, cada vez que cambia la apariencia del Mac — reiniciarle el
+# navegador al usuario sin que lo pida es inaceptable. Este script se invoca
+# a propósito y avisa antes de reiniciar.
+#
+# CÓMO FUNCIONA (medido 2026-08-29 en Chrome / macOS, ida y vuelta ×2):
+# Chrome mantiene UN solo theme instalado y no expone API para cambiarlo
+# (ver ports/out/chrome/README.md). La vuelta que sí funciona es no tener
+# nunca dos themes: un ÚNICO directorio unpacked cuyo manifest.json se
+# reescribe in-place. Como el path no cambia, el ID de la extensión tampoco,
+# y no hay theme inactivo que Chrome pueda desinstalar.
+#
+# Los dos hallazgos que hacen falta para que funcione:
+#   1. Reescribir el manifest y RELANZAR Chrome NO alcanza: Chrome no
+#      revalida el manifest de un unpacked al arrancar, aplica su
+#      `Cached Theme.pak`. Medido: manifest reescrito a las 10:42, pak
+#      intacto de las 10:40 tras el relanzamiento, theme viejo en pantalla.
+#   2. BORRAR el `Cached Theme.pak` con Chrome cerrado fuerza la
+#      regeneración desde el manifest al siguiente arranque. Ese es el
+#      mecanismo. Sin el paso 2 no pasa nada.
+set -euo pipefail
+
+[ "$(uname -s)" = "Darwin" ] || { echo "Solo macOS: Chrome vive en el Mac." >&2; exit 1; }
+
+target="${1:-}"
+dry_run=0
+[ "${2:-}" = "--dry-run" ] && dry_run=1
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OUT="${OCULAR_OUT:-$SCRIPT_DIR/out}"
+CHROME_PROFILE="${OCULAR_CHROME_PROFILE:-Default}"
+PREFS="$HOME/Library/Application Support/Google/Chrome/$CHROME_PROFILE/Preferences"
+
+ok()   { printf '  \033[32m\xe2\x9c\x93\033[0m %s\n' "$1"; }
+note() { printf '  \033[33m!\033[0m %s\n' "$1"; }
+
+[ -r "$PREFS" ] || { echo "No se encuentra el perfil de Chrome: $PREFS" >&2; exit 1; }
+
+# --- dónde está el theme instalado -------------------------------------
+# El directorio lo dicta Chrome, no nosotros: `extensions.theme.pack` del
+# perfil apunta a la carpeta unpacked que se cargó a mano. Se lee en vez de
+# cablearse porque el ID depende del path — moverlo obliga a recargar
+# unpacked, y entonces este valor es la única fuente de verdad.
+pack="$(python3 -c 'import json,sys
+d=json.load(open(sys.argv[1]))
+print((d.get("extensions",{}).get("theme") or {}).get("pack") or "")' "$PREFS")"
+
+[ -n "$pack" ] || { echo "Chrome no tiene ningún theme unpacked cargado. Cárgalo una vez desde chrome://extensions (Modo desarrollador → Cargar descomprimida)." >&2; exit 1; }
+[ -d "$pack" ] || { echo "El theme cargado apunta a un directorio inexistente: $pack" >&2; exit 1; }
+
+actual="$(python3 -c 'import json,sys
+print(json.load(open(sys.argv[1]))["name"])' "$pack/manifest.json" 2>/dev/null || echo "")"
+
+# --- variante pedida ---------------------------------------------------
+case "$target" in
+    rooibos|manzanilla) ;;
+    toggle)
+        case "$actual" in
+            *Rooibos*) target="manzanilla" ;;
+            *)         target="rooibos"    ;;
+        esac
+        ;;
+    *) echo "Uso: ocular-chrome rooibos|manzanilla|toggle [--dry-run]" >&2; exit 1 ;;
+esac
+
+# Perfil CVD, igual que ocular-switch: ~/.config/ocular/profile.
+profile_suffix=""
+if [ -r "$HOME/.config/ocular/profile" ]; then
+    case "$(cat "$HOME/.config/ocular/profile")" in
+        deutan) profile_suffix="-deutan" ;;
+        default|"") ;;
+        *) note "perfil desconocido en ~/.config/ocular/profile — se usa default" ;;
+    esac
+fi
+
+src="$OUT/chrome/ocular-${target}${profile_suffix}/manifest.json"
+[ -r "$src" ] || { echo "No existe $src — corre 'python3 ports/build_ports.py' primero." >&2; exit 1; }
+
+echo "Theme instalado: ${actual:-desconocido}"
+echo "Directorio:      $pack"
+echo "Variante nueva:  ocular-${target}${profile_suffix}"
+
+if [ "$dry_run" = "1" ]; then
+    note "--dry-run: no se toca nada"
+    exit 0
+fi
+
+echo
+echo "Chrome se va a cerrar y reabrir (las pestañas se reabren solas)."
+
+cp "$src" "$pack/manifest.json"
+ok "manifest reescrito"
+
+osascript -e 'tell application "Google Chrome" to quit' >/dev/null 2>&1 || true
+# Esperar a que el proceso muera de verdad: borrar el pak con Chrome vivo
+# no sirve — lo reescribe al salir.
+for _ in $(seq 1 20); do
+    pgrep -x "Google Chrome" >/dev/null || break
+    sleep 0.5
+done
+pgrep -x "Google Chrome" >/dev/null && { echo "Chrome no cerró; abortado (el manifest ya quedó en la variante nueva)." >&2; exit 1; }
+ok "Chrome cerrado"
+
+rm -f "$pack/Cached Theme.pak"
+ok "cache del theme borrado"
+
+open -a "Google Chrome"
+
+# Poll con techo en vez de sleep fijo: un arranque lento daría un falso
+# "no se regeneró".
+regenerado=0
+for _ in $(seq 1 40); do
+    [ -f "$pack/Cached Theme.pak" ] && { regenerado=1; break; }
+    sleep 0.5
+done
+
+if [ "$regenerado" = "1" ]; then
+    ok "theme regenerado — Chrome quedó en ${target}${profile_suffix}"
+else
+    note "Chrome no regeneró el cache en 20 s. Revisa chrome://extensions."
+    exit 1
+fi

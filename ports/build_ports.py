@@ -1342,6 +1342,34 @@ Rooibos one — same hue family as this palette). Chrome derives the light and
 dark variants itself and follows the system. The trade-off is control: it is
 a seed color, not the per-token palette these manifests define.
 
+## Switching by hand: `ocular-chrome` (works, measured 2026-08-29)
+
+Automatic is impossible, but switching on purpose is not. The trick is to
+never have two themes: ONE unpacked directory whose `manifest.json` is
+rewritten in place. The path does not change, so the extension ID does not
+either, and there is no inactive theme left for Chrome to uninstall.
+
+Two steps are needed, and the second one is the whole point:
+
+1. Rewriting the manifest and relaunching Chrome is NOT enough. Chrome does
+   not revalidate an unpacked theme's manifest on startup — it applies its
+   `Cached Theme.pak`. Measured: manifest rewritten at 10:42, pak untouched
+   from 10:40 after a full relaunch, old theme still on screen.
+2. Deleting `Cached Theme.pak` while Chrome is closed forces Chrome to
+   regenerate it from the manifest on the next start.
+
+`ports/ocular-chrome rooibos|manzanilla|toggle` does exactly that: copy the
+variant's manifest over the installed one, quit Chrome, delete the pak,
+relaunch. It reads the target directory from the profile's
+`extensions.theme.pack`, so it follows wherever the theme was loaded from.
+Verified both ways, twice in a row (rooibos -> manzanilla -> rooibos ->
+manzanilla): the extension ID stayed constant and nothing was uninstalled.
+
+Because it restarts Chrome, it is deliberately NOT wired into
+`ocular-switch`, which runs unattended from the Mac's appearance watcher —
+restarting someone's browser without being asked is not acceptable. Run it
+when you want it.
+
 `ocular-switch` does not manage Chrome.
 """
 
