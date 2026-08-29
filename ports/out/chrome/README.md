@@ -44,6 +44,35 @@ Rooibos one — same hue family as this palette). Chrome derives the light and
 dark variants itself and follows the system. The trade-off is control: it is
 a seed color, not the per-token palette these manifests define.
 
+## The fixed theme: `ocular-tabaco` (recommended)
+
+Chrome is the only app in this set that cannot follow the system, and even
+the manual switch below restarts the browser. The way out is not to switch at
+all: `ocular-tabaco/` is a single theme meant to read well with the OS in
+light **and** in dark.
+
+It is not the literal midpoint between Rooibos and Manzanilla. Measured with
+this repo's APCA engine, a mid-luminance frame (L 0.55-0.60) scores Lc 55/48
+for light text and 21/28 for dark text — everything under the body floor of
+60. A mid-tone would be the worst of the three themes. The band that works is
+L 0.32 with light text (Lc 64-78).
+
+Its neutrals are derived by deterministic OKLab mixing between both palettes'
+bases (Rooibos has a gap between L 0.371 and L 0.666, so no role lands
+there). That is why this manifest is validated by a dedicated APCA gate
+instead of the palette-membership check the per-mode ones use.
+
+The active tab is deliberately loud: Chrome paints the active tab with
+`toolbar` and inactive ones with `frame`, and in the per-mode themes those
+two are nearly identical (Manzanilla `238,232,223` vs `227,221,212`). Here
+they sit 0.15 apart in OKLab lightness, plus a `text` -> `overlay2` jump in
+the label. That matters most with the vertical tab strip.
+
+Accent note: all 14 Rooibos accents are calibrated to the same Lc against
+neutrals (equal-weight), so every one of them lands at Lc~53 over the active
+tab and none clears the chrome floor of 55. The icon accent is therefore a
+peach mixed 25% toward the cream base (Lc 59).
+
 ## Switching by hand: `ocular-chrome` (works, measured 2026-08-29)
 
 Automatic is impossible, but switching on purpose is not. The trick is to

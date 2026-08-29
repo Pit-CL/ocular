@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "name": "Ocular Tabaco",
+  "description": "Theme Ocular para Chrome \u2014 Tabaco (fijo, legible con el sistema en claro y en oscuro).",
+  "version": "1.0.0",
+  "theme": {
+    "colors": {
+      "frame": [
+        54,
+        50,
+        44
+      ],
+      "frame_inactive": [
+        44,
+        40,
+        35
+      ],
+      "frame_incognito": [
+        44,
+        40,
+        35
+      ],
+      "frame_incognito_inactive": [
+        44,
+        40,
+        35
+      ],
+      "toolbar": [
+        95,
+        90,
+        84
+      ],
+      "toolbar_button_icon": [
+        253,
+        197,
+        156
+      ],
+      "tab_text": [
+        223,
+        217,
+        204
+      ],
+      "tab_background_text": [
+        180,
+        175,
+        168
+      ],
+      "bookmark_text": [
+        223,
+        217,
+        204
+      ],
+      "ntp_background": [
+        49,
+        45,
+        40
+      ],
+      "ntp_text": [
+        223,
+        217,
+        204
+      ],
+      "ntp_link": [
+        253,
+        197,
+        156
+      ],
+      "button_background": [
+        54,
+        50,
+        44
+      ]
+    },
+    "tints": {
+      "buttons": [
+        -1,
+        -1,
+        -1
+      ]
+    },
+    "properties": {
+      "ntp_background_alignment": "bottom"
+    }
+  }
+}

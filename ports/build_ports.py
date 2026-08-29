@@ -1296,6 +1296,124 @@ def chrome_manifest(label, mode_desc, P):
     }
 
 
+# --------------------------------------------------------------------------
+# 8b) CHROME — theme FIJO "Tabaco" (2026-08-29).
+#     Por qué existe: Chrome es la única app del catastro que no conmuta sola
+#     (no hay API de theme dinámico y solo admite un theme instalado, ver
+#     CHROME_README). Alternar a mano con `ocular-chrome` funciona, pero el
+#     usuario pidió dejar de alternar: UN theme que se vea bien con el sistema
+#     en claro y en oscuro, fijo para siempre.
+#
+#     Por qué NO es el punto medio literal entre Rooibos y Manzanilla: medido
+#     con el motor APCA del repo, un fondo de luminancia media (L 0.55-0.60)
+#     da Lc 55/48 para texto claro y 21/28 para texto oscuro — TODO bajo el
+#     piso de 60. El mid-tone puro sería el peor de los tres themes. La zona
+#     que sí funciona es L 0.32 con texto claro (Lc 64-78).
+#
+#     Requisito de diseño del usuario: usa el tab strip VERTICAL y la pestaña
+#     activa debe cantar. En Chrome la activa se pinta con `toolbar` y las
+#     inactivas con `frame`; en los themes por modo esos dos colores son casi
+#     idénticos (Manzanilla 238,232,223 vs 227,221,212), por eso no se
+#     distinguía. Acá se separan a propósito: dL 0.15 en OKLab, más el salto
+#     de texto text -> overlay2.
+#
+#     Los tonos NO son roles de la paleta: Rooibos tiene un hueco entre
+#     L 0.371 (surface2) y L 0.666 (overlay0). Se derivan por mezcla OKLab
+#     determinista entre las bases de ambas paletas, con el mismo mix_oklab()
+#     que ya usan los tints de delta. Por eso este manifest queda FUERA del
+#     check de membresía `validate_chrome_rgb` y en su lugar lo valida un gate
+#     APCA propio (check_chrome_fixed_pairs), que es la garantía que importa.
+# --------------------------------------------------------------------------
+CHROME_FIXED_LABEL = "Tabaco"
+
+# Pesos de mezcla base_rooibos -> base_manzanilla. Cambiar estos cuatro
+# números es la única palanca de diseño del theme fijo.
+CHROME_FIXED_T = {
+    "frame": 0.135,      # fondo del strip = pestañas inactivas
+    "frame_inactive": 0.080,
+    "toolbar": 0.339,    # pestaña ACTIVA — el dL contra frame es el efecto
+    "ntp": 0.108,
+}
+# El acento se aclara hacia el crema: los 14 acentos de Rooibos están
+# calibrados al MISMO Lc contra neutros (equal-weight), así que TODOS dan
+# Lc~53 sobre la pestaña activa y ninguno pasa el piso de chrome (55).
+CHROME_FIXED_ACCENT_T = 0.25
+
+
+def chrome_fixed_colors():
+    """Los 4 neutros derivados + el acento, como hex."""
+    dark, light = ROOIBOS["colors"], MANZANILLA["colors"]
+    t = CHROME_FIXED_T
+    return {
+        "frame": mix_oklab(dark["base"], light["base"], t["frame"]),
+        "frame_inactive": mix_oklab(dark["base"], light["base"], t["frame_inactive"]),
+        "toolbar": mix_oklab(dark["base"], light["base"], t["toolbar"]),
+        "ntp": mix_oklab(dark["base"], light["base"], t["ntp"]),
+        "accent": mix_oklab(dark["peach"], light["base"], CHROME_FIXED_ACCENT_T),
+    }
+
+
+def chrome_fixed_manifest():
+    c = ROOIBOS["colors"]
+    d = chrome_fixed_colors()
+
+    def rgb(hx):
+        hx = hx.lstrip("#")
+        return [int(hx[0:2], 16), int(hx[2:4], 16), int(hx[4:6], 16)]
+
+    return {
+        "manifest_version": 3,
+        "name": f"Ocular {CHROME_FIXED_LABEL}",
+        "description": (
+            f"Theme Ocular para Chrome — {CHROME_FIXED_LABEL} (fijo, "
+            "legible con el sistema en claro y en oscuro)."
+        ),
+        "version": "1.0.0",
+        "theme": {
+            "colors": {
+                "frame": rgb(d["frame"]),
+                "frame_inactive": rgb(d["frame_inactive"]),
+                "frame_incognito": rgb(d["frame_inactive"]),
+                "frame_incognito_inactive": rgb(d["frame_inactive"]),
+                "toolbar": rgb(d["toolbar"]),
+                "toolbar_button_icon": rgb(d["accent"]),
+                "tab_text": rgb(c["text"]),
+                "tab_background_text": rgb(c["overlay2"]),
+                "bookmark_text": rgb(c["text"]),
+                "ntp_background": rgb(d["ntp"]),
+                "ntp_text": rgb(c["text"]),
+                "ntp_link": rgb(d["accent"]),
+                "button_background": rgb(d["frame"]),
+            },
+            "tints": {"buttons": [-1, -1, -1]},
+            "properties": {"ntp_background_alignment": "bottom"},
+        },
+    }
+
+
+def check_chrome_fixed_pairs():
+    """Gate APCA del theme fijo (exit != 0 si falla). Reemplaza al check de
+    membresía de paleta, que no aplica porque los neutros son derivados.
+    El par que manda es tab_text/toolbar: es el texto de la pestaña ACTIVA,
+    lo que el usuario mira todo el día en el strip vertical."""
+    c = ROOIBOS["colors"]
+    d = chrome_fixed_colors()
+    checks = [
+        ("tab_text/toolbar (activa)", c["text"], d["toolbar"], 60),
+        ("bookmark_text/frame", c["text"], d["frame"], 60),
+        ("ntp_text/ntp_background", c["text"], d["ntp"], 60),
+        ("tab_background_text/frame", c["overlay2"], d["frame"], 45),
+        ("toolbar_button_icon/toolbar", d["accent"], d["toolbar"], 55),
+        ("ntp_link/ntp_background", d["accent"], d["ntp"], 55),
+    ]
+    for field, fg, bg, floor in checks:
+        val = apca_lc(fg, bg)
+        record(
+            "apca-pares", ROOT / "ports" / f"chrome-fijo:{field}", val >= floor,
+            f"Lc={val:.2f} (piso={floor}) fg={fg} bg={bg}",
+        )
+
+
 CHROME_README = """# Chrome (developer mode) — Ocular
 
 MV3 theme (`theme.colors` in decimal RGB), same structure as an equivalent
@@ -1341,6 +1459,35 @@ pick a custom color (`#8C4900`, the Manzanilla peach, or `#FEB782`, the
 Rooibos one — same hue family as this palette). Chrome derives the light and
 dark variants itself and follows the system. The trade-off is control: it is
 a seed color, not the per-token palette these manifests define.
+
+## The fixed theme: `ocular-tabaco` (recommended)
+
+Chrome is the only app in this set that cannot follow the system, and even
+the manual switch below restarts the browser. The way out is not to switch at
+all: `ocular-tabaco/` is a single theme meant to read well with the OS in
+light **and** in dark.
+
+It is not the literal midpoint between Rooibos and Manzanilla. Measured with
+this repo's APCA engine, a mid-luminance frame (L 0.55-0.60) scores Lc 55/48
+for light text and 21/28 for dark text — everything under the body floor of
+60. A mid-tone would be the worst of the three themes. The band that works is
+L 0.32 with light text (Lc 64-78).
+
+Its neutrals are derived by deterministic OKLab mixing between both palettes'
+bases (Rooibos has a gap between L 0.371 and L 0.666, so no role lands
+there). That is why this manifest is validated by a dedicated APCA gate
+instead of the palette-membership check the per-mode ones use.
+
+The active tab is deliberately loud: Chrome paints the active tab with
+`toolbar` and inactive ones with `frame`, and in the per-mode themes those
+two are nearly identical (Manzanilla `238,232,223` vs `227,221,212`). Here
+they sit 0.15 apart in OKLab lightness, plus a `text` -> `overlay2` jump in
+the label. That matters most with the vertical tab strip.
+
+Accent note: all 14 Rooibos accents are calibrated to the same Lc against
+neutrals (equal-weight), so every one of them lands at Lc~53 over the active
+tab and none clears the chrome floor of 55. The icon accent is therefore a
+peach mixed 25% toward the cream base (Lc 59).
 
 ## Switching by hand: `ocular-chrome` (works, measured 2026-08-29)
 
@@ -2013,6 +2160,16 @@ def main():
     audit_hex_file("slack", slack_path, allowed_slack, quoted=False)
     # gate APCA obligatorio del custom theme de Slack (ver check_slack_pairs)
     check_slack_pairs()
+
+    # chrome/ocular-tabaco: theme FIJO, uno solo para todos los modos y
+    # perfiles (por eso se emite acá y no en emit_profile). No pasa por
+    # validate_chrome_rgb —sus neutros son derivados, no roles— sino por su
+    # propio gate APCA.
+    tabaco_path = OUT / "chrome/ocular-tabaco/manifest.json"
+    write(tabaco_path, json.dumps(chrome_fixed_manifest(), indent=2) + "\n")
+    record("exists", tabaco_path, tabaco_path.exists())
+    validate_json(tabaco_path)
+    check_chrome_fixed_pairs()
 
     # ------------------------------------------------------------------
     # Imprimir reporte
